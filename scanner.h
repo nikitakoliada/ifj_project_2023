@@ -17,6 +17,8 @@
 #ifndef SCANNER_H
 #define SCANNER_H
 
+#define DEFAULT_TOKEN_LENGTH 256
+
 typedef enum scanner_states {
     NEW_TOKEN,
     STRING,
@@ -32,10 +34,13 @@ typedef enum scanner_states {
     SEPARATOR,
     RIGHT_CURLY_BRACKET,
     LEFT_CURLY_BRACKET,
-    FUNCTION_TYPE,
     COMMENT,
     BLOCK_COMMENT,
-    BLOCK_COMMENT_END
+    BLOCK_COMMENT_END,
+    KEYWORD_OR_IDENTIFIER,
+    OPERATOR,
+    NIL,
+    FUNCTION_TYPE
 } scanner_states_t;
 
 typedef enum token_type {
@@ -43,6 +48,10 @@ typedef enum token_type {
     IDENTIFIER,
     TOKEN_EOF,
     TOKEN_EOL,
+    BUILT_IN_FUNCTION,
+    TOKEN_OPERATOR,
+    TOKEN_SEPARATOR,
+    TOKEN_FUNCTION_TYPE,
 
     // values of variables
     NUMBER_VALUE,
@@ -90,9 +99,13 @@ typedef struct token {
     unsigned long long line;
 } token_t;
 
-token_t * get_token(FILE *file, unsigned long long *line, token_t *token);
-token_t * get_first_token(token_t *token);
-void free_tokens(token_t *first_token);
-token_type_t get_token_types(char *token_string);
+token_t * scanner_get_first_token(token_t *token);
+void scanner_free_tokens(token_t *first_token);
+char * scanner_get_token_array(unsigned long long size);
+char * scanner_add_char_to_token_array(char * array, unsigned long long *size, unsigned long long *i, int c);
+token_type_t scanner_get_token_type(char *token, scanner_states_t actual_state);
+token_t * scanner_get_token_struct(char *token_array, unsigned long long actual_line, scanner_states_t actual_state, token_t *prev_token);
+token_t * scanner_get_token(FILE *file, unsigned long long *line, token_t *token);
+token_type_t scanner_get_param_token_type(char *token_string);
 
 #endif // SCANNER_H
