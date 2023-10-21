@@ -47,7 +47,7 @@ bool is_negative(token_t *prev_token)
 
 bool is_built_in_function(char *token, char *built_in_functions[])
 {
-    for (int i = 0; i < 12; i++)
+    for (int i = 0; i < 10; i++)
     {
         if (strcmp(token, built_in_functions[i]) == 0)
         {
@@ -60,7 +60,7 @@ bool is_built_in_function(char *token, char *built_in_functions[])
 
 bool is_keyword(char *token, char *keywords[])
 {
-    for (int i = 0; i < 12; i++)
+    for (int i = 0; i < 11; i++)
     {
         if (strcmp(token, keywords[i]) == 0)
         {
@@ -128,7 +128,7 @@ void scanner_process_escape_sequence(char *token, unsigned long long token_posit
             default:
                 break;
         }
-        token[token_position -1] = '\0';
+        token[token_position - 1] = '\0';
     }
 }
 
