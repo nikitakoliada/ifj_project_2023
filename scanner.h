@@ -32,15 +32,15 @@ typedef enum scanner_states {
     DOT,
     EXPONENT,
     SEPARATOR,
-    RIGHT_CURLY_BRACKET,
-    LEFT_CURLY_BRACKET,
-    COMMENT,
-    BLOCK_COMMENT,
-    BLOCK_COMMENT_END,
     KEYWORD_OR_IDENTIFIER,
     OPERATOR,
     NIL,
-    FUNCTION_TYPE
+    FUNCTION_TYPE,
+    COMMENT,
+    BLOCK_COMMENT,
+    BLOCK_COMMENT_END,
+    RIGHT_CURLY_BRACKET,
+    LEFT_CURLY_BRACKET
 } scanner_states_t;
 
 typedef enum token_type {
