@@ -3,9 +3,12 @@
  * @file scanner.c
 
  * @brief Scanner implementation
- 
+
  * @author Juraj Remeň - xremen02
-*/
+ * @author Pavlo Butenko - xbuten00
+ * @author Maksym Podhornyi - xpodho08
+
+ */
 
 #include "scanner.h"
 
@@ -13,6 +16,8 @@
 
 char *keywords[] = {"Double", "else", "func", "if", "Int", "let", "nil", "return", "String", "var", "while"};
 char *built_in_functions[] = {"readString", "readInt", "readDouble", "write", "Int2Double", "Double2Int", "length", "substring", "ord", "chr"};
+
+FILE* file;
 
 
 bool is_integer(char *token)
@@ -25,23 +30,6 @@ bool is_integer(char *token)
         }
     }
 
-    return false;
-}
-
-bool is_operator(int x)
-{
-    return (x == '+' || x == '-' || x == '*' || x == '/' || x == '=');
-}
-
-bool is_negative(token_t *prev_token)
-{
-    if (prev_token)
-    {
-        if ((prev_token->type == TOKEN_OPERATOR && strcmp(prev_token->data.String, "=") == 0)||
-            (prev_token->type == TOKEN_SEPARATOR && strcmp(prev_token->data.String, ",") == 0)) {
-            return true;
-        }
-    }
     return false;
 }
 
@@ -71,27 +59,6 @@ bool is_keyword(char *token)
         return false;
 }
 
-bool is_function_type(token_t *prev_token)
-{
-    if (prev_token != NULL && prev_token->prev != NULL && prev_token->type == TOKEN_SEPARATOR) {
-
-        if (prev_token->prev->type == TOKEN_FUNCTION_TYPE || prev_token->prev->type == TOKEN_RIGHT_BRACKET)
-            return true;
-    }
-    return false;
-}
-
-bool scanner_set_nil_value(token_t *prev_token,token_t *token, char *token_array)
-{
-    if (prev_token && prev_token->type == TOKEN_OPERATOR && strcmp(prev_token->data.String,"=") == 0
-        && token->type == KEYWORD && strcmp(token_array,"nil") == 0)
-        return true;
-    else if (prev_token && prev_token->type == TOKEN_SEPARATOR && strcmp(prev_token->data.String,",") == 0
-             && token->type == KEYWORD && strcmp(token_array,"nil") == 0)
-        return true;
-    else
-        return false;
-}
 
 void scanner_process_escape_sequence(char *token, unsigned long long token_position)
 {
@@ -103,8 +70,9 @@ void scanner_process_escape_sequence(char *token, unsigned long long token_posit
         memcpy(escaped,&token[token_position+1], 3);
         escaped[3] = '\0';
         ascii_val = atoi(escaped);
-        if (ascii_val < 1 || ascii_val > 255)
+        if (ascii_val < 1 || ascii_val > 255){
             ERROR_EXIT("Invalid escape sequence.\n", LEX_ERROR);
+        }
 
     } else {
         char c = token[token_position-1];
@@ -132,26 +100,12 @@ void scanner_process_escape_sequence(char *token, unsigned long long token_posit
     }
 }
 
-token_t * scanner_get_first_token(token_t *token)
+/*void scanner_free_tokens(token_t *first_token)
 {
-    token_t *next = token;
-    while (next && next->prev)
-        next = next->prev;
-
-    return next;
-}
-
-void scanner_free_tokens(token_t *first_token)
-{
-    if (!first_token)
-        return;
-
-    if (first_token->prev)
-        first_token = scanner_get_first_token(first_token);
 
 }*/
 
-token_type_t scanner_get_token_type(char *token, scanner_states_t actual_state)
+/*token_type_t scanner_get_token_type(char *token, scanner_states_t actual_state)
 {
     if (is_keyword(token))
         return KEYWORD;
@@ -165,8 +119,8 @@ token_type_t scanner_get_token_type(char *token, scanner_states_t actual_state)
         return NUMBER_VALUE;
     } else if (actual_state == OPERATOR)
         return TOKEN_OPERATOR;
-    else if (actual_state == SEPARATOR)
-        return TOKEN_SEPARATOR;
+    //else if (actual_state == SEPARATOR)
+    //    return TOKEN_SEPARATOR;
     else if (actual_state == STRING)
         return STRING_VALUE;
     else if (actual_state == LEFT_BRACKET)
@@ -179,7 +133,7 @@ token_type_t scanner_get_token_type(char *token, scanner_states_t actual_state)
         return TOKEN_RIGHT_CURLY_BRACKET;
     else
         return NIL_VALUE;
-}
+}*/
 
 //token_t * scanner_get_token_struct(char *token_array, unsigned long long actual_line, scanner_states_t actual_state, token_t *prev_token)
 //{
@@ -391,6 +345,19 @@ int get_next_token(token_t* token){
                     // TODO
                 }
                 break;
+            case KEYWORD_OR_IDENTIFIER:
+                if(isalnum(symbol) || symbol == '_'){
+                    add_char = true;
+                }else{
+                    ungetc(symbol, file);
+                    if(is_built_in_function(raw_token)){
+                        token_type = BUILT_IN_FUNCTION;
+                    }else if (is_keyword(raw_token)){
+                        token_type = KEYWORD;
+                    }else{
+                        token_type = IDENTIFIER;
+                    }
+                }
             case NUMBER:
                 if(symbol >= '0' && symbol <= '9') {
                     state = NUMBER;
@@ -581,16 +548,16 @@ int get_next_token(token_t* token){
     return 0;
 }
 
-token_type_t scanner_get_param_token_type(char *token_string)
-{
-    if (strcmp(token_string, "Int") == 0)
-        return INT_VALUE;
-    else if (strcmp(token_string, "Double") == 0)
-        return NUMBER_VALUE;
-    else if (strcmp(token_string, "String") == 0)
-        return STRING_VALUE;
-    else if (strcmp(token_string, "nil") == 0)
-        return NIL_VALUE;
-    else
-        ERROR_EXIT("Unsupported param type", INTERNAL_ERROR);
-}
+//token_type_t scanner_get_param_token_type(char *token_string)
+//{
+//    if (strcmp(token_string, "Int") == 0)
+//        return INT_VALUE;
+//    else if (strcmp(token_string, "Double") == 0)
+//        return NUMBER_VALUE;
+//    else if (strcmp(token_string, "String") == 0)
+//        return STRING_VALUE;
+//    else if (strcmp(token_string, "nil") == 0)
+//        return NIL_VALUE;
+//    else
+//        ERROR_EXIT("Unsupported param type", INTERNAL_ERROR);
+//}

@@ -61,8 +61,8 @@ typedef enum token_type {
     TOKEN_EOF,
     TOKEN_EOL,
     BUILT_IN_FUNCTION,
-    TOKEN_OPERATOR,
-    TOKEN_SEPARATOR,
+    //TOKEN_OPERATOR,
+    //TOKEN_SEPARATOR,
     TOKEN_FUNCTION_TYPE,
 
     // values of variables
