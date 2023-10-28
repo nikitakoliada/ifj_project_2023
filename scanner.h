@@ -22,16 +22,23 @@
 typedef enum scanner_states {
     NEW_TOKEN,
     STRING,
-    ESCAPE,
-    HEX_STRING,
+    ONE_LINE_STRING,
+    END_STRING,
+    MAYBE_MULTILINE,
+    MULTILINE,
+    MULTILINE_ESCAPE,
+    MULTILINE_MAYBE_UNICODE,
+    MULTILINE_UNICODE,
     LEFT_BRACKET,
     PARAMETER_ID,
     PARAMETER_TYPE,
     RIGHT_BRACKET,
     NUMBER,
     DOT,
+    DOUBLE,
     EXPONENT,
-    SEPARATOR,
+    EXPONENT_SIGN,
+    EXPONENT_FINAL,
     KEYWORD_OR_IDENTIFIER,
     OPERATOR,
     NIL,
@@ -85,27 +92,34 @@ typedef enum token_type {
     NOT, // !
 } token_type_t;
 
+typedef enum keyword{
+    Double_KW,
+    Else_KW,
+    Function_KW,
+    If_KW,
+    Int_KW,
+    Return_KW,
+    String_KW,
+    Var_KW,
+    While_KW,
+    Nil_KW,
+    Let_KW,
+} keyword_t;
+
 typedef union token_data {
     long long int Int;
     double Double;
     char *String;
+    keyword_t Keyword;
 } token_data_t;
 
 typedef struct token {
     enum token_type type;
-    struct token *prev;
-    struct token *next;
     token_data_t data;
     unsigned long long line;
 } token_t;
 
-token_t * scanner_get_first_token(token_t *token);
-void scanner_free_tokens(token_t *first_token);
-char * scanner_get_token_array(unsigned long long size);
-char * scanner_add_char_to_token_array(char * array, unsigned long long *size, unsigned long long *i, int c);
-token_type_t scanner_get_token_type(char *token, scanner_states_t actual_state);
-token_t * scanner_get_token_struct(char *token_array, unsigned long long actual_line, scanner_states_t actual_state, token_t *prev_token);
-token_t * scanner_get_token(FILE *file, unsigned long long *line, token_t *token);
-token_type_t scanner_get_param_token_type(char *token_string);
+void set_source_file(FILE *file);
+int get_next_token(token_t *token);
 
 #endif // SCANNER_H
