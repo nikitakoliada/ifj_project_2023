@@ -45,7 +45,7 @@ bool is_negative(token_t *prev_token)
     return false;
 }
 
-bool is_built_in_function(char *token, char *built_in_functions[])
+bool is_built_in_function(char *token)
 {
     for (int i = 0; i < 10; i++)
     {
@@ -58,7 +58,7 @@ bool is_built_in_function(char *token, char *built_in_functions[])
         return false;
 }
 
-bool is_keyword(char *token, char *keywords[])
+bool is_keyword(char *token)
 {
     for (int i = 0; i < 11; i++)
     {
@@ -149,42 +149,13 @@ void scanner_free_tokens(token_t *first_token)
     if (first_token->prev)
         first_token = scanner_get_first_token(first_token);
 
-    while (first_token->next)
-    {
-        token_t *token_free = first_token;
-        first_token = first_token->next;
-
-        free(token_free);
-    }
-}
-
-char * scanner_get_token_array(unsigned long long size)
-{
-    char * token_array = (char *)calloc(size + 1, sizeof(char));
-    if (token_array)
-        return token_array;
-    ERROR_EXIT("Could not allocate memory for token array!", INTERNAL_ERROR);
-}
-
-char * scanner_add_char_to_token_array(char * array, unsigned long long *size, unsigned long long *i, int c)
-{
-    if (*size == *i) {
-        *(size) *= 2;
-        char *reallocated = realloc(array, *size);
-        if (reallocated)
-            array = reallocated;
-        ERROR_EXIT("Could not allocate memory for token!", INTERNAL_ERROR);
-    }
-
-    array[(*i)++] = (char) c;
-    return array;
-}
+}*/
 
 token_type_t scanner_get_token_type(char *token, scanner_states_t actual_state)
 {
-    if (is_keyword(token, keywords))
+    if (is_keyword(token))
         return KEYWORD;
-    else if (is_built_in_function(token, built_in_functions))
+    else if (is_built_in_function(token))
         return BUILT_IN_FUNCTION;
     else if (actual_state == KEYWORD_OR_IDENTIFIER)
         return IDENTIFIER;
@@ -210,304 +181,404 @@ token_type_t scanner_get_token_type(char *token, scanner_states_t actual_state)
         return NIL_VALUE;
 }
 
-token_t * scanner_get_token_struct(char *token_array, unsigned long long actual_line, scanner_states_t actual_state, token_t *prev_token)
+//token_t * scanner_get_token_struct(char *token_array, unsigned long long actual_line, scanner_states_t actual_state, token_t *prev_token)
+//{
+//    token_t *token = (token_t *)malloc(sizeof(token_t));
+//    if (!token)
+//        ERROR_EXIT("Could not allocate memory for token!", INTERNAL_ERROR);
+//
+//    token->line = actual_line;
+//    //token->type = scanner_get_token_type(token_array, actual_state);
+//
+//    //token->next = NULL;
+//    //if (prev_token)
+//        //prev_token->next = token;
+//    //else
+//        //token->prev = NULL;
+//
+//    //if the current token_type = func_params, then previous token_type = function_name
+//    if (token->type == TOKEN_LEFT_BRACKET && prev_token->type != BUILT_IN_FUNCTION && prev_token->type != KEYWORD && prev_token->type != TOKEN_OPERATOR && prev_token->type != TOKEN_SEPARATOR && prev_token->type != TOKEN_RIGHT_BRACKET)
+//    {
+//        prev_token->type = TOKEN_FUNCTION_TYPE;
+//    }
+//
+//    /*if (scanner_set_nil_value(prev_token, token, token_array))
+//    {
+//        token->data.String = NULL;
+//        token->type = NIL_VALUE;
+//    }
+//
+//    if (is_function_type(prev_token))
+//        token->type = TOKEN_FUNCTION_TYPE;*/
+//
+//    if(token->type == STRING_VALUE && token_array[0] != '\0') {
+//        size_t len = strlen(token_array);
+//        size_t new_len = len;
+//        size_t j = 0;
+//        char temp[3];
+//
+//        char *temp_str = (char *)malloc(sizeof(char ) * (len + 1));
+//
+//        for (size_t i = 0; i < len; i++)
+//        {
+//            if (token_array[i] < 33 || token_array[i] == 35 || (token_array[i] == 92 && !isdigit(token_array[i+1])))
+//            {
+//                new_len += 4;
+//                temp_str = realloc(temp_str, sizeof(char) * (new_len + 1));
+//                sprintf(temp, "%02d", token_array[i]);
+//
+//                temp_str[j++] = '\\';
+//                temp_str[j++] = '0';
+//                temp_str[j++] = temp[0];
+//                temp_str[j++] = temp[1];
+//            } else
+//                temp_str[j++] = token_array[i];
+//        }
+//        temp_str[j] = 0;
+//        token_array = temp_str;
+//    } else if(token->type == IDENTIFIER && token_array[0] == '_') {
+//        token_array[0] = 'l';
+//    }
+//    if (token->type == KEYWORD || token->type == IDENTIFIER ||
+//        token->type == STRING_VALUE || token->type == TOKEN_OPERATOR ||
+//        token->type == BUILT_IN_FUNCTION ||
+//        token->type == TOKEN_SEPARATOR || token->type == TOKEN_FUNCTION_TYPE ||
+//        token->type == TOKEN_LEFT_BRACKET || token->type == TOKEN_RIGHT_BRACKET ||
+//        token->type == TOKEN_LEFT_CURLY_BRACKET || token->type == TOKEN_RIGHT_CURLY_BRACKET) {
+//        token->data.String = token_array;
+//    } else if (token->type == INT_VALUE) {
+//        token->data.Int = atoll(token_array);
+//    } else if (token->type == NUMBER_VALUE) {
+//        token->data.Double = atof(token_array);
+//    } else if (token->type == NIL_VALUE) {
+//        token->data.Int = 0;
+//    }
+//    //token->prev = prev_token;
+//
+//    return token;
+//}
+
+void add_char_to_string(char *string, unsigned* index, unsigned* size, char c)
 {
-    token_t *token = (token_t *)malloc(sizeof(token_t));
-    if (!token)
-        ERROR_EXIT("Could not allocate memory for token!", INTERNAL_ERROR);
+    unsigned len = strlen(string);
 
-    token->line = actual_line;
-    token->type = scanner_get_token_type(token_array, actual_state);
-
-    token->next = NULL;
-    if (prev_token)
-        prev_token->next = token;
-    else
-        token->prev = NULL;
-
-    //if the current token_type = func_params, then previous token_type = function_name
-    if (token->type == TOKEN_LEFT_BRACKET && prev_token->type != BUILT_IN_FUNCTION && prev_token->type != KEYWORD && prev_token->type != TOKEN_OPERATOR && prev_token->type != TOKEN_SEPARATOR && prev_token->type != TOKEN_RIGHT_BRACKET)
-    {
-        prev_token->type = TOKEN_FUNCTION_TYPE;
-    }
-
-    if (scanner_set_nil_value(prev_token, token, token_array))
-    {
-        token->data.String = NULL;
-        token->type = NIL_VALUE;
-    }
-
-    if (is_function_type(prev_token))
-        token->type = TOKEN_FUNCTION_TYPE;
-
-    if(token->type == STRING_VALUE && token_array[0] != '\0') {
-        size_t len = strlen(token_array);
-        size_t new_len = len;
-        size_t j = 0;
-        char temp[3];
-
-        char *temp_str = (char *)malloc(sizeof(char ) * (len + 1));
-
-        for (size_t i = 0; i < len; i++)
-        {
-            if (token_array[i] < 33 || token_array[i] == 35 || (token_array[i] == 92 && !isdigit(token_array[i+1])))
-            {
-                new_len += 4;
-                temp_str = realloc(temp_str, sizeof(char) * (new_len + 1));
-                sprintf(temp, "%02d", token_array[i]);
-
-                temp_str[j++] = '\\';
-                temp_str[j++] = '0';
-                temp_str[j++] = temp[0];
-                temp_str[j++] = temp[1];
-            } else
-                temp_str[j++] = token_array[i];
+    if(len + 2 >= *size){
+        if(realloc(string, *size * 2 * sizeof(char)) == NULL) {
+            ERROR_EXIT("Could not reallocate memory for string!", INTERNAL_ERROR)
         }
-        temp_str[j] = 0;
-        token_array = temp_str;
-    } else if(token->type == IDENTIFIER && token_array[0] == '_') {
-        token_array[0] = 'l';
+        *size *= 2;
     }
-    if (token->type == KEYWORD || token->type == IDENTIFIER ||
-        token->type == STRING_VALUE || token->type == TOKEN_OPERATOR ||
-        token->type == BUILT_IN_FUNCTION ||
-        token->type == TOKEN_SEPARATOR || token->type == TOKEN_FUNCTION_TYPE ||
-        token->type == TOKEN_LEFT_BRACKET || token->type == TOKEN_RIGHT_BRACKET ||
-        token->type == TOKEN_LEFT_CURLY_BRACKET || token->type == TOKEN_RIGHT_CURLY_BRACKET) {
-        token->data.String = token_array;
-    } else if (token->type == INT_VALUE) {
-        token->data.Int = atoll(token_array);
-    } else if (token->type == NUMBER_VALUE) {
-        token->data.Double = atof(token_array);
-    } else if (token->type == NIL_VALUE) {
-        token->data.Int = 0;
-    }
-    token->prev = prev_token;
-
-    return token;
+    string[(*index)++] = c;
+    string[*index] = '\0';
 }
 
-token_t * scanner_get_token(FILE *file, unsigned long long *line, token_t *previous_token)
-{
-    int c;
-    enum scanner_states state = NEW_TOKEN;
-    enum scanner_states temp_state = NEW_TOKEN;
-    enum scanner_states next_state = NEW_TOKEN;
+int get_next_token(token_t* token){
+    scanner_states_t state = NEW_TOKEN;
+    int token_type = -1;
+    char* raw_token = malloc(DEFAULT_TOKEN_LENGTH * sizeof(char));
+    if(raw_token == NULL){
+        ERROR_EXIT("Could not allocate memory for token!", INTERNAL_ERROR)
+    }
+    unsigned index = 0;
+    unsigned str_size = DEFAULT_TOKEN_LENGTH;
+    do{
+        bool add_char = false;
+        int symbol = getc(file);
 
-    unsigned long long token_length = DEFAULT_TOKEN_LENGTH;
-    unsigned long long token_position = 0;
-    int escaped_counter = 0;
-    int offset = 0;
-    bool exponent = false;
-    bool first_exp_char = false;
-    bool double_quotes_found = false;
-
-
-    char *raw_token = scanner_get_token_array(token_length);
-
-    while ((c = fgetc(file)) != EOF)
-    {
-        if (c == '\n' && state != STRING)
-            (*line)++;
-
-        bool add_character = true;
-        switch (state)
-        {
+        switch (state) {
             case NEW_TOKEN:
-                if (c == '\'')
-                    ERROR_EXIT("Simple quotes are not supported.\n", LEX_ERROR);
-                if (c == '"')
-                {
-                    double_quotes_found = true;
-                    add_character = false;
-                    temp_state = NEW_TOKEN;
-                    next_state = STRING;
-                }
-                if (c == ')')
-                    next_state = RIGHT_BRACKET;
-                else if (c == '(') {
-                    next_state = LEFT_BRACKET;
-                }else if (c == '_' || isalpha(c))
-                    next_state = KEYWORD_OR_IDENTIFIER;
-                else if (is_operator(c)) {
-                    if (c == '-' && is_negative(previous_token)) {
-                        next_state = NUMBER;
-                    } else {
-                        next_state = OPERATOR;
-                    }
-                }else if (isdigit(c))
-                    next_state = NUMBER;
-                else if (c == ',' || c == ':')
-                    next_state = SEPARATOR;
-                else if(isspace(c))
+                if(symbol == '"'){
+                    state = STRING;
+                }else if(isdigit(symbol)){
+                    state = NUMBER;
+                }else if(symbol == '-') {
+                    state = S_MINUS;
+                }else if(symbol == '+') {
+                    token_type = PLUS;
+                }else if(isalpha(symbol) || symbol == '_') {
+                    state = KEYWORD_OR_IDENTIFIER;
+                }else if(symbol == EOF){
+                    break;
+                }else if(symbol == ',') {
+                    token_type = COMMA;
+                }else if(symbol == ':') {
+                    token_type = COLON;
+                }else if(symbol == '?') {
+                    state = NIL;
+                }else if(symbol == '!'){
+                    state = S_NOT;
+                }else if(symbol == '{'){
+                    token_type = TOKEN_LEFT_CURLY_BRACKET;
+                }else if(symbol == '}'){
+                    token_type = TOKEN_RIGHT_CURLY_BRACKET;
+                }else if(symbol == '='){
+                    state = ASSIGNMENT;
+                }else if(symbol == '*'){
+                    token_type = MUL;
+                }else if(symbol == '/'){
+                    state = DIVIDE;
+                }else if(symbol == '>'){
+                    state = MAYBE_MORE_THAN;
+                }else if(symbol == '<'){
+                    state = MAYBE_LESS_THAN;
+                }else if(symbol == '('){
+                    token_type = TOKEN_LEFT_BRACKET;
+                }else if(symbol == ')'){
+                    token_type = TOKEN_RIGHT_BRACKET;
+                }else if(symbol == ' ' || symbol == '\n') {
                     continue;
-                break;
-            case STRING:
-                if (c == '"'){
-                    if (double_quotes_found)  //empty string
-                        c = '\0';
-                    else
-                        add_character = false;
-                    double_quotes_found = false;
-                    next_state = temp_state;
-                }else if (c == '\\')
-                    next_state = ESCAPE;
-                break;
-            case ESCAPE:
-                if (escaped_counter == 0 && (c == '"' || c == 'n' || c == 't' || c == '\\')) {
-                    offset = 1;
-
-                    next_state = STRING;
-                } else if (isdigit(c))
-                {
-                    escaped_counter++;
-
-                    if (escaped_counter == 3)
-                    {
-                        offset = 0;
-                        escaped_counter = 0;
-                        next_state = STRING;
-                    }
-                } else
-                    ERROR_EXIT("Invalid escape sequence.\n", LEX_ERROR);
-
-                if (next_state == STRING) {
-                    scanner_add_char_to_token_array(raw_token, &token_length, &token_position, c);
-                    scanner_process_escape_sequence(raw_token, token_position);
-                    token_position = token_position - offset;
-                    add_character = false;
+                }else{
+                    ERROR_EXIT("Unexpected symbol", LEX_ERROR)
                 }
                 break;
-            case FUNCTION_TYPE:
-                if (c == ')')
-                    next_state = NEW_TOKEN;
-                else if (c == '"')
-                {
-                    temp_state = FUNCTION_TYPE;
-                    next_state = STRING;
+
+            case S_MINUS:
+                if(symbol == '>'){
+                    // state = FUNCTION_TYPE;
+                    token_type = TOKEN_FUNCTION_TYPE;
+                }else{
+                    ungetc(symbol, file);
+                    token_type = MINUS;
+                    //TODO
+                }
+                break;
+            case NIL:
+                if(symbol == '?'){
+                    //state = NC;
+                    token_type = NIL_COLL; // Nullish coalescing operator
+                }else{
+                    ungetc(symbol, file);
+                    token_type = NIL_VALUE;
+                }
+                break;
+            case S_NOT:
+                if(symbol == '='){
+                    //state = NOT_EQUAL;
+                    token_type = NOT_EQUAL;
+                }else {
+                    ungetc(symbol, file);
+                    token_type = NOT;
+                    //TODO
+                }
+                break;
+            case ASSIGNMENT:
+                if(symbol == '='){
+                    // state = EQUAL;
+                    token_type = EQUAL;
+                }else {
+                    ungetc(symbol, file);
+                    token_type = ASSIGNMENT;
+                    //TODO
+                }
+                break;
+            case MAYBE_MORE_THAN:
+                if(symbol == '='){
+                    // state = MORE_THAN_OR_EQUAL;
+                    token_type = MORE_THAN_OR_EQUAL;
+                }else{
+                    ungetc(symbol, file);
+                    token_type = MORE_THAN;
+                    // TODO
+                }
+                break;
+            case MAYBE_LESS_THAN:
+                if(symbol == '='){
+                    // state = LESS_THAN_OR_EQUAL;
+                    token_type = LESS_THAN_OR_EQUAL;
+                }else{
+                    ungetc(symbol, file);
+                    token_type = LESS_THAN;
+                    // TODO
                 }
                 break;
             case NUMBER:
-                if (c == '.')
-                    next_state = DOT;
-                else if (c == 'E' || c == 'e'){
-                    next_state = EXPONENT;
-                    first_exp_char = true;
-                } else if (!isdigit(c)) {
-                    add_character = false;
-                    ungetc(c, stdin);  // read character could not be the useless whitespace
-                    next_state = NEW_TOKEN;
+                if(symbol >= '0' && symbol <= '9') {
+                    state = NUMBER;
+                    add_char = true;
+                    break;
+                }else if(symbol == '.'){
+                    state = DOT;
+                    add_char = true;
+                    break;
+                }else if(symbol == 'e' || symbol == 'E') {
+                    state = EXPONENT;
+                    add_char = true;
+                    break;
+                }else{
+                    token_type = INT_VALUE;
+                    ungetc(symbol, file);
                 }
                 break;
+
             case DOT:
-                if (exponent)
-                    ERROR_EXIT("Invalid number format.\n", LEX_ERROR);
-                if (!isdigit(c) || isspace(c))
-                    ERROR_EXIT("Invalid number format\n", LEX_ERROR);
-                next_state = NUMBER;
+                if(symbol >= '0' && symbol <= '9'){
+                    state = DOUBLE;
+                    add_char = true;
+                    break;
+                }
+                else{
+                    ERROR_EXIT("Unexpected symbol", LEX_ERROR)
+                }
+
+            case DOUBLE:
+                if (symbol >= '0' && symbol <= '9') {
+                    state = DOUBLE;
+                    add_char = true;
+                    break;
+                }else if (symbol == 'e' || symbol == 'E'){
+                    state = EXPONENT;
+                    add_char = true;
+                    break;
+                }else{
+                    token_type = DOUBLE_VALUE;
+                    ungetc(symbol, file);
+                }
                 break;
+
             case EXPONENT:
-                exponent = true;
-                if (c == '.')
-                    ERROR_EXIT("Invalid number format.\n", LEX_ERROR);
-                if (first_exp_char && c != '+' && c != '-' && !isdigit(c))
-                    ERROR_EXIT("Invalid number format\n", LEX_ERROR);
-                if (!isdigit(c) && c != '+' && c != '-') {
-                    add_character = false;
-                    ungetc(c, stdin);  // read character could not be the useless whitespace
-                    next_state = NEW_TOKEN;
+                if (symbol >= '0' && symbol <= '9') {
+                    state = EXPONENT_FINAL;
+                    add_char = true;
+                    break;
+                }else if (symbol == '+' || symbol == '-'){
+                    state = EXPONENT_SIGN;
+                    add_char = true;
+                    break;
                 }
-                break;
-            case KEYWORD_OR_IDENTIFIER:
-                if(isspace(c) || c == ',' || c == ')' || is_operator(c) || c == '(' || c == ':' || c == '"')
-                {
-                    add_character = false;  // skip adding invalid character of identificator
-                    ungetc(c, stdin);  // read character could not be the useless whitespace
-                    next_state = NEW_TOKEN;
-                } else if (!isalnum(c) && c != '_' ){
-                    ERROR_EXIT("Invalid identifier.\n", SYNTAX_ERROR);
+                else{
+                    ERROR_EXIT("Unexpected symbol", LEX_ERROR)
                 }
-                break;
-            case SEPARATOR:
-                next_state = NEW_TOKEN;
 
-                add_character = false;
-                ungetc(c, stdin);
-                next_state = NEW_TOKEN;
-                break;
-            case OPERATOR:
-                if (c == '/')
-                    next_state = COMMENT;
-                else if (!is_operator(c))
-                {
-                    add_character = false;
-                    ungetc(c, stdin);  // read character could not be the useless whitespace
-                    next_state = NEW_TOKEN;
+            case EXPONENT_SIGN:
+                if (symbol >= '0' && symbol <= '9') {
+                    state = EXPONENT_FINAL;
+                    add_char = true;
+                    break;
+                }else{
+                    ERROR_EXIT("Unexpected symbol", LEX_ERROR)
+                }
+
+            case EXPONENT_FINAL:
+                if (symbol >= '0' && symbol <= '9') {
+                    state = EXPONENT_FINAL;
+                    break;
+                }else{
+                    ungetc(symbol, file);
+                    token_type = DOUBLE_VALUE;
                 }
                 break;
+
+            case DIVIDE:
+                if(symbol == '/'){
+                    state = COMMENT;
+                    break;
+                }else if(symbol == '*'){
+                    state = BLOCK_COMMENT;
+                    break;
+                }else{
+                    token_type = DIV;
+                    ungetc(symbol, file);
+                }
+                break;
+
             case COMMENT:
-                if (c == '/')
-                    next_state = COMMENT;
-                else {
-                    while ((c = fgetc(file)) != EOF) {
-                        if (c == '\n') {
-                            token_position = 0;
-                            raw_token[0] = '\0';
-                            next_state = NEW_TOKEN;
-                            break;
-                        }
-                    }
+                if(symbol >= 32 && symbol <= 126){
+                    state = COMMENT;
+                    break;
+                } else if(symbol == '\n'){
+                    state = NEW_TOKEN;
+                    break;
                 }
                 break;
+
             case BLOCK_COMMENT:
-                if (c == '*')
-                    next_state = BLOCK_COMMENT_END;
-                else {
-                    while ((c = fgetc(file)) != EOF) {
-                        if (c == '/') {
-                            next_state = BLOCK_COMMENT_END;
-                            break;
-                        }
-                    }
+                if (symbol >= 32 && symbol <= 126 && symbol != '*') {
+                    state = BLOCK_COMMENT;
+                    break;
+                }else if(symbol == '*'){
+                    state = BLOCK_COMMENT_POSSIBLE_END;
+                    break;
+                }else if(symbol == EOF){
+                    ERROR_EXIT("Unexpected EOF in block comment", LEX_ERROR)
                 }
                 break;
+
+            case BLOCK_COMMENT_POSSIBLE_END:
+                if(symbol == '/'){
+                    state = BLOCK_COMMENT_END;
+                    break;
+                }else if(symbol == '*'){
+                    state = BLOCK_COMMENT_POSSIBLE_END;
+                    break;
+                }else if(symbol >= 32 && symbol <= 126){
+                    state = BLOCK_COMMENT;
+                    break;
+                }else if(symbol == EOF){
+                    ERROR_EXIT("Unexpected EOF in block comment", LEX_ERROR)
+                }
+                break;
+
             case BLOCK_COMMENT_END:
-                if (c == '/')
-                {
-                    token_position = 0;
-                    raw_token[0] = '\0';
-                    next_state = NEW_TOKEN;
-                }else
-                    next_state = BLOCK_COMMENT;
-                break;
-            case LEFT_BRACKET:
-                add_character = false;
-                ungetc(c, stdin);
-                next_state = NEW_TOKEN;
-                break;
-            case RIGHT_BRACKET:
-                add_character = false;
-                ungetc(c, stdin);
-                next_state = NEW_TOKEN;
-                break;
-            default:
-                break;
-        }
-        if (add_character && state < COMMENT)
-            scanner_add_char_to_token_array(raw_token, &token_length, &token_position, c);
+                state = NEW_TOKEN;
 
-        if (next_state == NEW_TOKEN && state != NEW_TOKEN && state != COMMENT && state != BLOCK_COMMENT_END && state != BLOCK_COMMENT)
-            break;
+                break;
 
-        state = next_state;
-    }
-    if (state == BLOCK_COMMENT)
-        ERROR_EXIT("Could not end inside comment", LEX_ERROR);
+            case STRING:
+                if(symbol == '"'){
+                    state = MAYBE_MULTILINE;
+                    //token_type = STRING_VALUE;
+                    break;
+                }else if(symbol >= 32 && symbol <= 126 && symbol != '\\') {
+                    state = ONE_LINE_STRING;
+                    add_char = true;
+                    break;
+                }
+                break;
 
-    if (!token_position)
-        return NULL;
+            case ONE_LINE_STRING:
+                if(symbol == '"'){
+                    state = END_STRING;
+                    break;
+                }else if(symbol == '\n'){
+                    ERROR_EXIT("Unexpected EOL in string", LEX_ERROR)
+                }else if(symbol == EOF){
+                    ERROR_EXIT("Unexpected EOF in string", LEX_ERROR)
+                }else if(symbol >= 32 && symbol <= 126){
+                    //state = ONE_LINE_STRING;
+                    add_char = true;
+                    break;
+                }
+                break;
 
-    return scanner_get_token_struct(raw_token, *line, state, previous_token);
+            case MAYBE_MULTILINE:
+                if (symbol == '"') {
+                    state = MULTILINE;
+                    break;
+                }else if(symbol == '\n' || symbol == EOF || symbol == '\0') {
+                    state = STRING;
+                    // Empty string
+                    break;
+                }
+                break;
+
+            case END_STRING:
+                break;
+
+            case MULTILINE:
+                if(symbol == '"') {
+                    state = END_STRING;
+                    break;
+                }
+
+
+       }
+
+       if(add_char){
+           add_char_to_string(raw_token, &index, &str_size, (char)symbol);
+       }
+
+   }while(token_type == -1);
+    return 0;
 }
 
 token_type_t scanner_get_param_token_type(char *token_string)

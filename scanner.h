@@ -26,13 +26,11 @@ typedef enum scanner_states {
     END_STRING,
     MAYBE_MULTILINE,
     MULTILINE,
-    MULTILINE_ESCAPE,
-    MULTILINE_MAYBE_UNICODE,
-    MULTILINE_UNICODE,
-    LEFT_BRACKET,
-    PARAMETER_ID,
-    PARAMETER_TYPE,
-    RIGHT_BRACKET,
+//    MULTILINE_ESCAPE,
+//    MULTILINE_MAYBE_UNICODE,
+//    MULTILINE_UNICODE,
+//    LEFT_BRACKET,
+//    RIGHT_BRACKET,
     NUMBER,
     DOT,
     DOUBLE,
@@ -40,14 +38,21 @@ typedef enum scanner_states {
     EXPONENT_SIGN,
     EXPONENT_FINAL,
     KEYWORD_OR_IDENTIFIER,
-    OPERATOR,
+//    OPERATOR,
     NIL,
-    FUNCTION_TYPE,
+    DIVIDE,
     COMMENT,
     BLOCK_COMMENT,
+    BLOCK_COMMENT_POSSIBLE_END,
     BLOCK_COMMENT_END,
-    RIGHT_CURLY_BRACKET,
-    LEFT_CURLY_BRACKET
+//    FUNCTION_TYPE,
+//    RIGHT_CURLY_BRACKET,
+//    LEFT_CURLY_BRACKET,
+    ASSIGNMENT,
+    MAYBE_MORE_THAN,
+    MAYBE_LESS_THAN,
+    S_MINUS,
+    S_NOT
 } scanner_states_t;
 
 typedef enum token_type {
@@ -65,6 +70,7 @@ typedef enum token_type {
     STRING_VALUE,
     INT_VALUE,
     NIL_VALUE, // ?
+    DOUBLE_VALUE,
 
     // relation operators
     NOT_EQUAL, // !=
@@ -75,7 +81,6 @@ typedef enum token_type {
     MORE_THAN_OR_EQUAL, // >=
 
     // operators
-    ASSIGNMENT, // =
     PLUS, // +
     MINUS, // -
     MUL, // *

@@ -12,7 +12,7 @@ FLAGS = -std=c99 -pedantic -Wall -Wextra
 OUT = IFJ23
 SRCS := $(wildcard *.c)
 
-make:
+all:
 	${CC} ${FLAGS} ${SRCS} -o ifj
 
 clean:
