@@ -103,12 +103,12 @@ typedef enum keyword{
     Function_KW,
     If_KW,
     Int_KW,
+    Let_KW,
+    Nil_KW,
     Return_KW,
     String_KW,
     Var_KW,
     While_KW,
-    Nil_KW,
-    Let_KW,
 } keyword_t;
 
 typedef union token_data {

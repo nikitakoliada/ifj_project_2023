@@ -100,41 +100,6 @@ void scanner_process_escape_sequence(char *token, unsigned long long token_posit
     }
 }
 
-/*void scanner_free_tokens(token_t *first_token)
-{
-
-}*/
-
-/*token_type_t scanner_get_token_type(char *token, scanner_states_t actual_state)
-{
-    if (is_keyword(token))
-        return KEYWORD;
-    else if (is_built_in_function(token))
-        return BUILT_IN_FUNCTION;
-    else if (actual_state == KEYWORD_OR_IDENTIFIER)
-        return IDENTIFIER;
-    else if (actual_state == NUMBER || actual_state == EXPONENT) {
-        if (is_integer(token))
-            return INT_VALUE;
-        return NUMBER_VALUE;
-    } else if (actual_state == OPERATOR)
-        return TOKEN_OPERATOR;
-    //else if (actual_state == SEPARATOR)
-    //    return TOKEN_SEPARATOR;
-    else if (actual_state == STRING)
-        return STRING_VALUE;
-    else if (actual_state == LEFT_BRACKET)
-        return TOKEN_LEFT_BRACKET;
-    else if (actual_state == RIGHT_BRACKET)
-        return TOKEN_RIGHT_BRACKET;
-    else if (actual_state == LEFT_CURLY_BRACKET)
-        return TOKEN_LEFT_CURLY_BRACKET;
-    else if (actual_state == RIGHT_CURLY_BRACKET)
-        return TOKEN_RIGHT_CURLY_BRACKET;
-    else
-        return NIL_VALUE;
-}*/
-
 //token_t * scanner_get_token_struct(char *token_array, unsigned long long actual_line, scanner_states_t actual_state, token_t *prev_token)
 //{
 //    token_t *token = (token_t *)malloc(sizeof(token_t));
@@ -226,6 +191,14 @@ void add_char_to_string(char *string, unsigned* index, unsigned* size, char c)
     string[*index] = '\0';
 }
 
+token_type_t get_keyword_type(char* token_raw){
+    for(int i = 0; i < 11; i++){
+        if(!strcmp(token_raw, keywords[i])){
+            return i;
+        }
+    }
+}
+
 int get_next_token(token_t* token){
     scanner_states_t state = NEW_TOKEN;
     int token_type = -1;
@@ -238,6 +211,8 @@ int get_next_token(token_t* token){
     do{
         bool add_char = false;
         int symbol = getc(file);
+
+        if(symbol == '\n') token->line++;
 
         switch (state) {
             case NEW_TOKEN:
@@ -545,6 +520,31 @@ int get_next_token(token_t* token){
        }
 
    }while(token_type == -1);
+
+    token->type = token_type;
+
+    switch (token_type)
+    {
+        case KEYWORD:
+            token->data.Keyword = get_keyword_type(raw_token);
+            break;
+        case NUMBER_VALUE:
+            token->data.Int = atoll(raw_token);
+        case DOUBLE_VALUE:
+            token->data.Double = atof(raw_token);
+            break;
+        case STRING_VALUE:
+            token->data.String = malloc(sizeof(char) * (strlen(raw_token) + 1));
+            if(!token) ERROR_EXIT("Could not allocate memory for token!", INTERNAL_ERROR)
+            strcpy(token->data.String, raw_token);
+            break;
+        default:
+            break;
+    }
+
+    free(raw_token);
+
+
     return 0;
 }
 
