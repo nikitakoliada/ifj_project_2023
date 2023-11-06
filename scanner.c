@@ -19,6 +19,9 @@ char *built_in_functions[] = {"readString", "readInt", "readDouble", "write", "I
 
 FILE* file;
 
+void set_source_file(FILE *file_arg){
+    file = file_arg;
+}
 
 bool is_integer(char *token)
 {
@@ -333,6 +336,7 @@ int get_next_token(token_t* token){
                         token_type = IDENTIFIER;
                     }
                 }
+                break;
             case NUMBER_S:
                 if(symbol >= '0' && symbol <= '9') {
                     state = NUMBER_S;

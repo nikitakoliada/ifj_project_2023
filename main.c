@@ -30,12 +30,6 @@ void print_token(token_t *token)
         case BUILT_IN_FUNCTION:
             printf("BUILT_IN_FUNCTION\n");
             break;
-        case TOKEN_OPERATOR:
-            printf("TOKEN_OPERATOR\n");
-            break;
-        case TOKEN_SEPARATOR:
-            printf("TOKEN_SEPARATOR\n");
-            break;
         case TOKEN_FUNCTION_TYPE:
             printf("TOKEN_FUNCTION_TYPE\n");
             break;
@@ -83,9 +77,6 @@ void print_token(token_t *token)
         case (MORE_THAN_OR_EQUAL):
             printf("MORE_THAN_OR_EQUAL\n");
             break;
-        case (ASSIGNMENT):
-            printf("ASSIGNMENT\n");
-            break;
         case (TOKEN_LEFT_BRACKET):
             printf("TOKEN_LEFT_BRACKET\n");
             break;
@@ -108,51 +99,27 @@ void print_token(token_t *token)
             printf("NOT\n");
             break;
         default:
-            printf("UNKNOWN\n");
+            printf("%d\n", token->type);
             break;
     }
 }
 
-token_t *initializeTokens()
-{
-    token_t *token = (token_t *) malloc(sizeof(token_t));
-    char *data = (char *)malloc(sizeof(char) * 8);
-
-    token->type = KEYWORD;
-    token->prev = NULL;
-    token->line = 0;
-    token->data.String = data;
-
-    token_t *token2 = (token_t *)malloc(sizeof(token_t));
-    char *data2 = (char *)malloc(sizeof(char) * 8);
-
-    token2->type = STRING_VALUE;
-    token2->next = NULL;
-    token2->prev = token;
-    token2->line = 0;
-    token2->data.String = data2;
-    token->next = token2;
-
-    return token;
-}
 
 int main()
 {
-    token_t *token = NULL;
-    token_t *next_token = NULL;
-    unsigned long long line = 1;
+    set_source_file(stdin);
+    token_t *token = malloc(sizeof(token_t));
+    if(!token) return 1;
 
     while (true)  // Load all the tokens
     {
-        next_token = scanner_get_token(stdin, &line, token);
-        if (next_token == NULL)
-            break;
-        token = next_token;
+        get_next_token(token);
+        if(token->type == TOKEN_EOF) break;
         print_token(token);
     }
-    token = scanner_get_first_token(token);
 
-    scanner_free_tokens(token);
+
+    free(token);
 
     return 0;
 }
