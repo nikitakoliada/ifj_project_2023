@@ -115,7 +115,8 @@ int main()
     {
         get_next_token(token);
         if(token->type == TOKEN_EOF) break;
-        print_token(token);
+        //print_token(token);
+        printf("%d\n", token->type);
     }
 
 

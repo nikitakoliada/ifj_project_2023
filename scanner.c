@@ -206,6 +206,7 @@ int get_next_token(token_t* token){
     scanner_states_t state = NEW_TOKEN_S;
     int token_type = -1;
     char* raw_token = malloc(DEFAULT_TOKEN_LENGTH * sizeof(char));
+    strcpy(raw_token, "");
     if(raw_token == NULL){
         ERROR_EXIT("Could not allocate memory for token!", INTERNAL_ERROR)
     }
@@ -222,15 +223,17 @@ int get_next_token(token_t* token){
                 if(symbol == '"'){
                     state = STRING_S;
                 }else if(isdigit(symbol)){
+                    add_char = true;
                     state = NUMBER_S;
                 }else if(symbol == '-') {
                     state = MINUS_S;
                 }else if(symbol == '+') {
                     token_type = PLUS;
                 }else if(isalpha(symbol) || symbol == '_') {
+                    add_char = true;
                     state = KEYWORD_OR_IDENTIFIER_S;
                 }else if(symbol == EOF){
-                    break;
+                    token_type = TOKEN_EOF;
                 }else if(symbol == ',') {
                     token_type = COMMA;
                 }else if(symbol == ':') {
@@ -516,6 +519,8 @@ int get_next_token(token_t* token){
                     state = MAYBE_MULTILINE_START_S;
                 }else if(symbol == EOF){
                     ERROR_EXIT("Unexpected EOF in string", LEX_ERROR)
+                }else{
+                    token_type = STRING_VALUE;
                 }
                 break;
 
@@ -602,8 +607,10 @@ int get_next_token(token_t* token){
             if(!token) ERROR_EXIT("Could not allocate memory for token!", INTERNAL_ERROR)
             strcpy(token->data.String, raw_token);
             break;
+        default:
+            break;
     }
-
+    printf("%s\n", raw_token);
     free(raw_token);
 
 
