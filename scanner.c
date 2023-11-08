@@ -191,7 +191,7 @@ void add_char_to_string(char *string, unsigned* index, unsigned* size, char c)
     string[*index] = '\0';
 }
 
-token_type_t get_keyword_type(char* token_raw){
+keyword_t get_keyword_type(char* token_raw){
     for(int i = 0; i < 11; i++){
         if(!strcmp(token_raw, keywords[i])){
             return i;
@@ -589,6 +589,7 @@ int get_next_token(token_t* token){
             break;
         case NUMBER_VALUE:
             token->data.Int = atoll(raw_token);
+            break;
         case DOUBLE_VALUE:
             token->data.Double = atof(raw_token);
             break;
@@ -596,8 +597,6 @@ int get_next_token(token_t* token){
             token->data.String = malloc(sizeof(char) * (strlen(raw_token) + 1));
             if(!token) ERROR_EXIT("Could not allocate memory for token!", INTERNAL_ERROR)
             strcpy(token->data.String, raw_token);
-            break;
-        default:
             break;
     }
 
