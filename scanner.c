@@ -200,7 +200,7 @@ token_type_t get_keyword_type(char* token_raw){
 }
 
 int get_next_token(token_t* token){
-    scanner_states_t state = NEW_TOKEN;
+    scanner_states_t state = NEW_TOKEN_S;
     int token_type = -1;
     char* raw_token = malloc(DEFAULT_TOKEN_LENGTH * sizeof(char));
     if(raw_token == NULL){
@@ -215,17 +215,17 @@ int get_next_token(token_t* token){
         if(symbol == '\n') token->line++;
 
         switch (state) {
-            case NEW_TOKEN:
+            case NEW_TOKEN_S:
                 if(symbol == '"'){
-                    state = STRING;
+                    state = STRING_S;
                 }else if(isdigit(symbol)){
-                    state = NUMBER;
+                    state = NUMBER_S;
                 }else if(symbol == '-') {
-                    state = S_MINUS;
+                    state = MINUS_S;
                 }else if(symbol == '+') {
                     token_type = PLUS;
                 }else if(isalpha(symbol) || symbol == '_') {
-                    state = KEYWORD_OR_IDENTIFIER;
+                    state = KEYWORD_OR_IDENTIFIER_S;
                 }else if(symbol == EOF){
                     break;
                 }else if(symbol == ',') {
@@ -233,23 +233,23 @@ int get_next_token(token_t* token){
                 }else if(symbol == ':') {
                     token_type = COLON;
                 }else if(symbol == '?') {
-                    state = NIL;
+                    state = NIL_S;
                 }else if(symbol == '!'){
-                    state = S_NOT;
+                    state = NOT_S;
                 }else if(symbol == '{'){
                     token_type = TOKEN_LEFT_CURLY_BRACKET;
                 }else if(symbol == '}'){
                     token_type = TOKEN_RIGHT_CURLY_BRACKET;
                 }else if(symbol == '='){
-                    state = ASSIGNMENT;
+                    state = ASSIGNMENT_S;
                 }else if(symbol == '*'){
                     token_type = MUL;
                 }else if(symbol == '/'){
-                    state = DIVIDE;
+                    state = DIVIDE_S;
                 }else if(symbol == '>'){
-                    state = MAYBE_MORE_THAN;
+                    state = MAYBE_MORE_THAN_S;
                 }else if(symbol == '<'){
-                    state = MAYBE_LESS_THAN;
+                    state = MAYBE_LESS_THAN_S;
                 }else if(symbol == '('){
                     token_type = TOKEN_LEFT_BRACKET;
                 }else if(symbol == ')'){
@@ -261,7 +261,7 @@ int get_next_token(token_t* token){
                 }
                 break;
 
-            case S_MINUS:
+            case MINUS_S:
                 if(symbol == '>'){
                     // state = FUNCTION_TYPE;
                     token_type = TOKEN_FUNCTION_TYPE;
@@ -271,7 +271,7 @@ int get_next_token(token_t* token){
                     //TODO
                 }
                 break;
-            case NIL:
+            case NIL_S:
                 if(symbol == '?'){
                     //state = NC;
                     token_type = NIL_COLL; // Nullish coalescing operator
@@ -280,7 +280,7 @@ int get_next_token(token_t* token){
                     token_type = NIL_VALUE;
                 }
                 break;
-            case S_NOT:
+            case NOT_S:
                 if(symbol == '='){
                     //state = NOT_EQUAL;
                     token_type = NOT_EQUAL;
@@ -290,17 +290,17 @@ int get_next_token(token_t* token){
                     //TODO
                 }
                 break;
-            case ASSIGNMENT:
+            case ASSIGNMENT_S:
                 if(symbol == '='){
                     // state = EQUAL;
                     token_type = EQUAL;
                 }else {
                     ungetc(symbol, file);
-                    token_type = ASSIGNMENT;
+                    token_type = ASSIGNMENT_S;
                     //TODO
                 }
                 break;
-            case MAYBE_MORE_THAN:
+            case MAYBE_MORE_THAN_S:
                 if(symbol == '='){
                     // state = MORE_THAN_OR_EQUAL;
                     token_type = MORE_THAN_OR_EQUAL;
@@ -310,7 +310,7 @@ int get_next_token(token_t* token){
                     // TODO
                 }
                 break;
-            case MAYBE_LESS_THAN:
+            case MAYBE_LESS_THAN_S:
                 if(symbol == '='){
                     // state = LESS_THAN_OR_EQUAL;
                     token_type = LESS_THAN_OR_EQUAL;
@@ -320,7 +320,7 @@ int get_next_token(token_t* token){
                     // TODO
                 }
                 break;
-            case KEYWORD_OR_IDENTIFIER:
+            case KEYWORD_OR_IDENTIFIER_S:
                 if(isalnum(symbol) || symbol == '_'){
                     add_char = true;
                 }else{
@@ -333,17 +333,17 @@ int get_next_token(token_t* token){
                         token_type = IDENTIFIER;
                     }
                 }
-            case NUMBER:
+            case NUMBER_S:
                 if(symbol >= '0' && symbol <= '9') {
-                    state = NUMBER;
+                    state = NUMBER_S;
                     add_char = true;
                     break;
                 }else if(symbol == '.'){
-                    state = DOT;
+                    state = DOT_S;
                     add_char = true;
                     break;
                 }else if(symbol == 'e' || symbol == 'E') {
-                    state = EXPONENT;
+                    state = EXPONENT_S;
                     add_char = true;
                     break;
                 }else{
@@ -352,9 +352,9 @@ int get_next_token(token_t* token){
                 }
                 break;
 
-            case DOT:
+            case DOT_S:
                 if(symbol >= '0' && symbol <= '9'){
-                    state = DOUBLE;
+                    state = DOUBLE_S;
                     add_char = true;
                     break;
                 }
@@ -362,13 +362,13 @@ int get_next_token(token_t* token){
                     ERROR_EXIT("Unexpected symbol", LEX_ERROR)
                 }
 
-            case DOUBLE:
+            case DOUBLE_S:
                 if (symbol >= '0' && symbol <= '9') {
-                    state = DOUBLE;
+                    state = DOUBLE_S;
                     add_char = true;
                     break;
                 }else if (symbol == 'e' || symbol == 'E'){
-                    state = EXPONENT;
+                    state = EXPONENT_S;
                     add_char = true;
                     break;
                 }else{
@@ -377,13 +377,13 @@ int get_next_token(token_t* token){
                 }
                 break;
 
-            case EXPONENT:
+            case EXPONENT_S:
                 if (symbol >= '0' && symbol <= '9') {
-                    state = EXPONENT_FINAL;
+                    state = EXPONENT_FINAL_S;
                     add_char = true;
                     break;
                 }else if (symbol == '+' || symbol == '-'){
-                    state = EXPONENT_SIGN;
+                    state = EXPONENT_SIGN_S;
                     add_char = true;
                     break;
                 }
@@ -391,18 +391,18 @@ int get_next_token(token_t* token){
                     ERROR_EXIT("Unexpected symbol", LEX_ERROR)
                 }
 
-            case EXPONENT_SIGN:
+            case EXPONENT_SIGN_S:
                 if (symbol >= '0' && symbol <= '9') {
-                    state = EXPONENT_FINAL;
+                    state = EXPONENT_FINAL_S;
                     add_char = true;
                     break;
                 }else{
                     ERROR_EXIT("Unexpected symbol", LEX_ERROR)
                 }
 
-            case EXPONENT_FINAL:
+            case EXPONENT_FINAL_S:
                 if (symbol >= '0' && symbol <= '9') {
-                    state = EXPONENT_FINAL;
+                    state = EXPONENT_FINAL_S;
                     break;
                 }else{
                     ungetc(symbol, file);
@@ -410,12 +410,12 @@ int get_next_token(token_t* token){
                 }
                 break;
 
-            case DIVIDE:
+            case DIVIDE_S:
                 if(symbol == '/'){
-                    state = COMMENT;
+                    state = COMMENT_S;
                     break;
                 }else if(symbol == '*'){
-                    state = BLOCK_COMMENT;
+                    state = BLOCK_COMMENT_S;
                     break;
                 }else{
                     token_type = DIV;
@@ -423,63 +423,63 @@ int get_next_token(token_t* token){
                 }
                 break;
 
-            case COMMENT:
+            case COMMENT_S:
                 if(symbol >= 32 && symbol <= 126){
-                    state = COMMENT;
+                    state = COMMENT_S;
                     break;
                 } else if(symbol == '\n'){
-                    state = NEW_TOKEN;
+                    state = NEW_TOKEN_S;
                     break;
                 }
                 break;
 
-            case BLOCK_COMMENT:
+            case BLOCK_COMMENT_S:
                 if (symbol >= 32 && symbol <= 126 && symbol != '*') {
-                    state = BLOCK_COMMENT;
+                    state = BLOCK_COMMENT_S;
                     break;
                 }else if(symbol == '*'){
-                    state = BLOCK_COMMENT_POSSIBLE_END;
+                    state = BLOCK_COMMENT_POSSIBLE_END_S;
                     break;
                 }else if(symbol == EOF){
                     ERROR_EXIT("Unexpected EOF in block comment", LEX_ERROR)
                 }
                 break;
 
-            case BLOCK_COMMENT_POSSIBLE_END:
+            case BLOCK_COMMENT_POSSIBLE_END_S:
                 if(symbol == '/'){
-                    state = BLOCK_COMMENT_END;
+                    state = BLOCK_COMMENT_END_S;
                     break;
                 }else if(symbol == '*'){
-                    state = BLOCK_COMMENT_POSSIBLE_END;
+                    state = BLOCK_COMMENT_POSSIBLE_END_S;
                     break;
                 }else if(symbol >= 32 && symbol <= 126){
-                    state = BLOCK_COMMENT;
+                    state = BLOCK_COMMENT_S;
                     break;
                 }else if(symbol == EOF){
                     ERROR_EXIT("Unexpected EOF in block comment", LEX_ERROR)
                 }
                 break;
 
-            case BLOCK_COMMENT_END:
-                state = NEW_TOKEN;
+            case BLOCK_COMMENT_END_S:
+                state = NEW_TOKEN_S;
 
                 break;
 
-            case STRING:
+            case STRING_S:
                 if(symbol == '"'){
-                    state = MAYBE_MULTILINE;
+                    state = MAYBE_MULTILINE_S;
                     //token_type = STRING_VALUE;
                     break;
                 }else if(symbol >= 32 && symbol <= 126 && symbol != '\\') {
-                    state = ONE_LINE_STRING;
+                    state = ONE_LINE_STRING_S;
                     add_char = true;
                     break;
                 }
                 break;
 
-            case ONE_LINE_STRING:
+            case ONE_LINE_STRING_S:
                 if(symbol == '"'){
-                    state = END_STRING;
+                    state = END_STRING_S;
                     break;
                 }else if(symbol == '\n'){
                     ERROR_EXIT("Unexpected EOL in string", LEX_ERROR)
@@ -492,23 +492,23 @@ int get_next_token(token_t* token){
                 }
                 break;
 
-            case MAYBE_MULTILINE:
+            case MAYBE_MULTILINE_S:
                 if (symbol == '"') {
-                    state = MULTILINE;
+                    state = MULTILINE_S;
                     break;
                 }else if(symbol == '\n' || symbol == EOF || symbol == '\0') {
-                    state = STRING;
+                    state = STRING_S;
                     // Empty string
                     break;
                 }
                 break;
 
-            case END_STRING:
+            case END_STRING_S:
                 break;
 
-            case MULTILINE:
+            case MULTILINE_S:
                 if(symbol == '"') {
-                    state = END_STRING;
+                    state = END_STRING_S;
                     break;
                 }
 
