@@ -468,51 +468,110 @@ int get_next_token(token_t* token){
             case STRING_S:
                 if(symbol == '"'){
                     state = MAYBE_MULTILINE_S;
-                    //token_type = STRING_VALUE;
-                    break;
-                }else if(symbol >= 32 && symbol <= 126 && symbol != '\\') {
-                    state = ONE_LINE_STRING_S;
+                }else if(symbol == '\\'){
+                    state = ESCAPE_S;
+                }else if(symbol >= 32 && symbol <= 126){
+                    state = STRING_S;
                     add_char = true;
-                    break;
+                }else if(symbol == EOF){
+                    ERROR_EXIT("Unexpected EOF in string", LEX_ERROR)
                 }
                 break;
 
-            case ONE_LINE_STRING_S:
-                if(symbol == '"'){
-                    state = END_STRING_S;
-                    break;
-                }else if(symbol == '\n'){
-                    ERROR_EXIT("Unexpected EOL in string", LEX_ERROR)
+            case ESCAPE_S:
+                if(symbol == 'n' || symbol == 't' || symbol == 'r' || symbol == '"' || symbol == '\\'){
+                    scanner_process_escape_sequence(raw_token, index);
+                    state = STRING_S;
+                }else if(symbol == 'u'){
+                    state = MAYBE_UNICODE_S;
                 }else if(symbol == EOF){
                     ERROR_EXIT("Unexpected EOF in string", LEX_ERROR)
-                }else if(symbol >= 32 && symbol <= 126){
-                    //state = ONE_LINE_STRING;
-                    add_char = true;
-                    break;
+                }
+                break;
+
+            case MAYBE_UNICODE_S:
+                if(symbol == '{'){
+                    state = UNICODE_S;
+                }else{
+                    ERROR_EXIT("Unexpected symbol", LEX_ERROR)
+                }
+                break;
+
+            case UNICODE_S:
+                if(isxdigit(symbol)){
+                    state = UNICODE_S;
+                }else if(symbol == '}'){
+                    state = STRING_S;
+                }else{
+                    ERROR_EXIT("Unexpected symbol", LEX_ERROR)
                 }
                 break;
 
             case MAYBE_MULTILINE_S:
-                if (symbol == '"') {
-                    state = MULTILINE_S;
-                    break;
-                }else if(symbol == '\n' || symbol == EOF || symbol == '\0') {
-                    state = STRING_S;
-                    // Empty string
-                    break;
+                if(symbol == '"'){
+                    state = MAYBE_MULTILINE_START_S;
+                }else if(symbol == EOF){
+                    ERROR_EXIT("Unexpected EOF in string", LEX_ERROR)
                 }
                 break;
 
-            case END_STRING_S:
+            case MAYBE_MULTILINE_START_S:
+                if(symbol == '\n'){
+                    state = MULTILINE_STRING_S;
+                }else if(symbol == EOF){
+                    ERROR_EXIT("Unexpected EOF in string", LEX_ERROR)
+                }else{
+                    ERROR_EXIT("Unexpected symbol", LEX_ERROR)
+                }
                 break;
 
-            case MULTILINE_S:
-                if(symbol == '"') {
-                    state = END_STRING_S;
-                    break;
+            case MULTILINE_STRING_S:
+                if(symbol == '\n'){
+                    state = MAYBE_MULTILINE_END_START_S;
+                }else if(symbol == EOF){
+                    ERROR_EXIT("Unexpected EOF in string", LEX_ERROR)
+                }else{
+                    state = MULTILINE_STRING_S;
+                    add_char = true;
                 }
+                break;
 
+            case MAYBE_MULTILINE_END_START_S:
+                if(symbol == '"'){
+                    state = MAYBE_MULTILINE_END_S;
+                }else if(symbol == EOF){
+                    ERROR_EXIT("Unexpected EOF in string", LEX_ERROR)
+                }else{
+                    state = MULTILINE_STRING_S;
+                    add_char = true;
+                }
+                break;
 
+            case MAYBE_MULTILINE_END_S:
+                if(symbol == '"'){
+                    state = MAYBE_MULTILINE_END_FINAL_S;
+                }else if(symbol == EOF){
+                    ERROR_EXIT("Unexpected EOF in string", LEX_ERROR)
+                }else{
+                    state = MULTILINE_STRING_S;
+                    add_char = true;
+                }
+                break;
+
+            case MAYBE_MULTILINE_END_FINAL_S:
+                if(symbol == '"'){
+                    state = MULTILINE_END_S;
+                }else if(symbol == EOF){
+                    ERROR_EXIT("Unexpected EOF in string", LEX_ERROR)
+                }else{
+                    state = MULTILINE_STRING_S;
+                    add_char = true;
+                }
+                break;
+
+            case MULTILINE_END_S:
+                state = NEW_TOKEN_S;
+                break;
        }
 
        if(add_char){
