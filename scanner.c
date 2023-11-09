@@ -537,6 +537,7 @@ int get_next_token(token_t* token){
             case MULTILINE_STRING_S:
                 if(symbol == '\n'){
                     state = MAYBE_MULTILINE_END_START_S;
+                    add_char = true;
                 }else if(symbol == EOF){
                     ERROR_EXIT("Unexpected EOF in string", LEX_ERROR)
                 }else{
@@ -548,6 +549,7 @@ int get_next_token(token_t* token){
             case MAYBE_MULTILINE_END_START_S:
                 if(symbol == '"'){
                     state = MAYBE_MULTILINE_END_S;
+                    add_char = true;
                 }else if(symbol == EOF){
                     ERROR_EXIT("Unexpected EOF in string", LEX_ERROR)
                 }else{
@@ -559,6 +561,7 @@ int get_next_token(token_t* token){
             case MAYBE_MULTILINE_END_S:
                 if(symbol == '"'){
                     state = MAYBE_MULTILINE_END_FINAL_S;
+                    add_char = true;
                 }else if(symbol == EOF){
                     ERROR_EXIT("Unexpected EOF in string", LEX_ERROR)
                 }else{
@@ -580,6 +583,7 @@ int get_next_token(token_t* token){
 
             case MULTILINE_END_S:
                 state = NEW_TOKEN_S;
+                raw_token[index - 3] = '\0';
                 break;
        }
 
@@ -612,7 +616,6 @@ int get_next_token(token_t* token){
     }
     printf("%s\n", raw_token);
     free(raw_token);
-
 
     return 0;
 }

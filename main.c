@@ -98,6 +98,10 @@ void print_token(token_t *token)
         case (NOT):
             printf("NOT\n");
             break;
+        case (DOUBLE_VALUE):
+            printf("DOUBLE_VALUE\n");
+            printf("%f\n", token->data.Double);
+            break;
         default:
             printf("%d\n", token->type);
             break;
@@ -115,8 +119,8 @@ int main()
     {
         get_next_token(token);
         if(token->type == TOKEN_EOF) break;
-        //print_token(token);
-        printf("%d\n", token->type);
+        print_token(token);
+//        printf("%d\n", token->type);
     }
 
 
