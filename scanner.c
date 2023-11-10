@@ -23,19 +23,6 @@ void set_source_file(FILE *file_arg){
     file = file_arg;
 }
 
-bool is_integer(char *token)
-{
-    for (unsigned int i = 0; i < strlen(token); i++)
-    {
-        if (isdigit(token[i]))
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 bool is_built_in_function(char *token)
 {
     for (int i = 0; i < 10; i++)
@@ -102,83 +89,6 @@ void scanner_process_escape_sequence(char *token, unsigned long long token_posit
         token[token_position - 1] = '\0';
     }
 }
-
-//token_t * scanner_get_token_struct(char *token_array, unsigned long long actual_line, scanner_states_t actual_state, token_t *prev_token)
-//{
-//    token_t *token = (token_t *)malloc(sizeof(token_t));
-//    if (!token)
-//        ERROR_EXIT("Could not allocate memory for token!", INTERNAL_ERROR);
-//
-//    token->line = actual_line;
-//    //token->type = scanner_get_token_type(token_array, actual_state);
-//
-//    //token->next = NULL;
-//    //if (prev_token)
-//        //prev_token->next = token;
-//    //else
-//        //token->prev = NULL;
-//
-//    //if the current token_type = func_params, then previous token_type = function_name
-//    if (token->type == TOKEN_LEFT_BRACKET && prev_token->type != BUILT_IN_FUNCTION && prev_token->type != KEYWORD && prev_token->type != TOKEN_OPERATOR && prev_token->type != TOKEN_SEPARATOR && prev_token->type != TOKEN_RIGHT_BRACKET)
-//    {
-//        prev_token->type = TOKEN_FUNCTION_TYPE;
-//    }
-//
-//    /*if (scanner_set_nil_value(prev_token, token, token_array))
-//    {
-//        token->data.String = NULL;
-//        token->type = NIL_VALUE;
-//    }
-//
-//    if (is_function_type(prev_token))
-//        token->type = TOKEN_FUNCTION_TYPE;*/
-//
-//    if(token->type == STRING_VALUE && token_array[0] != '\0') {
-//        size_t len = strlen(token_array);
-//        size_t new_len = len;
-//        size_t j = 0;
-//        char temp[3];
-//
-//        char *temp_str = (char *)malloc(sizeof(char ) * (len + 1));
-//
-//        for (size_t i = 0; i < len; i++)
-//        {
-//            if (token_array[i] < 33 || token_array[i] == 35 || (token_array[i] == 92 && !isdigit(token_array[i+1])))
-//            {
-//                new_len += 4;
-//                temp_str = realloc(temp_str, sizeof(char) * (new_len + 1));
-//                sprintf(temp, "%02d", token_array[i]);
-//
-//                temp_str[j++] = '\\';
-//                temp_str[j++] = '0';
-//                temp_str[j++] = temp[0];
-//                temp_str[j++] = temp[1];
-//            } else
-//                temp_str[j++] = token_array[i];
-//        }
-//        temp_str[j] = 0;
-//        token_array = temp_str;
-//    } else if(token->type == IDENTIFIER && token_array[0] == '_') {
-//        token_array[0] = 'l';
-//    }
-//    if (token->type == KEYWORD || token->type == IDENTIFIER ||
-//        token->type == STRING_VALUE || token->type == TOKEN_OPERATOR ||
-//        token->type == BUILT_IN_FUNCTION ||
-//        token->type == TOKEN_SEPARATOR || token->type == TOKEN_FUNCTION_TYPE ||
-//        token->type == TOKEN_LEFT_BRACKET || token->type == TOKEN_RIGHT_BRACKET ||
-//        token->type == TOKEN_LEFT_CURLY_BRACKET || token->type == TOKEN_RIGHT_CURLY_BRACKET) {
-//        token->data.String = token_array;
-//    } else if (token->type == INT_VALUE) {
-//        token->data.Int = atoll(token_array);
-//    } else if (token->type == NUMBER_VALUE) {
-//        token->data.Double = atof(token_array);
-//    } else if (token->type == NIL_VALUE) {
-//        token->data.Int = 0;
-//    }
-//    //token->prev = prev_token;
-//
-//    return token;
-//}
 
 void add_char_to_string(char *string, unsigned* index, unsigned* size, char c)
 {
@@ -288,7 +198,6 @@ int get_next_token(token_t* token){
                 break;
             case NOT_S:
                 if(symbol == '='){
-                    //state = NOT_EQUAL;
                     token_type = NOT_EQUAL;
                 }else {
                     ungetc(symbol, file);
@@ -302,7 +211,7 @@ int get_next_token(token_t* token){
                     token_type = EQUAL;
                 }else {
                     ungetc(symbol, file);
-                    token_type = ASSIGNMENT_S;
+                    token_type = ASSIGNMENT;
                     //TODO
                 }
                 break;
@@ -410,6 +319,7 @@ int get_next_token(token_t* token){
             case EXPONENT_FINAL_S:
                 if (symbol >= '0' && symbol <= '9') {
                     state = EXPONENT_FINAL_S;
+                    add_char = true;
                     break;
                 }else{
                     ungetc(symbol, file);
@@ -517,10 +427,12 @@ int get_next_token(token_t* token){
             case MAYBE_MULTILINE_S:
                 if(symbol == '"'){
                     state = MAYBE_MULTILINE_START_S;
+                }else if(raw_token != NULL){
+                    state = NEW_TOKEN_S;
+                    token_type = STRING_VALUE;
+                    ungetc(symbol, file);
                 }else if(symbol == EOF){
                     ERROR_EXIT("Unexpected EOF in string", LEX_ERROR)
-                }else{
-                    token_type = STRING_VALUE;
                 }
                 break;
 
@@ -584,6 +496,8 @@ int get_next_token(token_t* token){
             case MULTILINE_END_S:
                 state = NEW_TOKEN_S;
                 raw_token[index - 3] = '\0';
+                token_type = STRING_VALUE;
+                ungetc(symbol, file);
                 break;
        }
 
@@ -600,36 +514,21 @@ int get_next_token(token_t* token){
         case KEYWORD:
             token->data.Keyword = get_keyword_type(raw_token);
             break;
-        case NUMBER_VALUE:
+        case INT_VALUE:
             token->data.Int = atoll(raw_token);
             break;
         case DOUBLE_VALUE:
             token->data.Double = atof(raw_token);
             break;
-        case STRING_VALUE:
-            token->data.String = malloc(sizeof(char) * (strlen(raw_token) + 1));
-            if(!token) ERROR_EXIT("Could not allocate memory for token!", INTERNAL_ERROR)
-            strcpy(token->data.String, raw_token);
-            break;
         default:
-            break;
+            if(token_type == IDENTIFIER || token_type == STRING_VALUE){
+                token->data.String = malloc(sizeof(char) * (strlen(raw_token) + 1));
+                if(!token->data.String) ERROR_EXIT("Could not allocate memory for token!", INTERNAL_ERROR)
+                strcpy(token->data.String, raw_token);
+            }
     }
-    printf("%s\n", raw_token);
+//    printf("%s\n", raw_token);
     free(raw_token);
 
     return 0;
 }
-
-//token_type_t scanner_get_param_token_type(char *token_string)
-//{
-//    if (strcmp(token_string, "Int") == 0)
-//        return INT_VALUE;
-//    else if (strcmp(token_string, "Double") == 0)
-//        return NUMBER_VALUE;
-//    else if (strcmp(token_string, "String") == 0)
-//        return STRING_VALUE;
-//    else if (strcmp(token_string, "nil") == 0)
-//        return NIL_VALUE;
-//    else
-//        ERROR_EXIT("Unsupported param type", INTERNAL_ERROR);
-//}

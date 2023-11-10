@@ -15,7 +15,41 @@ void print_token(token_t *token)
     switch (token->type) {
         case KEYWORD:
             printf("KEYWORD\n");
-            printf("%s\n", token->data.String);
+            switch (token->data.Keyword) {
+                case Double_KW:
+                    printf("Double_KW\n");
+                    break;
+                case Else_KW:
+                    printf("Else_KW\n");
+                    break;
+                case If_KW:
+                    printf("If_KW\n");
+                    break;
+                case Int_KW:
+                    printf("Int_KW\n");
+                    break;
+                case Return_KW:
+                    printf("Return_KW\n");
+                    break;
+                case String_KW:
+                    printf("String_KW\n");
+                    break;
+                case Var_KW:
+                    printf("Var_KW\n");
+                    break;
+                case While_KW:
+                    printf("While_KW\n");
+                    break;
+                case Nil_KW:
+                    printf("Nil_KW\n");
+                    break;
+                case Function_KW:
+                    printf("Function_KW\n");
+                    break;
+                case Let_KW:
+                    printf("Let_KW\n");
+                    break;
+            }
             break;
         case IDENTIFIER:
             printf("IDENTIFIER\n");
@@ -32,9 +66,6 @@ void print_token(token_t *token)
             break;
         case TOKEN_FUNCTION_TYPE:
             printf("TOKEN_FUNCTION_TYPE\n");
-            break;
-        case NUMBER_VALUE:
-            printf("NUMBER_VALUE\n");
             break;
         case STRING_VALUE:
             printf("STRING_VALUE\n");
@@ -101,6 +132,9 @@ void print_token(token_t *token)
         case (DOUBLE_VALUE):
             printf("DOUBLE_VALUE\n");
             printf("%f\n", token->data.Double);
+            break;
+        case ASSIGNMENT:
+            printf("ASSIGNMENT\n");
             break;
         default:
             printf("%d\n", token->type);

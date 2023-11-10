@@ -39,21 +39,17 @@ typedef enum scanner_states {
     EXPONENT_SIGN_S,
     EXPONENT_FINAL_S,
     KEYWORD_OR_IDENTIFIER_S,
-//    OPERATOR,
     NIL_S,
     DIVIDE_S,
     COMMENT_S,
     BLOCK_COMMENT_S,
     BLOCK_COMMENT_POSSIBLE_END_S,
     BLOCK_COMMENT_END_S,
-//    FUNCTION_TYPE,
-//    RIGHT_CURLY_BRACKET,
-//    LEFT_CURLY_BRACKET,
     ASSIGNMENT_S,
     MAYBE_MORE_THAN_S,
     MAYBE_LESS_THAN_S,
     MINUS_S,
-    NOT_S
+    NOT_S,
 } scanner_states_t;
 
 typedef enum token_type {
@@ -62,12 +58,9 @@ typedef enum token_type {
     TOKEN_EOF,
     TOKEN_EOL,
     BUILT_IN_FUNCTION,
-    //TOKEN_OPERATOR,
-    //TOKEN_SEPARATOR,
     TOKEN_FUNCTION_TYPE,
 
     // values of variables
-    NUMBER_VALUE,
     STRING_VALUE,
     INT_VALUE,
     NIL_VALUE, // ?
@@ -96,6 +89,7 @@ typedef enum token_type {
     COMMA, // ,
     COLON, // :
     NOT, // !
+    ASSIGNMENT, // =
 } token_type_t;
 
 typedef enum keyword{
