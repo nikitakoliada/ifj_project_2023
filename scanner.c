@@ -169,7 +169,9 @@ int get_next_token(token_t* token){
                     token_type = TOKEN_LEFT_BRACKET;
                 }else if(symbol == ')'){
                     token_type = TOKEN_RIGHT_BRACKET;
-                }else if(symbol == ' ' || symbol == '\n') {
+                }else if(symbol == '\n'){
+                    token_type = TOKEN_EOL;
+                }else if(symbol == ' ') {
                     continue;
                 }else{
                     ERROR_EXIT("Unexpected symbol", LEX_ERROR)

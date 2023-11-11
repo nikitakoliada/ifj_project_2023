@@ -89,7 +89,7 @@ typedef enum token_type {
     COMMA, // ,
     COLON, // :
     NOT, // !
-    ASSIGNMENT, // =
+    ASSIGNMENT // =
 } token_type_t;
 
 typedef enum keyword{
