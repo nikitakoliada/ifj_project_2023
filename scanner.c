@@ -512,6 +512,7 @@ int get_next_token(token_t* token){
 
     switch (token_type)
     {
+        case BUILT_IN_FUNCTION:
         case KEYWORD:
             get_keyword_type(raw_token, &token->data.Keyword);
             break;
