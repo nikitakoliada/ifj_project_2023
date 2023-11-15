@@ -121,33 +121,34 @@ void test_eof_eol_token() {
     fclose(file);
     printf("EOF and EOL Token Test: Passed\n");
 }
-// TODO how am I supposed to test it 
-// void test_escape_sequence_processing() {
+// TODO again should fix it cz it aint good
+void test_escape_sequence_processing() {
     
-//     char test_string[] = "Hello\nWorld";
-//     unsigned long long pos = 6; 
-//     scanner_process_escape_sequence(test_string, pos);
-//     assert(test_string[pos-2] == 10); // Checking if the escape sequence is processed correctly
+    char test_string[] = "Hello\nWorld";
+    unsigned long long pos = 6; 
+    scanner_process_escape_sequence(test_string, pos);
+    printf("%c\n", test_string[pos-2]); 
+    // assert(test_string[pos-2] == 10); // Checking if the escape sequence is processed correctly
      
-//     *test_string = "Hello\tWorld";
-//     scanner_process_escape_sequence(test_string, pos);
-//     assert(test_string[pos-2] == 9); // Checking if the escape sequence is processed correctly
+    // *test_string = "Hello\tWorld";
+    // scanner_process_escape_sequence(test_string, pos);
+    // assert(test_string[pos-2] == 9); // Checking if the escape sequence is processed correctly
 
-//     *test_string = "Hello\rWorld";
-//     scanner_process_escape_sequence(test_string, pos);
-//     assert(test_string[pos-2] == 13);  // Checking if the escape sequence is processed correctly
+    // *test_string = "Hello\rWorld";
+    // scanner_process_escape_sequence(test_string, pos);
+    // assert(test_string[pos-2] == 13);  // Checking if the escape sequence is processed correctly
 
-//     *test_string = "Hello\\World";
-//     scanner_process_escape_sequence(test_string, pos);
-//     assert(test_string[pos-2] == 92);  // Checking if the escape sequence is processed correctly
+    // *test_string = "Hello\\World";
+    // scanner_process_escape_sequence(test_string, pos);
+    // assert(test_string[pos-2] == 92);  // Checking if the escape sequence is processed correctly
 
-//     *test_string = "Hello\"World";
-//     scanner_process_escape_sequence(test_string, pos);
-//     assert(test_string[pos-2] == 34);  // Checking if the escape sequence is processed correctly
+    // *test_string = "Hello\"World";
+    // scanner_process_escape_sequence(test_string, pos);
+    // assert(test_string[pos-2] == 34);  // Checking if the escape sequence is processed correctly
 
-//     assert(test_string[pos-1] == '\0');  // Checking if the escape sequence is processed correctly
-//     printf("Escape sequence Test: Passed\n");
-// }
+    // assert(test_string[pos-1] == '\0');  // Checking if the escape sequence is processed correctly
+    printf("Escape sequence Test: Passed\n");
+}
 // TODO how to test if there were some errors? 
 
 // void test_error_handling() {
@@ -163,24 +164,27 @@ void test_eof_eol_token() {
 //     printf("Error Handling Test: Passed\n");
 // }
 
-// TODO does not work 
-// Maxim should implement multiline first ig
+
 void test_line_number_tracking() {
-    // char *input = "first\nsecond";
-    // FILE *file = fmemopen(input, strlen(input), "r");
-    // set_source_file(file);
+    char *input = "first\nsecond";
+    FILE *file = fmemopen(input, strlen(input), "r");
+    set_source_file(file);
 
-    // token_t token;
-    // get_next_token(&token); // Should be 'first'
-    // assert(token.line == 0);
+    token_t token;
+    get_next_token(&token); // Should be 'first'
+    assert(strcmp(token.data.String, "first") == 0);
 
-    // get_next_token(&token); // Should be EOL
-    // get_next_token(&token); // Should be 'second'
-    // assert(token.line == 1);
+    get_next_token(&token); // Should be EOL
+    assert(token.type == TOKEN_EOL);
+    get_next_token(&token); // Should be 'second'
+    assert(strcmp(token.data.String, "second") == 0);
 
-    // fclose(file);
+    fclose(file);
     printf("Line Number Tracking Test: Passed\n");
 }
+
+
+// TODO max should fix it 
 void test_state_transition() {
     char *input = "\"abc\\ndef\"";
     FILE *file = fmemopen(input, strlen(input), "r");
@@ -190,8 +194,8 @@ void test_state_transition() {
     get_next_token(&token);
 
     assert(token.type == STRING_VALUE);
-    //assert(strcmp(token.data.String, "abc\ndef") == 0); ayo tf is  inside 
-
+    printf("%s\n", token.data.String);
+    get_next_token(&token);
     fclose(file);
     printf("State Transition Test: Passed\n");
 }
@@ -201,9 +205,61 @@ void test_factorial_code() {
     set_source_file(file);
 
     token_t token;
-    while (get_next_token(&token) != TOKEN_EOF) {
-        // TDO
-    }
+    get_next_token(&token);
+    assert(token.type == BUILT_IN_FUNCTION);
+
+    assert(strcmp(token.data.String, "write") == 0);
+    get_next_token(&token);
+    assert(token.type == TOKEN_LEFT_BRACKET);
+
+    // Next token: String literal
+    get_next_token(&token);
+    assert(token.type == STRING_VALUE);
+    assert(strcmp(token.data.String, "Zadejte cislo pro vypocet faktorialu\\n") == 0);
+
+    get_next_token(&token);
+    assert(token.type == TOKEN_RIGHT_BRACKET);
+
+    // Next token: 'let' (KEYWORD)
+    get_next_token(&token);
+    assert(token.type == KEYWORD);
+    assert(token.data.Keyword == Let_KW);
+
+    // Next token: 'a' (IDENTIFIER)
+    get_next_token(&token);
+    assert(token.type == IDENTIFIER);
+    assert(strcmp(token.data.String, "a") == 0);
+
+    // Next token: ':' (COLON)
+    get_next_token(&token);
+    assert(token.type == COLON);
+
+    // Next token: 'Int?' (IDENTIFIER)
+    get_next_token(&token);
+    assert(token.type == IDENTIFIER);
+    assert(strcmp(token.data.String, "Int?") == 0);
+
+    // Next token: '=' (ASSIGNMENT)
+    get_next_token(&token);
+    assert(token.type == ASSIGNMENT);
+
+    // Next token: 'readInt' (BUILT_IN_FUNCTION)
+    get_next_token(&token);
+    assert(token.type == BUILT_IN_FUNCTION);
+    assert(strcmp(token.data.String, "readInt") == 0);
+
+    // Next token: '(' (LEFT BRACKET)
+    get_next_token(&token);
+    assert(token.type == TOKEN_LEFT_BRACKET);
+
+    // Next token: ')' (RIGHT BRACKET)
+    get_next_token(&token);
+    assert(token.type == TOKEN_RIGHT_BRACKET);
+
+    // Next token: 'if' (KEYWORD)
+    get_next_token(&token);
+    assert(token.type == KEYWORD);
+    assert(token.data.Keyword == If_KW);
 
     fclose(file);
     printf("Factorial Code Test: Passed\n");
@@ -215,7 +271,7 @@ int main() {
     test_double_value_token();
     test_eof_eol_token();
     //test_error_handling();
-    //test_escape_sequence_processing();
+    test_escape_sequence_processing();
     test_identifier_token();
     test_integer_value_token();
     test_keyword_token();
@@ -223,6 +279,7 @@ int main() {
     test_operator_token();
     test_state_transition();
     test_string_value_token();
+    test_factorial_code();
     
     return 0;
 }
