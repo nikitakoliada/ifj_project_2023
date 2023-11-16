@@ -49,47 +49,6 @@ bool is_keyword(char *token)
         return false;
 }
 
-
-void scanner_process_escape_sequence(char *token, unsigned long long token_position)
-{
-    if (isdigit(token[token_position-2])) {
-        token_position = token_position - 4;
-        char escaped[4];
-        int ascii_val;
-
-        memcpy(escaped,&token[token_position+1], 3);
-        escaped[3] = '\0';
-        ascii_val = atoi(escaped);
-        if (ascii_val < 1 || ascii_val > 255){
-            ERROR_EXIT("Invalid escape sequence.\n", LEX_ERROR);
-        }
-
-    } else {
-        char c = token[token_position-1];
-
-        switch (c){
-            case 'n':
-                token[token_position-2] = 10;
-                break;
-            case 't':
-                token[token_position-2] = 9;
-                break;
-            case 'r':
-                token[token_position-2] = 13;
-                break;
-            case '"':
-                token[token_position-2] = 34;
-                break;
-            case '\\':
-                token[token_position-2] = 92;
-                break;
-            default:
-                break;
-        }
-        token[token_position - 1] = '\0';
-    }
-}
-
 void add_char_to_string(char *string, unsigned* index, unsigned* size, char c)
 {
     unsigned len = strlen(string);
@@ -113,7 +72,14 @@ void get_keyword_type(char* token_raw, keyword_t* keyword){
 }
 
 int get_next_token(token_t* token){
+    // current state of the scanner
     scanner_states_t state = NEW_TOKEN_S;
+
+    // string representation of unicode code
+    char* unicode_code = calloc(sizeof(char), 3);
+    int unicode_index = 0;
+
+    // creation token and its type
     int token_type = -1;
     char* raw_token = calloc(sizeof(char), DEFAULT_TOKEN_LENGTH);
     if(raw_token == NULL){
@@ -121,6 +87,7 @@ int get_next_token(token_t* token){
     }
     unsigned index = 0;
     unsigned str_size = DEFAULT_TOKEN_LENGTH;
+
     do{
         bool add_char = false;
         int symbol = getc(file);
@@ -397,13 +364,33 @@ int get_next_token(token_t* token){
                 break;
 
             case ESCAPE_S:
-                if(symbol == 'n' || symbol == 't' || symbol == 'r' || symbol == '"' || symbol == '\\'){
-                    scanner_process_escape_sequence(raw_token, index);
-                    state = STRING_S;
-                }else if(symbol == 'u'){
-                    state = MAYBE_UNICODE_S;
-                }else if(symbol == EOF){
-                    ERROR_EXIT("Unexpected EOF in string", LEX_ERROR)
+                switch (symbol) {
+                    case 'n':
+                        add_char_to_string(raw_token, &index, &str_size, '\n');
+                        state = STRING_S;
+                        break;
+                    case 't':
+                        add_char_to_string(raw_token, &index, &str_size, '\t');
+                        state = STRING_S;
+                        break;
+                    case 'r':
+                        add_char_to_string(raw_token, &index, &str_size, '\r');
+                        state = STRING_S;
+                        break;
+                    case '"':
+                        add_char_to_string(raw_token, &index, &str_size, '"');
+                        state = STRING_S;
+                        break;
+                    case '\\':
+                        add_char_to_string(raw_token, &index, &str_size, '\\');
+                        state = STRING_S;
+                        break;
+                    case 'u':
+                        state = MAYBE_UNICODE_S;
+                        break;
+                    default:
+                        ERROR_EXIT("Unexpected symbol", LEX_ERROR)
+
                 }
                 break;
 
@@ -417,8 +404,14 @@ int get_next_token(token_t* token){
 
             case UNICODE_S:
                 if(isxdigit(symbol)){
+                    if(unicode_index == 4){
+                        ERROR_EXIT("Unexpected symbol", LEX_ERROR)
+                    }
+                    unicode_code[unicode_index++] = (char)symbol;
                     state = UNICODE_S;
                 }else if(symbol == '}'){
+                    int unicode_int = (int) strtol(unicode_code, NULL, 16);
+                    add_char_to_string(raw_token, &index, &str_size, (char)unicode_int);
                     state = STRING_S;
                 }else{
                     ERROR_EXIT("Unexpected symbol", LEX_ERROR)
