@@ -407,7 +407,7 @@ int get_next_token(token_t* token){
                     if(unicode_index == 4){
                         ERROR_EXIT("Unexpected symbol", LEX_ERROR)
                     }
-                    unicode_code[unicode_index++] = symbol;
+                    unicode_code[unicode_index++] = (char)symbol;
                     state = UNICODE_S;
                 }else if(symbol == '}'){
                     int unicode_int = (int) strtol(unicode_code, NULL, 16);
