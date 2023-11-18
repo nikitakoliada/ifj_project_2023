@@ -61,7 +61,7 @@ int top_terminal_index(stack_t* stack){
 
     do{
         if(index == -1) return index;
-        element = stack->array[index--]->symbol;
+        element = stack->array[index--];
     }while(element->symbol == NON_TERM);
 
     return ++index;

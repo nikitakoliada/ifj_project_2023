@@ -1,3 +1,5 @@
+#include "analysis.h"
+
 typedef enum{
     IntS,
     DoubleS,
@@ -22,3 +24,5 @@ typedef enum{
     NilS,
     Handle
 }eSymbol;
+
+int expression(analyse_data_t* data);

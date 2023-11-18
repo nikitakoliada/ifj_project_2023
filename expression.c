@@ -2,8 +2,8 @@
 #include "stack.h"
 #include "error.h"
 #include "scanner.h"
-#include "analysis.h"
 #include "symtable.h"
+#include "analysis.h"
 #include <string.h>
 
 #define FREE_RECOURCES(stack)do{\
@@ -133,7 +133,7 @@ int reduce(stack_t* stack){
     stack_element* elements[3];
     int elements_count = 0;
 
-    for(int i = 0; i < 3 && stack->array[stack->index - i] != Handle; i--){
+    for(int i = 0; i < 3 && stack->array[stack->index - i]->symbol != Handle; i--){
         elements_count++;
         elements[2 - i] = stack->array[stack->index - i];
         if(stack->index - i == -1) return SYNTAX_ERROR;
@@ -399,16 +399,17 @@ int expression(analyse_data_t* data){
                     FREE_RECOURCES(stack);
                     return INTERNAL_ERROR;
                 } 
-                if((result = get_next_token(&token))){
-                    FREE_RECOURCES(stack);
-                    return result;
-                }
+                do{
+                    if((result = get_next_token(&token))){
+                        FREE_RECOURCES(stack);
+                        return result;
+                    }
+                }while(token.type == TOKEN_EOL);
 
                 break;
 
             case E:
 
-                stack_element new_element;
                 new_element.symbol = input_symbol;
                 new_element.type = get_data_type(token, data->local_table, &nullable);
                 new_element.nullable = nullable;
@@ -417,10 +418,12 @@ int expression(analyse_data_t* data){
                     FREE_RECOURCES(stack);
                     return INTERNAL_ERROR;
                 } 
-                if((result = get_next_token(&token))){
-                    FREE_RECOURCES(stack);
-                    return result;
-                }
+                do{
+                    if((result = get_next_token(&token))){
+                        FREE_RECOURCES(stack);
+                        return result;
+                    }
+                }while(token.type == TOKEN_EOL);
                 break;
             case F:
                 if(input_symbol == DollarS && stack_symbol == DollarS){
@@ -485,6 +488,8 @@ int expression(analyse_data_t* data){
                 break;
         }
     }
+
+    data->token = token;
 
     FREE_RECOURCES(stack);
 
