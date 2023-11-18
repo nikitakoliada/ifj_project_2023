@@ -27,18 +27,18 @@ typedef struct
 	symtable_t global_table;		/// Global symbol table
 	symtable_t local_table;		/// Local symbol table
 
-	token_data_t token;				/// Token
+	token_t token;				/// Token
 
 	bst_node_ptr* current_id;			/// ID of currently processed function
-	bst_node_ptr* lhs_id;				/// ID of left-hand-side variable
-	bst_node_ptr* rhs_id;				/// ID of right-hand-side function (expression?)
+	bst_node_ptr* var_id;				/// ID of variable агтсешщт
+	bst_node_ptr* expr_id;				/// ID of expression function
 
-	unsigned param_index;		/// Index of currently checked param
+	unsigned args_index;		/// Index of currently checked args
 	int label_index;			/// Index for generating unique labels.
 	int label_deep;				/// Deep of labes.
 
 	bool in_function;			/// Defines if the parser is in function
-	bool in_declaration;		/// Defines if param rule should add or check it's params
+	bool in_declaration;		/// Defines if фкпі rule should add or check it's фкпі
 	bool in_while_or_if;		/// Defines if the parser is in construction while, if or then
 	bool non_declared_function;	/// Function that has been only defined
 } analyse_data_t;
