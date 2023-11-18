@@ -25,17 +25,24 @@ typedef enum node_data_type {
 // node of the tree
 typedef struct bst_node {
     char* key;
+    int height;
     node_data_type_t data_type;
     void* data;
-    struct bst_node * left_ptr;
-    struct bst_node * right_ptr;
+    struct bst_node *left_ptr;
+    struct bst_node *right_ptr;
 } *bst_node_ptr;
 
 // BST functions
 void bst_init(bst_node_ptr *);
-void bst_insert (bst_node_ptr *, char*, void*, node_data_type_t);
-void bst_delete(bst_node_ptr *, char*);
-bst_node_ptr bst_search(bst_node_ptr, char*);
+int bst_height(bst_node_ptr *);
+int bst_calculate_balance(bst_node_ptr *);
+int max(int, int);
+bst_node_ptr bst_rotate_right(bst_node_ptr *);
+bst_node_ptr bst_rotate_left(bst_node_ptr *);
+bst_node_ptr bst_insert (bst_node_ptr *, char*, void*, node_data_type_t);
+void bst_replace_by_right_most(bst_node_ptr, bst_node_ptr *);
+bst_node_ptr bst_delete(bst_node_ptr *, char*);
+bst_node_ptr bst_search(bst_node_ptr *, char*);
 void bst_dispose(bst_node_ptr *);
 
 // symtable helpers and functions

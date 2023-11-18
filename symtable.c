@@ -18,7 +18,69 @@ void bst_init(bst_node_ptr *root_ptr)
     *root_ptr = NULL;
 }
 
-void bst_insert(bst_node_ptr* root_ptr, char* key, void* data, node_data_type_t data_type)
+int bst_height(bst_node_ptr *root_ptr)
+{
+    if (root_ptr == NULL)
+    {
+        return 0;
+    }
+
+    else
+    {
+        return ((*root_ptr)->height);
+    }
+}
+
+int bst_calculate_balance(bst_node_ptr *root_ptr)
+{
+    struct bst_node *tmp;
+    tmp = (struct bst_node*)malloc(sizeof(struct bst_node));
+    if (root_ptr == NULL && tmp == NULL)
+    {
+        return 0;
+    }
+
+    else
+    {
+        int balance = (bst_height((bst_node_ptr *) (*root_ptr)->left_ptr)) - (bst_height((bst_node_ptr *) (*root_ptr)->right_ptr));
+        return balance;
+    }
+}
+
+int max(int x, int y)
+{
+    return ( (x > y) ? x : y );
+}
+
+bst_node_ptr bst_rotate_right(bst_node_ptr *root_ptr)
+{
+    bst_node_ptr (*tmp1) = (bst_node_ptr *) (*root_ptr)->left_ptr;
+    bst_node_ptr (*tmp2) = (bst_node_ptr *) (*tmp1)->right_ptr;
+
+    (*tmp1)->right_ptr =  (*root_ptr);
+    (*root_ptr)->left_ptr = (*tmp2);
+
+    (*root_ptr)->height = max(bst_height(&(*root_ptr)->left_ptr), bst_height(&(*root_ptr)->right_ptr)) + 1;
+    (*tmp1)->height = max(bst_height(&(*tmp1)->left_ptr), bst_height(&(*tmp1)->right_ptr)) + 1;
+
+    return (*tmp1);
+}
+
+bst_node_ptr bst_rotate_left(bst_node_ptr *root_ptr)
+{
+    bst_node_ptr *tmp1 = (bst_node_ptr *) (*root_ptr)->left_ptr;
+    bst_node_ptr *tmp2 = (bst_node_ptr *) (*tmp1)->right_ptr;
+
+    (*tmp1)->right_ptr =  (*root_ptr);
+    (*root_ptr)->left_ptr = (*tmp2);
+
+    (*root_ptr)->height = max(bst_height(&(*root_ptr)->left_ptr), bst_height(&(*root_ptr)->right_ptr)) + 1;
+    (*tmp1)->height = max(bst_height(&(*tmp1)->left_ptr), bst_height(&(*tmp1)->right_ptr)) + 1;
+
+    return (*tmp1);
+}
+
+bst_node_ptr bst_insert(bst_node_ptr* root_ptr, char* key, void* data, node_data_type_t data_type)
 {
     if (root_ptr == NULL && (*root_ptr) == NULL)
     {
@@ -27,7 +89,7 @@ void bst_insert(bst_node_ptr* root_ptr, char* key, void* data, node_data_type_t 
 
         if (tmp == NULL)
         {
-            return;
+            return NULL;
         }
         tmp->key = key;
         tmp->data = data;
@@ -41,14 +103,49 @@ void bst_insert(bst_node_ptr* root_ptr, char* key, void* data, node_data_type_t 
     {
         if (strcmp(key, (*root_ptr)->key) != 0)
         {
-            if (strcmp(key, ((*root_ptr)->key)) < 0)
+            if (strcmp(key, ((*root_ptr)->key)) < 0 )
             {
                 bst_insert(&((*root_ptr)->left_ptr), key, data, data_type);
+                if (bst_height(&(*root_ptr)->left_ptr) > bst_height(&(*root_ptr)->right_ptr))
+                {
+                    (*root_ptr)->height = bst_height(&(*root_ptr)->left_ptr);
+                }
             }
 
             else if (strcmp(key, (*root_ptr)->key) > 0)
             {
                 bst_insert(&((*root_ptr)->right_ptr), key, data, data_type);
+                if (bst_height(&(*root_ptr)->left_ptr) < bst_height(&(*root_ptr)->right_ptr))
+                {
+                    (*root_ptr)->height = bst_height(&(*root_ptr)->right_ptr);
+                }
+            }
+
+            int balance = bst_calculate_balance(root_ptr);
+
+            // leaning left
+            if (balance > 1 && key < (*root_ptr)->left_ptr->key)
+            {
+                return bst_rotate_right(root_ptr);
+            }
+
+            // leaning left and then right
+            else if (balance > 1 && key > (*root_ptr)->left_ptr->key)
+            {
+                (*root_ptr)->left_ptr = bst_rotate_left(&(*root_ptr)->left_ptr);
+                return bst_rotate_right(root_ptr);
+            }
+            // leaning right
+            else if (balance < -1 && key > (*root_ptr)->right_ptr->key)
+            {
+                return bst_rotate_left(root_ptr);
+            }
+
+            // leaning right and then left
+            else if (balance < -1 && key > (*root_ptr)->right_ptr->key)
+            {
+                (*root_ptr)->right_ptr = bst_rotate_right(&(*root_ptr)->left_ptr);
+                return bst_rotate_left(root_ptr);
             }
         }
 
@@ -57,9 +154,11 @@ void bst_insert(bst_node_ptr* root_ptr, char* key, void* data, node_data_type_t 
             (*root_ptr)->data = data;
         }
     }
+
+    return (*root_ptr);
 }
 
-void replace_by_right_most(bst_node_ptr target, bst_node_ptr *root_ptr)
+void bst_replace_by_right_most(bst_node_ptr target, bst_node_ptr *root_ptr)
 {
     if ( (*root_ptr)->right_ptr == NULL)
     {
@@ -72,13 +171,13 @@ void replace_by_right_most(bst_node_ptr target, bst_node_ptr *root_ptr)
 
     else
     {
-        replace_by_right_most(target, &((*root_ptr)->right_ptr));
+        bst_replace_by_right_most(target, &((*root_ptr)->right_ptr));
     }
 }
 
-void bst_delete(bst_node_ptr *root_ptr, char* key)
+bst_node_ptr bst_delete(bst_node_ptr *root_ptr, char* key)
 {
-    if (root_ptr && (*root_ptr))
+    if (*root_ptr)
     {
         if (strcmp(key, (*root_ptr)->key) < 0)
         {
@@ -115,34 +214,63 @@ void bst_delete(bst_node_ptr *root_ptr, char* key)
 
             else
             {
-                replace_by_right_most((*root_ptr), &((*root_ptr)->left_ptr));
+                bst_replace_by_right_most((*root_ptr), &((*root_ptr)->left_ptr));
             }
         }
     }
+    else
+    {
+        (*root_ptr)->height = 1 + max(bst_height(&(*root_ptr)->left_ptr), bst_height(&(*root_ptr)->right_ptr));
+
+        int balance = bst_calculate_balance(root_ptr);
+        if (balance > 1 && bst_calculate_balance(&(*root_ptr)->left_ptr) >= 0)
+        {
+            return bst_rotate_right(root_ptr);
+        }
+
+        else if (balance > 1 && bst_calculate_balance(&(*root_ptr)->left_ptr) < 0)
+        {
+            (*root_ptr)->left_ptr = bst_rotate_left(&(*root_ptr)->left_ptr);
+            return bst_rotate_right(root_ptr);
+        }
+
+        else if (balance < -1 && bst_calculate_balance(&(*root_ptr)->right_ptr) <= 0)
+        {
+            return bst_rotate_left(root_ptr);
+        }
+
+        else if (balance < -1 && bst_calculate_balance(&(*root_ptr)->right_ptr) > 0)
+        {
+            (*root_ptr)->left_ptr = bst_rotate_right(&(*root_ptr)->left_ptr);
+            return bst_rotate_left(root_ptr);
+        }
+    }
+
+    return (*root_ptr);
 }
 
-bst_node_ptr bst_search(bst_node_ptr root_ptr, char* key)
+bst_node_ptr bst_search(bst_node_ptr *root_ptr, char* key)
 {
-    if (root_ptr == NULL)
+    if ((*root_ptr) == NULL)
     {
         return NULL;
     }
 
     else
     {
-        if (strcmp(key, root_ptr->key) == 0)
+        if (strcmp(key, (*root_ptr)->key) == 0)
         {
-            return root_ptr;
+            return (*root_ptr);
         }
 
-        else if (strcmp(key, root_ptr->key) > 0)
+        else if (strcmp(key, (*root_ptr)->key) > 0)
         {
-            return bst_search(root_ptr->right_ptr, key);
+            return bst_search(&(*root_ptr)->right_ptr, key);
         }
 
         else
         {
-            return bst_search(root_ptr->left_ptr, key);
+            return bst_search(&(*root_ptr)->left_ptr, key);
         }
     }
 }
@@ -232,7 +360,7 @@ void symtable_delete(symtable_t* table, string key)
 
 bst_node_ptr symtable_search(symtable_t* table, string key)
 {
-    return bst_search(table->root, key.value);
+    return bst_search(&(table)->root, key.value);
 }
 
 void symtable_dispose(symtable_t* table)
