@@ -38,9 +38,8 @@ typedef struct
 	int label_deep;				/// Deep of labes.
 
 	bool in_function;			/// Defines if the parser is in function
-	bool in_declaration;		/// Defines if фкпі rule should add or check it's фкпі
+	bool in_defintion;		/// Defines if фкпі rule should add or check it's фкпі
 	bool in_while_or_if;		/// Defines if the parser is in construction while, if or then
-	bool non_declared_function;	/// Function that has been only defined
 } analyse_data_t;
 
 /**
