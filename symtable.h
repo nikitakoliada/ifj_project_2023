@@ -41,20 +41,29 @@ void bst_dispose(bst_node_ptr *);
 // symtable helpers and functions
 typedef struct variable {
     int data_type;
+    bool q_type; // true if f.e. int? or string? or double?
 } var_data_t;
 
-typedef struct {
-    char *value;
-    int len;
-    int allocated_len;
-} string;
+// useless in INF23
+// typedef struct {
+//     char *value;
+//     int len;
+//     int allocated_len;
+// } string;
 
 typedef struct function {
     int return_data_type;
-    bool declared;
+    //we dont have declaration of functions only definition
+    //bool declared; 
     bool defined;
-    string params;
-    string param_names[10];
+    int param_len;
+    //  STRING_VALUE,
+    // INT_VALUE,
+    // NIL_VALUE, 
+    // DOUBLE_VALUE,
+    token_type_t params_types[];
+    char* params_identifiers[];
+    char* param_names[];
 } function_data_t;
 
 typedef struct symtable {
@@ -63,10 +72,10 @@ typedef struct symtable {
 
 // symtable functions
 void symtable_init(symtable_t*);
-void symtable_insert_var(symtable_t*, string);
-void symtable_insert_function(symtable_t*, string);
-void symtable_delete(symtable_t*, string);
-bst_node_ptr symtable_search(symtable_t*, string);
+void symtable_insert_var(symtable_t*, char*);
+void symtable_insert_function(symtable_t*, char*);
+void symtable_delete(symtable_t*, char*);
+bst_node_ptr symtable_search(symtable_t*, char*);
 void symtable_dispose(symtable_t*);
 
 #endif // SYMTABLE_H
