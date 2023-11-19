@@ -366,8 +366,6 @@ static int def_var(analyse_data_t* data){
         symtable_insert_var(&data->global_table, data->token.data.String);
         return SYNTAX_OK;
     }
-        if(data->token.type == KEYWORD){
-
     return SYNTAX_ERROR;
 }
 
@@ -520,11 +518,11 @@ static int p_type(analyse_data_t* data){
                 data->current_id->data->param_types[data->args_index].data_type = 'd';
 			}
             else{
-                data->var_id->data->data_type += 'd';
+                data->var_id->data->data_type = 'd';
             }
 			break;
             return SYNTAX_OK;
-        }
+        
         //40. 〈 p_type 〉 −→ Int
         case Int_KW:
             if (data->in_defintion)
@@ -532,10 +530,10 @@ static int p_type(analyse_data_t* data){
                 data->current_id->data->param_types[data->args_index].data_type = 'i';
             }
             else{
-                data->var_id->data->data_type += 'i';
+                data->var_id->data->data_type = 'i';
             }
             
-        }
+        
         //41. 〈 p_type 〉 −→ String
         case String_KW:
             if (data->in_defintion)
@@ -543,7 +541,7 @@ static int p_type(analyse_data_t* data){
                 data->current_id->data->param_types[data->args_index].data_type = 's';
             }
             else{
-                data->var_id->data->data_type += 's';
+                data->var_id->data->data_type = 's';
             }
         }
     }
