@@ -104,6 +104,9 @@ typedef enum keyword{
     String_KW,
     Var_KW,
     While_KW,
+    IntNullable_KW,
+    StringNullable_KW,
+    DoubleNullable_KW,
 } keyword_t;
 
 typedef union token_data {

@@ -49,6 +49,16 @@ void print_token(token_t *token)
                 case Let_KW:
                     printf("Let_KW\n");
                     break;
+                case IntNullable_KW:
+                    printf("IntNullable_KW\n");
+                    break;
+                case StringNullable_KW:
+                    printf("StringNullable_KW\n");
+                    break;
+                case DoubleNullable_KW:
+                    printf("DoubleNullable_KW\n");
+                    break;
+
             }
             break;
         case IDENTIFIER:
