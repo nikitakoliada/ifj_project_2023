@@ -362,7 +362,7 @@ void symtable_delete(symtable_t* table, char* key)
 
 bst_node_ptr symtable_search(symtable_t* table, char* key)
 {
-    return bst_search(table->root, key);
+    return bst_search(&(table)->root, key);
 }
 
 void symtable_dispose(symtable_t* table)

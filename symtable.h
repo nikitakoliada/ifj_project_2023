@@ -29,8 +29,8 @@ typedef struct bst_node {
     int height;
     node_data_type_t data_type;
     void* data;
-    struct bst_node * left_ptr;
-    struct bst_node * right_ptr;
+    struct bst_node *left_ptr;
+    struct bst_node *right_ptr;
 } *bst_node_ptr;
 
 // BST functions
