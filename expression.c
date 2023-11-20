@@ -5,6 +5,7 @@
 #include "symtable.h"
 #include "analysis.h"
 #include <string.h>
+#include <stdio.h>
 
 #define FREE_RECOURCES(stack)do{\
         stack_dispose(stack);\
@@ -72,7 +73,7 @@ int get_pt_index(eSymbol symbol){
         case StringS:
         case IdS:
         case NilS:
-            return IdS;
+            return IdI;
         case DollarS:
         default:
             return DI;
@@ -129,37 +130,61 @@ data_type get_data_type(token_t token, symtable_t table, bool* is_nullable){
     }
 }
 
+void stack_print(stack_t* stack){
+    for(int i = stack->index; i >= 0; i--){
+        printf("%d)%d - %d\n", i, stack->array[i]->symbol, stack->array[i]->type);
+    }
+}
+
+void swap(void** a, void** b){
+    void* temp = *a;
+    *a  = *b;
+    *b = temp;
+}
+
 int reduce(stack_t* stack){
     stack_element* elements[3];
     int elements_count = 0;
 
-    for(int i = 0; i < 3 && stack->array[stack->index - i]->symbol != Handle; i--){
+    for(int i = 0; i < 3 && stack->array[stack->index - i]->symbol != Handle; i++){
         elements_count++;
-        elements[2 - i] = stack->array[stack->index - i];
-        if(stack->index - i == -1) return SYNTAX_ERROR;
+        elements[i] = stack->array[stack->index - i];
+        if(stack->index - i  == -1) return SYNTAX_ERROR;
     }
 
-    if(stack->array[stack->index - elements_count]){
+    // Needs to be reimplemented
+    if(elements_count == 3){
+        swap((void**)&elements[0], (void**)&elements[2]);
+    }
+    if(elements_count == 2){
+        swap((void**)&elements[0], (void**)&elements[1]);
+    }
+    //
+
+
+    if(stack->array[stack->index - elements_count]->symbol != Handle){
         return SYNTAX_ERROR;
     }
 
     stack_pop_elements(stack, elements_count + 1); // Check for error
-    
-    stack_element new_element;
-    new_element.symbol = NON_TERM;
-    new_element.is_nil = false;
-    new_element.nullable = false;
+
+    stack_element* new_element = malloc(sizeof(stack_element));
+    new_element->symbol = NON_TERM;
+
+    new_element->is_nil = false;
+    new_element->nullable = false;
+
 
     // E -> id
     if(elements_count == 1){
-        new_element.type = elements[0]->type;
-        new_element.nullable = elements[0]->nullable;
+        new_element->type = elements[0]->type;
+        new_element->nullable = elements[0]->nullable;
         if(elements[0]->type == Undefined){
             if(elements[0]->symbol != NilS){
                 return SEM_ERROR_UNDEF_VAR;
             }
 
-            new_element.is_nil = true;
+            new_element->is_nil = true;
         }
     }
     // E -> E!
@@ -179,17 +204,20 @@ int reduce(stack_t* stack){
             return SEM_ERROR_TYPE_COMPAT;
         }
 
-        new_element.nullable = false;
+        new_element->nullable = false;
+        new_element->type = elements[0]->type;
 
         // Generate ! code
     }
     else if(elements_count == 3){
-
+        //printf("[1] = %d\n", elements[0]->symbol);
+        //printf("[2] = %d\n", elements[1]->symbol);
+        //printf("[3] = %d\n", elements[2]->symbol);
         // E -> (E)
         if(elements[0]->symbol == LPS && elements[1]->symbol == NON_TERM && elements[2]->symbol == RPS){
-            new_element.nullable = elements[1]->nullable;
-            new_element.type = elements[1]->type;
-            new_element.is_nil = elements[1]->is_nil;
+            new_element->nullable = elements[1]->nullable;
+            new_element->type = elements[1]->type;
+            new_element->is_nil = elements[1]->is_nil;
         }
         else{
             if(elements[0]->symbol != NON_TERM || elements[2]->symbol != NON_TERM){
@@ -222,7 +250,7 @@ int reduce(stack_t* stack){
                 }
 
                 if(elements[0]->type == Int_Type && elements[2]->type == Int_Type){
-                    new_element.type = Int_Type;
+                    new_element->type = Int_Type;
                     // Generate decimal division
                 }
                 else{
@@ -236,7 +264,7 @@ int reduce(stack_t* stack){
 
                     // Generate float division
 
-                    new_element.type = Double_Type;
+                    new_element->type = Double_Type;
                 }
             }
             else if(elements[1]->symbol == PlusS 
@@ -250,7 +278,7 @@ int reduce(stack_t* stack){
                         return SEM_ERROR_TYPE_COMPAT;
                     }
 
-                    new_element.type = String_Type;
+                    new_element->type = String_Type;
 
                     // Generate concatenation
                 }
@@ -260,7 +288,7 @@ int reduce(stack_t* stack){
                         return SEM_ERROR_TYPE_COMPAT;
                     }
 
-                    new_element.type = Int_Type;
+                    new_element->type = Int_Type;
 
                     if(elements[0]->type == Double_Type || elements[2]->type == Double_Type){
                         if(elements[0]->type == Int_Type){
@@ -271,7 +299,7 @@ int reduce(stack_t* stack){
                             // Generate Int2Double code
                         }
 
-                        new_element.type = Double_Type;
+                        new_element->type = Double_Type;
                     }
 
                     switch(elements[1]->symbol){
@@ -319,7 +347,7 @@ int reduce(stack_t* stack){
                         break;
                 }   
 
-                new_element.type = Bool_Type;
+                new_element->type = Bool_Type;
             }
             else{
                 return SYNTAX_ERROR;
@@ -332,7 +360,7 @@ int reduce(stack_t* stack){
         return SYNTAX_ERROR;
     }
 
-    if(!stack_push(stack, &new_element)) return INTERNAL_ERROR;
+    if(!stack_push(stack, new_element)) return INTERNAL_ERROR;
 
     return SYNTAX_OK;
 }
@@ -342,9 +370,12 @@ int reduce(stack_t* stack){
 
 
 int expression(analyse_data_t* data){
+
     stack_t* stack = malloc(sizeof(stack_t));
     if(!stack) return INTERNAL_ERROR;
-    if(!stack_init(stack)){
+
+
+    if(!stack_init(&stack)){
         free(stack);
         return INTERNAL_ERROR;
     }
@@ -365,6 +396,7 @@ int expression(analyse_data_t* data){
     token_t token = data->token;
 
 
+
     do{
         int result = 0;
         bool nullable = false;
@@ -375,8 +407,12 @@ int expression(analyse_data_t* data){
         eSymbol stack_symbol = st_element->symbol;
         pt_index stack_symbol_index = get_pt_index(stack_symbol);
 
-        switch(predence_table[input_index][stack_symbol_index]){
+        stack_element* new_element = malloc(sizeof(stack_element));
+        if(!new_element) return INTERNAL_ERROR;
+
+        switch(predence_table[stack_symbol_index][input_index]){
             case R:
+            stack_print(stack);
                 if((result = reduce(stack)) != SYNTAX_OK){
                     // Free recources
                     FREE_RECOURCES(stack);
@@ -386,19 +422,22 @@ int expression(analyse_data_t* data){
                 break;
 
             case S:
+
                 if(!stack_insert_after_top_terminal(stack, Handle, Undefined)){
                     FREE_RECOURCES(stack);
                     return INTERNAL_ERROR;
                 }
-                stack_element new_element;
-                new_element.symbol = input_symbol;
-                new_element.type = get_data_type(token, data->local_table, &nullable);
-                new_element.nullable = nullable;
-                if(!stack_push(stack, &new_element))
+                new_element->symbol = input_symbol;
+                new_element->type = get_data_type(token, data->local_table, &nullable);
+                new_element->nullable = nullable;
+                if(!stack_push(stack, new_element))
                 {
                     FREE_RECOURCES(stack);
                     return INTERNAL_ERROR;
                 } 
+
+
+
                 do{
                     if((result = get_next_token(&token))){
                         FREE_RECOURCES(stack);
@@ -406,14 +445,15 @@ int expression(analyse_data_t* data){
                     }
                 }while(token.type == TOKEN_EOL);
 
+
+
                 break;
 
             case E:
-
-                new_element.symbol = input_symbol;
-                new_element.type = get_data_type(token, data->local_table, &nullable);
-                new_element.nullable = nullable;
-                if(!stack_push(stack, &new_element))
+                new_element->symbol = input_symbol;
+                new_element->type = get_data_type(token, data->local_table, &nullable);
+                new_element->nullable = nullable;
+                if(!stack_push(stack, new_element))
                 {
                     FREE_RECOURCES(stack);
                     return INTERNAL_ERROR;
@@ -439,8 +479,8 @@ int expression(analyse_data_t* data){
         }
     }while(!is_success);
 
-
     stack_element* final_element = stack_pop(stack);
+
 
     if(!final_element){
         // Free recources
@@ -448,11 +488,16 @@ int expression(analyse_data_t* data){
         return SYNTAX_ERROR;
     }
 
+
+
     if(final_element->symbol != NON_TERM){
+
         // Free recources
         FREE_RECOURCES(stack);
         return INTERNAL_ERROR;
     }
+
+
 
     if(data->var_id){
         var_data_t* var_data = (var_data_t*)(*data->var_id)->data;

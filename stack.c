@@ -1,28 +1,30 @@
 #include "stack.h"
 #include <assert.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #define INIT_SIZE 8
 
-bool stack_init(stack_t* stack){
-    if(!(stack->array = malloc(INIT_SIZE * sizeof(void*)))) return false;
-    stack->index = -1;
-    stack->size = INIT_SIZE;
+bool stack_init(stack_t** stack){
+    if(!((*stack)->array = malloc(INIT_SIZE * sizeof(void*)))) return false;
+    (*stack)->index = -1;
+    (*stack)->size = INIT_SIZE;
     return true; 
 }
 
-bool stack_extend(stack_t* stack){
-    int new_stack_size = (stack->size + 1) * 2;
-    if(!(stack->array = realloc(stack->array, new_stack_size * sizeof(stack_element*)))) return false;
-    stack->size = new_stack_size;
+bool stack_extend(stack_t** stack){
+    int new_stack_size = ((*stack)->size + 1) * 2;
+    if(!((*stack)->array = realloc((*stack)->array, new_stack_size * sizeof(stack_element*)))) return false;
+    (*stack)->size = new_stack_size;
 }
 
 bool stack_push(stack_t* stack, stack_element* item){
     assert(stack);
 
     if(stack->index + 1 == stack->size){
-        bool is_success = stack_extend(stack);
-        if(!is_success) return false;
+        int new_size = stack_extend(&stack);
+        if(!new_size) return false;
+        stack->size = new_size;
     }
 
     stack->array[++stack->index] = item;
@@ -57,11 +59,12 @@ int top_terminal_index(stack_t* stack){
     assert(stack);
 
     int index = stack->index;
-    stack_element* element;
+    stack_element* element = NULL;
 
     do{
         if(index == -1) return index;
         element = stack->array[index--];
+
     }while(element->symbol == NON_TERM);
 
     return ++index;
@@ -85,8 +88,9 @@ bool stack_insert_after_top_terminal(stack_t* stack, eSymbol symbol, data_type t
     if(index == -1) return false;
 
     if(stack->index + 1 == stack->size){
-        bool is_success = stack_extend(stack);
-        if(!is_success) return false;
+        int new_size = stack_extend(&stack);
+        if(!new_size) return false;
+        stack->size = new_size;
     }
 
     for(int i = stack->index; i > index; i--){
@@ -99,6 +103,7 @@ bool stack_insert_after_top_terminal(stack_t* stack, eSymbol symbol, data_type t
     new_element->type = type;
 
     stack->array[index + 1] = new_element;
+    stack->index++;
 
     return true;
 }

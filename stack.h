@@ -22,7 +22,7 @@ typedef struct stack{
     stack_element** array;
 }stack_t;
 
-bool stack_init(stack_t*);
+bool stack_init(stack_t**);
 bool stack_push(stack_t*, stack_element*);
 stack_element* stack_pop(stack_t*);
 void stack_pop_elements(stack_t*, int);
