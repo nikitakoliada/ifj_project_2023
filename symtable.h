@@ -5,6 +5,7 @@
  * @brief Symtable definitions and header file for symtable.c
 
  * @author Juraj Remeň - xremen02
+ * @author Nikita Koliada - xkolia00
 */
 
 #include <stdbool.h>
@@ -25,6 +26,7 @@ typedef enum node_data_type {
 // node of the tree
 typedef struct bst_node {
     char* key;
+    int height;
     node_data_type_t data_type;
     void* data;
     struct bst_node * left_ptr;
@@ -33,9 +35,15 @@ typedef struct bst_node {
 
 // BST functions
 void bst_init(bst_node_ptr *);
-void bst_insert (bst_node_ptr *, char*, void*, node_data_type_t);
-void bst_delete(bst_node_ptr *, char*);
-bst_node_ptr bst_search(bst_node_ptr, char*);
+int bst_height(bst_node_ptr *);
+int bst_calculate_balance(bst_node_ptr *);
+int max(int, int);
+bst_node_ptr bst_rotate_right(bst_node_ptr *);
+bst_node_ptr bst_rotate_left(bst_node_ptr *);
+bst_node_ptr bst_insert (bst_node_ptr *, char*, void*, node_data_type_t);
+void bst_replace_by_right_most(bst_node_ptr, bst_node_ptr *);
+bst_node_ptr bst_delete(bst_node_ptr *, char*);
+bst_node_ptr bst_search(bst_node_ptr *, char*);
 void bst_dispose(bst_node_ptr *);
 
 // symtable helpers and functions
@@ -53,15 +61,9 @@ typedef struct variable {
 
 typedef struct function {
     int return_data_type;
-    //we dont have declaration of functions only definition
-    //bool declared; 
     bool defined;
     int param_len;
-    //  STRING_VALUE,
-    // INT_VALUE,
-    // NIL_VALUE, 
-    // DOUBLE_VALUE,
-    token_type_t params_types[];
+    var_data_t params_types[];
     char* params_identifiers[];
     char* param_names[];
 } function_data_t;
