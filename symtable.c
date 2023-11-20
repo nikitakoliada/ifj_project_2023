@@ -304,14 +304,24 @@ void bst_dispose(bst_node_ptr *root_ptr)
 
         free((*root_ptr)->key);
         (*root_ptr)->key = NULL;
-
-        if ((*root_ptr)->data_type == node_data_type_function)
+        if((*root_ptr)->data_type == node_data_type_var)
         {
-            dispose_string(&(((function_data_t*)(*root_ptr)->data)->params));
+            free((*root_ptr)->data);
+            (*root_ptr)->data = NULL;
         }
 
-        free((*root_ptr)->data);
-        (*root_ptr)->data = NULL;
+        else if ((*root_ptr)->data_type == node_data_type_function)
+        {
+            function_data_t* data = (function_data_t*)(*root_ptr)->data;
+            for (int i = 0; i < data->param_len; i++) {
+                free(data->param_names[i]);
+                free(data->params_identifiers[i]);
+            }
+
+            free(data);
+            (*root_ptr)->data = NULL;
+        }
+
 
         free(*root_ptr);
         *root_ptr = NULL;
