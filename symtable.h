@@ -52,20 +52,13 @@ typedef struct variable {
     bool q_type; // true if f.e. int? or string? or double?
 } var_data_t;
 
-// useless in INF23
-// typedef struct {
-//     char *value;
-//     int len;
-//     int allocated_len;
-// } string;
-
 typedef struct function {
     int return_data_type;
     bool defined;
     int param_len;
-    var_data_t params_types[];
-    char* params_identifiers[];
-    char* param_names[];
+    var_data_t* params_types;
+    char** params_identifiers;
+    char** param_names;
 } function_data_t;
 
 typedef struct symtable {
@@ -74,8 +67,8 @@ typedef struct symtable {
 
 // symtable functions
 void symtable_init(symtable_t*);
-void symtable_insert_var(symtable_t*, char*);
-void symtable_insert_function(symtable_t*, char*);
+void symtable_insert_var(symtable_t* table, char* key, var_data_t* data);
+void symtable_insert_function(symtable_t* table, char* key, function_data_t* data);
 void symtable_delete(symtable_t*, char*);
 bst_node_ptr symtable_search(symtable_t*, char*);
 void symtable_dispose(symtable_t*);
