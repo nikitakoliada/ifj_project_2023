@@ -5,6 +5,7 @@
  * @brief Symtable implementation - height balanced binary search tree
 
  * @author Juraj Remeň - xremen02
+ * @author Nikita Koliada - xkolia00
  */
 
 #include <stdlib.h>
@@ -275,24 +276,24 @@ bst_node_ptr bst_search(bst_node_ptr *root_ptr, char* key)
     }
 }
 
-int init_string(string *str)
-{
-    if ((str->value = (char*)malloc(10 * sizeof(char))) == NULL)
-    {
-        return INTERNAL_ERROR;
-    }
-    str->value[0] = '\0';
-    str->len = 0;
-    str->allocated_len = 10;
-    return SYNTAX_OK;
-}
+// int init_string(string *str)
+// {
+//     if ((str->value = (char*)malloc(10 * sizeof(char))) == NULL)
+//     {
+//         return INTERNAL_ERROR;
+//     }
+//     str->value[0] = '\0';
+//     str->len = 0;
+//     str->allocated_len = 10;
+//     return SYNTAX_OK;
+// }
 
-void dispose_string(string *str)
-{
-    free(str->value);
-    str->value = NULL;
-    str->len = str->allocated_len = 0;
-}
+// void dispose_string(string *str)
+// {
+//     free(str->value);
+//     str->value = NULL;
+//     str->len = str->allocated_len = 0;
+// }
 
 void bst_dispose(bst_node_ptr *root_ptr)
 {
@@ -323,19 +324,18 @@ void symtable_init(symtable_t* table)
     bst_init(&(table)->root);
 }
 
-void symtable_insert_var(symtable_t* table, string key)
+void symtable_insert_var(symtable_t* table, char* key, var_data_t* data)
 {
     var_data_t *data_ptr;
     if ((data_ptr = (var_data_t*)malloc(sizeof(var_data_t))) == NULL)
     {
         return;
     }
-
-    data_ptr->data_type = -1;
-    bst_insert(&(table->root), key.value, data_ptr, node_data_type_var);
+    data_ptr->data_type = data->data_type;
+    bst_insert(&(table->root), key, data_ptr, node_data_type_var);
 }
 
-void symtable_insert_function(symtable_t* table, string key)
+void symtable_insert_function(symtable_t* table, char* key, function_data_t* data)
 {
     function_data_t *data_ptr;
     if ((data_ptr = (function_data_t*)malloc(sizeof(function_data_t))) == NULL)
@@ -343,24 +343,26 @@ void symtable_insert_function(symtable_t* table, string key)
         return;
     }
 
-    string params;
-    init_string(&params);
-    data_ptr->return_data_type = -1;
-    data_ptr->declared = false;
-    data_ptr->defined = false;
-    data_ptr->params = params;
+    data_ptr->return_data_type = data->return_data_type;
+    data_ptr->defined = data->defined;
+    data_ptr->param_names = data->param_names;
+    data_ptr->param_len = data->param_len;
+    data_ptr->params_types = data->params_types;
+    data_ptr->params_identifiers = data->params_identifiers;
 
-    bst_insert(&(table->root), key.value, data_ptr, node_data_type_function);
+    bst_insert(&(table->root), key, data_ptr, node_data_type_function);
 }
 
-void symtable_delete(symtable_t* table, string key)
+
+void symtable_delete(symtable_t* table, char* key)
 {
-    bst_delete(&(table)->root, key.value);
+    bst_delete(&(table)->root, key);
+    //table->size--;
 }
 
-bst_node_ptr symtable_search(symtable_t* table, string key)
+bst_node_ptr symtable_search(symtable_t* table, char* key)
 {
-    return bst_search(&(table)->root, key.value);
+    return bst_search(&(table)->root, key);
 }
 
 void symtable_dispose(symtable_t* table)

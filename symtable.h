@@ -5,6 +5,7 @@
  * @brief Symtable definitions and header file for symtable.c
 
  * @author Juraj Remeň - xremen02
+ * @author Nikita Koliada - xkolia00
 */
 
 #include <stdbool.h>
@@ -60,15 +61,9 @@ typedef struct variable {
 
 typedef struct function {
     int return_data_type;
-    //we dont have declaration of functions only definition
-    //bool declared; 
     bool defined;
     int param_len;
-    //  STRING_VALUE,
-    // INT_VALUE,
-    // NIL_VALUE, 
-    // DOUBLE_VALUE,
-    token_type_t params_types[];
+    var_data_t params_types[];
     char* params_identifiers[];
     char* param_names[];
 } function_data_t;
