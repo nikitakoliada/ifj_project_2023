@@ -179,12 +179,14 @@ int reduce(stack_t* stack){
 
     new_element->is_nil = false;
     new_element->nullable = false;
+    new_element->nullable = false;
 
 
     // E -> id
     if(elements_count == 1){
         new_element->type = elements[0]->type;
         new_element->nullable = elements[0]->nullable;
+        new_element->is_identifier = elements[0]->is_identifier;
         if(elements[0]->type == Undefined){
             if(elements[0]->symbol != NilS){
                 return SEM_ERROR_UNDEF_VAR;
@@ -212,6 +214,7 @@ int reduce(stack_t* stack){
 
         new_element->nullable = false;
         new_element->type = elements[0]->type;
+        new_element->is_identifier = elements[0]->is_identifier;
 
         // Generate ! code
     }
@@ -224,6 +227,7 @@ int reduce(stack_t* stack){
             new_element->nullable = elements[1]->nullable;
             new_element->type = elements[1]->type;
             new_element->is_nil = elements[1]->is_nil;
+            new_element->is_identifier = elements[1]->is_identifier;
         }
         else{
             if(elements[0]->symbol != NON_TERM || elements[2]->symbol != NON_TERM){
@@ -240,6 +244,8 @@ int reduce(stack_t* stack){
             || (elements[2]->type == Undefined && !elements[2]->is_nil)){
                 return SEM_ERROR_UNDEF_VAR;
             }
+
+            new_element->is_identifier = elements[0]->is_identifier || elements[2]->is_identifier;
 
             if(elements[1]->symbol == NilCS){
                 if((elements[0]->type != elements[2]->type && !elements[0]->is_nil) 
@@ -263,11 +269,13 @@ int reduce(stack_t* stack){
                     // Generate decimal division
                 }
                 else{
-                    if(elements[0]->type == Int_Type) {
+                    if(elements[0]->type == Int_Type ) {
+                        if(elements[0]->is_identifier) return SEM_ERROR_TYPE_COMPAT;
                         // Generate Int2Double for 1 operands
                     }
 
-                    if(elements[1]->type == Int_Type) {
+                    if(elements[2]->type == Int_Type) {
+                        if(elements[2]->is_identifier) return SEM_ERROR_TYPE_COMPAT;
                         // Generate Int2Double for 2 operands
                     }
 
@@ -301,10 +309,12 @@ int reduce(stack_t* stack){
 
                     if(elements[0]->type == Double_Type || elements[2]->type == Double_Type){
                         if(elements[0]->type == Int_Type){
+                            if(elements[0]->is_identifier) return SEM_ERROR_TYPE_COMPAT;
                             // Generate Int2Double code
                         }
 
-                        if(elements[0]->type == Int_Type){
+                        if(elements[2]->type == Int_Type){
+                            if(elements[2]->is_identifier) return SEM_ERROR_TYPE_COMPAT;
                             // Generate Int2Double code
                         }
 
@@ -326,14 +336,16 @@ int reduce(stack_t* stack){
             }
             else if(elements[1]->symbol == EqS 
             || elements[1]->symbol == NEqS){
-                if((elements[0]->type == Int_Type || elements[0]->type != Double_Type) 
+                if((elements[0]->type == Int_Type || elements[0]->type == Double_Type) 
                 && (elements[2]->type == Int_Type || elements[2]->type == Double_Type)){
 
                     if(elements[0]->type == Double_Type && elements[2]->type == Int_Type){
+                        if(elements[2]->is_identifier) return SEM_ERROR_TYPE_COMPAT;
                         // Generate Int2Double code
                     }
 
                     if(elements[2]->type == Double_Type && elements[0]->type == Int_Type){
+                        if(elements[0]->is_identifier) return SEM_ERROR_TYPE_COMPAT;
                         // Generate Int2Double code
                     }
                 }
@@ -461,6 +473,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
                 new_element->symbol = input_symbol;
                 new_element->type = get_data_type(token, data->local_table, &nullable);
                 new_element->nullable = nullable;
+                new_element->is_identifier = token.type == IDENTIFIER;
                 if(!stack_push(stack, new_element))
                 {
                     FREE_RECOURCES(stack);
@@ -483,6 +496,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
                 new_element->symbol = input_symbol;
                 new_element->type = get_data_type(token, data->local_table, &nullable);
                 new_element->nullable = nullable;
+                new_element->is_identifier = token.type == IDENTIFIER;
                 if(!stack_push(stack, new_element))
                 {
                     FREE_RECOURCES(stack);

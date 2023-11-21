@@ -14,6 +14,7 @@ typedef struct{
     data_type type;
     bool nullable;
     bool is_nil;
+    bool is_identifier;
 }stack_element;
 
 typedef struct stack{
