@@ -224,7 +224,7 @@ int reduce(stack_t* stack){
                 return SYNTAX_ERROR;
             }
 
-            if(elements[1]->symbol != NilCS 
+            if(elements[1]->symbol != NilCS && get_pt_index(elements[1]->symbol) != RelI 
             && (elements[0]->nullable || elements[2]->nullable
             || elements[0]->is_nil || elements[2]->is_nil)){
                 return SEM_ERROR_TYPE_COMPAT;
