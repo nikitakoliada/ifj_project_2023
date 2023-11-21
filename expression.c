@@ -18,7 +18,8 @@ typedef enum{
     S, // <
     R, // >
     E, // =
-    F  // Failure
+    F, // Failure
+    P, // Pass
 } precedence_value_t;
 
 typedef enum{
@@ -408,7 +409,10 @@ int reduce(stack_t* stack){
 }
 
 
-
+void process_parenthese(token_t token, int* count){
+    if(token.type == TOKEN_LEFT_BRACKET) (*count)++;
+    if(token.type == TOKEN_RIGHT_BRACKET) (*count)--;
+}
 
 
 int expression(analyse_data_t* data, bool* is_EOL){
@@ -436,9 +440,10 @@ int expression(analyse_data_t* data, bool* is_EOL){
 
     bool is_success = false;
     bool was_EOL = false;
+    int parantheses_counter = 0;
     token_t token = data->token;
 
-
+    process_parenthese(token, &parantheses_counter);
 
     do{
         stack_print(stack);
@@ -454,7 +459,16 @@ int expression(analyse_data_t* data, bool* is_EOL){
         stack_element* new_element = malloc(sizeof(stack_element));
         if(!new_element) return INTERNAL_ERROR;
 
-        switch(predence_table[stack_symbol_index][input_index]){
+        precedence_value_t precedence_result = predence_table[stack_symbol_index][input_index];
+
+        if(parantheses_counter < 0){
+            if(stack->index == 1) precedence_result = P;
+            else precedence_result = R;
+        }
+
+        printf("-****%d*****\n", parantheses_counter);
+
+        switch(precedence_result){
             case R:
                 if((result = reduce(stack)) != SYNTAX_OK){
                     // Free recources
@@ -489,6 +503,8 @@ int expression(analyse_data_t* data, bool* is_EOL){
                     if(token.type == TOKEN_EOL) was_EOL = true;
                 }while(token.type == TOKEN_EOL);
 
+                process_parenthese(token, &parantheses_counter);
+
                 break;
 
             case E:
@@ -509,6 +525,9 @@ int expression(analyse_data_t* data, bool* is_EOL){
                     }
                     if(token.type == TOKEN_EOL) was_EOL = true;
                 }while(token.type == TOKEN_EOL);
+
+                process_parenthese(token, &parantheses_counter);
+
                 break;
             case F:
                 if(input_symbol == DollarS && stack_symbol == DollarS){
@@ -520,6 +539,10 @@ int expression(analyse_data_t* data, bool* is_EOL){
                     return SYNTAX_ERROR;
                 }
 
+                break;
+
+            case P:
+                is_success = true;
                 break;
         }
     }while(!is_success);
@@ -545,7 +568,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
 
 
     if(data->var_id){
-        var_data_t* var_data = (var_data_t*)(*data->var_id).data;
+        var_data_t* var_data = (var_data_t*)(*data->var_id)->data;
         if((final_element->nullable || final_element->is_nil) && !var_data->q_type){
             FREE_RECOURCES(stack);
             return SEM_ERROR_TYPE_COMPAT;
