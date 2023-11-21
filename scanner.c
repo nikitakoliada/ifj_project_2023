@@ -8,13 +8,13 @@
  * @author Pavlo Butenko - xbuten00
  * @author Maksym Podhornyi - xpodho08
 
- */
+*/
 
 #include "scanner.h"
 
 #include "ctype.h"
 
-char *keywords[] = {"Double", "else", "func", "if", "Int", "let", "nil", "return", "String", "var", "while"};
+char *keywords[] = {"Double", "else", "func", "if", "Int", "let", "nil", "return", "String", "var", "while", "String?", "Int?", "Double?"};
 char *built_in_functions[] = {"readString", "readInt", "readDouble", "write", "Int2Double", "Double2Int", "length", "substring", "ord", "chr"};
 
 FILE* file;
@@ -38,7 +38,7 @@ bool is_built_in_function(char *token)
 
 bool is_keyword(char *token)
 {
-    for (int i = 0; i < 11; i++)
+    for (int i = 0; i < 14; i++)
     {
         if (strcmp(token, keywords[i]) == 0)
         {
@@ -64,7 +64,7 @@ void add_char_to_string(char *string, unsigned* index, unsigned* size, char c)
 }
 
 void get_keyword_type(char* token_raw, keyword_t* keyword){
-    for(int i = 0; i < 11; i++){
+    for(int i = 0; i < 14; i++){
         if(!strcmp(token_raw, keywords[i])){
             *keyword = (keyword_t)i;
         }
@@ -204,7 +204,7 @@ int get_next_token(token_t* token){
                 }
                 break;
             case KEYWORD_OR_IDENTIFIER_S:
-                if(isalnum(symbol) || symbol == '_'){
+                if(isalnum(symbol) || symbol == '_' || symbol == '?'){
                     add_char = true;
                 }else{
                     ungetc(symbol, file);
