@@ -16,15 +16,14 @@ bool stack_extend(stack_t** stack){
     int new_stack_size = ((*stack)->size + 1) * 2;
     if(!((*stack)->array = realloc((*stack)->array, new_stack_size * sizeof(stack_element*)))) return false;
     (*stack)->size = new_stack_size;
+    return true;
 }
 
 bool stack_push(stack_t* stack, stack_element* item){
     assert(stack);
 
     if(stack->index + 1 == stack->size){
-        int new_size = stack_extend(&stack);
-        if(!new_size) return false;
-        stack->size = new_size;
+        if(!stack_extend(&stack)) return false;
     }
 
     stack->array[++stack->index] = item;
@@ -88,9 +87,7 @@ bool stack_insert_after_top_terminal(stack_t* stack, eSymbol symbol, data_type t
     if(index == -1) return false;
 
     if(stack->index + 1 == stack->size){
-        int new_size = stack_extend(&stack);
-        if(!new_size) return false;
-        stack->size = new_size;
+        if(!stack_extend(&stack)) return false;
     }
 
     for(int i = stack->index; i > index; i--){

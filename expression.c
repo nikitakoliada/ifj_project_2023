@@ -37,7 +37,7 @@ precedence_value_t predence_table[PT_SIZE][PT_SIZE] = {
     //        +-  */  (   )   r   ??  !  id   $          
     /* +- */{ R,  S,  S,  R,  R,  R,  S,  S,  R},
     /* /* */{ S,  R,  S,  R,  R,  R,  S,  S,  R},
-    /* (  */{ S,  S,  S,  E,  F,  F,  S,  S,  F},
+    /* (  */{ S,  S,  S,  E,  S,  S,  S,  S,  F},
     /* )  */{ R,  R,  F,  R,  R,  R,  S,  R,  R},
     /* r  */{ S,  S,  S,  R,  F,  R,  S,  S,  R},
     /* ?? */{ S,  S,  S,  R,  S,  S,  S,  S,  R},
@@ -231,14 +231,17 @@ int reduce(stack_t* stack){
             }
 
             if((elements[0]->type == Undefined && !elements[0]->is_nil) 
-            || (elements[2]->type == Undefined && !elements[0]->is_nil)){
+            || (elements[2]->type == Undefined && !elements[2]->is_nil)){
                 return SEM_ERROR_UNDEF_VAR;
             }
 
             if(elements[1]->symbol == NilCS){
-                if((elements[0]->type != elements[2]->type) || elements[2]->nullable || elements[2]->is_nil){
+                if((elements[0]->type != elements[2]->type && !elements[0]->is_nil) 
+                || elements[2]->nullable || elements[2]->is_nil){
                     return SEM_ERROR_TYPE_COMPAT;
                 }
+
+                new_element->type = elements[2]->type;
 
                 // Generate ?? code
             }
@@ -398,6 +401,7 @@ int expression(analyse_data_t* data){
 
 
     do{
+        stack_print(stack);
         int result = 0;
         bool nullable = false;
         eSymbol input_symbol = token_to_esymbol(token);
@@ -412,7 +416,6 @@ int expression(analyse_data_t* data){
 
         switch(predence_table[stack_symbol_index][input_index]){
             case R:
-            stack_print(stack);
                 if((result = reduce(stack)) != SYNTAX_OK){
                     // Free recources
                     FREE_RECOURCES(stack);
@@ -422,7 +425,6 @@ int expression(analyse_data_t* data){
                 break;
 
             case S:
-
                 if(!stack_insert_after_top_terminal(stack, Handle, Undefined)){
                     FREE_RECOURCES(stack);
                     return INTERNAL_ERROR;
@@ -435,7 +437,6 @@ int expression(analyse_data_t* data){
                     FREE_RECOURCES(stack);
                     return INTERNAL_ERROR;
                 } 
-
 
 
                 do{
