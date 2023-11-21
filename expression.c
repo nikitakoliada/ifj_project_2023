@@ -42,7 +42,7 @@ precedence_value_t predence_table[PT_SIZE][PT_SIZE] = {
     /* r  */{ S,  S,  S,  R,  F,  R,  S,  S,  R},
     /* ?? */{ S,  S,  S,  R,  S,  S,  S,  S,  R},
     /* !  */{ R,  R,  S,  R,  R,  R,  F,  S,  R},
-    /* id */{ R,  R,  F,  R,  R,  R,  R,  R,  R},
+    /* id */{ R,  R,  F,  R,  R,  R,  R,  F,  R},
     /* $  */{ S,  S,  S,  F,  S,  S,  S,  S,  F}
 };
 
@@ -80,7 +80,31 @@ int get_pt_index(eSymbol symbol){
     }
 }
 
-eSymbol token_to_esymbol(token_t token){
+
+data_type get_data_type(token_t token, symtable_t table, bool* is_nullable){
+    switch(token.type){
+        case IDENTIFIER:
+            bst_node_ptr node = symtable_search(&table, token.data.String);
+            if(!node){
+                return Undefined;
+            }
+            var_data_t* data = (var_data_t*)node->data;
+            if(is_nullable) *is_nullable = data->q_type;
+            return data->data_type;
+        case INT_VALUE:
+            return Int_Type;
+
+        case DOUBLE_VALUE:
+            return Double_Type;
+
+        case STRING_VALUE:
+            return String_Type;
+
+        default: return Undefined;
+    }
+}
+
+eSymbol token_to_esymbol(token_t token, symtable_t table, bool* is_nullable){
     switch(token.type){
         case PLUS:  return PlusS;
         case MINUS: return MinusS;
@@ -95,40 +119,23 @@ eSymbol token_to_esymbol(token_t token){
         case LESS_THAN_OR_EQUAL: return LEqs;
         case MORE_THAN_OR_EQUAL: return GEqS;
         case NIL_COLL: return NilCS;
-        case NOT: return NOT_S;
+        case NOT: return NotS;
         case DOUBLE_VALUE: return DoubleS;
         case STRING_VALUE: return StringS;
         case INT_VALUE: return IntS;
         case KEYWORD:
             if(token.data.Keyword == Nil_KW) return NilS; 
+        case IDENTIFIER:
+            bool a = false;
+            data_type t = get_data_type(token, table, is_nullable);
+            printf("**%d**\n", t);
+            if(t == Int_Type) return IntS;
+            if(t == String_Type) return StringS;
+            if(t == Double_Type) return DoubleS;
         default: return DollarS; // Process
     }
 }
 
-
-data_type get_data_type(token_t token, symtable_t table, bool* is_nullable){
-    is_nullable = false;
-    switch(token.type){
-        case IDENTIFIER:
-            bst_node_ptr node = symtable_search(&table, token.data.String);
-            if(!node){
-                return Undefined;
-            }
-            var_data_t* data = (var_data_t*)node->data;
-            *is_nullable = data->q_type; 
-            return data->data_type;
-        case INT_VALUE:
-            return Int_Type;
-
-        case DOUBLE_VALUE:
-            return Double_Type;
-
-        case STRING_VALUE:
-            return String_Type;
-
-        default: return Undefined;
-    }
-}
 
 void stack_print(stack_t* stack){
     for(int i = stack->index; i >= 0; i--){
@@ -189,7 +196,8 @@ int reduce(stack_t* stack){
     }
     // E -> E!
     else if(elements_count == 2){
-        if(elements[1]->symbol != NotS && elements[1]->symbol != NON_TERM){
+        printf("ok");
+        if(elements[1]->symbol != NotS || elements[0]->symbol != NON_TERM){
             return SYNTAX_ERROR;
         }
 
@@ -236,7 +244,7 @@ int reduce(stack_t* stack){
             }
 
             if(elements[1]->symbol == NilCS){
-                if((elements[0]->type != elements[2]->type && !elements[0]->is_nil) 
+                if(elements[0]->type != elements[2]->type 
                 || elements[2]->nullable || elements[2]->is_nil){
                     return SEM_ERROR_TYPE_COMPAT;
                 }
@@ -298,7 +306,7 @@ int reduce(stack_t* stack){
                             // Generate Int2Double code
                         }
 
-                        if(elements[1]->type == Int_Type){
+                        if(elements[0]->type == Int_Type){
                             // Generate Int2Double code
                         }
 
@@ -319,13 +327,19 @@ int reduce(stack_t* stack){
                 }
             }
             else if(elements[1]->symbol == EqS 
-            || elements[1]->symbol == NEqS 
-            || elements[1]->symbol == LEqs
-            || elements[1]->symbol == GEqS
-            || elements[1]->symbol == LessS
-            || elements[1]->symbol == GreaterS){
-                if(elements[0]->type != elements[2]->type 
-                || elements[0]->nullable != elements[2]->nullable){
+            || elements[1]->symbol == NEqS){
+                if((elements[0]->type == Int_Type || elements[0]->type != Double_Type) 
+                && (elements[2]->type == Int_Type || elements[2]->type == Double_Type)){
+
+                    if(elements[0]->type == Double_Type && elements[2]->type == Int_Type){
+                        // Generate Int2Double code
+                    }
+
+                    if(elements[2]->type == Double_Type && elements[0]->type == Int_Type){
+                        // Generate Int2Double code
+                    }
+                }
+                else if(elements[0]->type != elements[2]->type){
                     return SEM_ERROR_TYPE_COMPAT;
                 }
 
@@ -334,8 +348,22 @@ int reduce(stack_t* stack){
                         // Generate ==
                         break;
                     case NEqS:
-                        // Genearte !=
+                        // Generate !=
                         break;
+                }
+
+                new_element->type = Bool_Type;
+            }
+            else if(elements[1]->symbol == LEqs
+            || elements[1]->symbol == GEqS
+            || elements[1]->symbol == LessS
+            || elements[1]->symbol == GreaterS){
+                if(elements[0]->type != elements[2]->type 
+                || elements[0]->nullable || elements[2]->nullable){
+                    return SEM_ERROR_TYPE_COMPAT;
+                }
+
+                switch(elements[1]->symbol){
                     case LessS:
                         // Generate <
                         break;
@@ -404,7 +432,7 @@ int expression(analyse_data_t* data){
         stack_print(stack);
         int result = 0;
         bool nullable = false;
-        eSymbol input_symbol = token_to_esymbol(token);
+        eSymbol input_symbol = token_to_esymbol(token, data->local_table, &nullable);
         pt_index input_index = get_pt_index(input_symbol);
         stack_element* st_element = stack_top_terminal(stack);
         if(!st_element) return INTERNAL_ERROR;
@@ -413,6 +441,7 @@ int expression(analyse_data_t* data){
 
         stack_element* new_element = malloc(sizeof(stack_element));
         if(!new_element) return INTERNAL_ERROR;
+        printf("---%d\n", token.type);
 
         switch(predence_table[stack_symbol_index][input_index]){
             case R:
