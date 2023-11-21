@@ -128,7 +128,6 @@ eSymbol token_to_esymbol(token_t token, symtable_t table, bool* is_nullable){
         case IDENTIFIER:
             bool a = false;
             data_type t = get_data_type(token, table, is_nullable);
-            printf("**%d**\n", t);
             if(t == Int_Type) return IntS;
             if(t == String_Type) return StringS;
             if(t == Double_Type) return DoubleS;
@@ -196,7 +195,6 @@ int reduce(stack_t* stack){
     }
     // E -> E!
     else if(elements_count == 2){
-        printf("ok");
         if(elements[1]->symbol != NotS || elements[0]->symbol != NON_TERM){
             return SYNTAX_ERROR;
         }
@@ -244,7 +242,7 @@ int reduce(stack_t* stack){
             }
 
             if(elements[1]->symbol == NilCS){
-                if(elements[0]->type != elements[2]->type 
+                if((elements[0]->type != elements[2]->type && !elements[0]->is_nil) 
                 || elements[2]->nullable || elements[2]->is_nil){
                     return SEM_ERROR_TYPE_COMPAT;
                 }
@@ -339,7 +337,8 @@ int reduce(stack_t* stack){
                         // Generate Int2Double code
                     }
                 }
-                else if(elements[0]->type != elements[2]->type){
+                else if(elements[0]->type != elements[2]->type 
+                && (!elements[0]->is_nil && !elements[2]->is_nil)){
                     return SEM_ERROR_TYPE_COMPAT;
                 }
 
@@ -400,7 +399,7 @@ int reduce(stack_t* stack){
 
 
 
-int expression(analyse_data_t* data){
+int expression(analyse_data_t* data, bool* is_EOL){
 
     stack_t* stack = malloc(sizeof(stack_t));
     if(!stack) return INTERNAL_ERROR;
@@ -424,6 +423,7 @@ int expression(analyse_data_t* data){
 
 
     bool is_success = false;
+    bool was_EOL = false;
     token_t token = data->token;
 
 
@@ -441,7 +441,6 @@ int expression(analyse_data_t* data){
 
         stack_element* new_element = malloc(sizeof(stack_element));
         if(!new_element) return INTERNAL_ERROR;
-        printf("---%d\n", token.type);
 
         switch(predence_table[stack_symbol_index][input_index]){
             case R:
@@ -454,6 +453,7 @@ int expression(analyse_data_t* data){
                 break;
 
             case S:
+                was_EOL = false;
                 if(!stack_insert_after_top_terminal(stack, Handle, Undefined)){
                     FREE_RECOURCES(stack);
                     return INTERNAL_ERROR;
@@ -473,13 +473,13 @@ int expression(analyse_data_t* data){
                         FREE_RECOURCES(stack);
                         return result;
                     }
+                    if(token.type == TOKEN_EOL) was_EOL = true;
                 }while(token.type == TOKEN_EOL);
-
-
 
                 break;
 
             case E:
+                was_EOL = false;
                 new_element->symbol = input_symbol;
                 new_element->type = get_data_type(token, data->local_table, &nullable);
                 new_element->nullable = nullable;
@@ -493,6 +493,7 @@ int expression(analyse_data_t* data){
                         FREE_RECOURCES(stack);
                         return result;
                     }
+                    if(token.type == TOKEN_EOL) was_EOL = true;
                 }while(token.type == TOKEN_EOL);
                 break;
             case F:
@@ -565,6 +566,7 @@ int expression(analyse_data_t* data){
     }
 
     data->token = token;
+    *is_EOL = was_EOL; 
 
     FREE_RECOURCES(stack);
 
