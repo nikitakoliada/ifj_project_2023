@@ -13,369 +13,231 @@
 #include "scanner.h"
 #include "symtable.h"
 
-//BST functions
-void bst_init(bst_node_ptr *root_ptr)
-{
-    *root_ptr = NULL;
+// Helper Functions
+int max(int a, int b) {
+    return (a > b) ? a : b;
 }
 
-int bst_height(bst_node_ptr *root_ptr)
-{
-    if (root_ptr == NULL)
-    {
+int height(bst_node_ptr N) {
+    if (N == NULL)
         return 0;
-    }
-
-    else
-    {
-        return ((*root_ptr)->height);
-    }
+    return N->height;
 }
 
-int bst_calculate_balance(bst_node_ptr *root_ptr)
-{
-    struct bst_node *tmp;
-    tmp = (struct bst_node*)malloc(sizeof(struct bst_node));
-    if (root_ptr == NULL && tmp == NULL)
-    {
+int getBalance(bst_node_ptr N) {
+    if (N == NULL)
         return 0;
-    }
-
-    else
-    {
-        int balance = (bst_height((bst_node_ptr *) (*root_ptr)->left_ptr)) - (bst_height((bst_node_ptr *) (*root_ptr)->right_ptr));
-        return balance;
-    }
+    return height(N->left_ptr) - height(N->right_ptr);
 }
 
-int max(int x, int y)
-{
-    return ( (x > y) ? x : y );
+bst_node_ptr rightRotate(bst_node_ptr root_ptr) {
+    bst_node_ptr tmp = root_ptr->left_ptr;
+    bst_node_ptr tmp2 = tmp->right_ptr;
+
+    // Perform rotation
+    tmp->right_ptr = root_ptr;
+    root_ptr->left_ptr = tmp2;
+
+    // Update heights
+    root_ptr->height = max(height(root_ptr->left_ptr), height(root_ptr->right_ptr)) + 1;
+    tmp->height = max(height(tmp->left_ptr), height(tmp->right_ptr)) + 1;
+
+    // Return new root
+    return tmp;
 }
 
-bst_node_ptr bst_rotate_right(bst_node_ptr *root_ptr)
-{
-    bst_node_ptr (*tmp1) = (bst_node_ptr *) (*root_ptr)->left_ptr;
-    bst_node_ptr (*tmp2) = (bst_node_ptr *) (*tmp1)->right_ptr;
+bst_node_ptr leftRotate(bst_node_ptr root_ptr) {
+    bst_node_ptr tmp1 = root_ptr->right_ptr;
+    bst_node_ptr tmp2 = tmp1->left_ptr;
 
-    (*tmp1)->right_ptr =  (*root_ptr);
-    (*root_ptr)->left_ptr = (*tmp2);
+    // Perform rotation
+    tmp1->left_ptr = root_ptr;
+    root_ptr->right_ptr = tmp2;
 
-    (*root_ptr)->height = max(bst_height(&(*root_ptr)->left_ptr), bst_height(&(*root_ptr)->right_ptr)) + 1;
-    (*tmp1)->height = max(bst_height(&(*tmp1)->left_ptr), bst_height(&(*tmp1)->right_ptr)) + 1;
+    // Update heights
+    root_ptr->height = max(height(root_ptr->left_ptr), height(root_ptr->right_ptr)) + 1;
+    tmp1->height = max(height(tmp1->left_ptr), height(tmp1->right_ptr)) + 1;
 
-    return (*tmp1);
+    // Return new root
+    return tmp1;
 }
 
-bst_node_ptr bst_rotate_left(bst_node_ptr *root_ptr)
-{
-    bst_node_ptr *tmp1 = (bst_node_ptr *) (*root_ptr)->left_ptr;
-    bst_node_ptr *tmp2 = (bst_node_ptr *) (*tmp1)->right_ptr;
-
-    (*tmp1)->right_ptr =  (*root_ptr);
-    (*root_ptr)->left_ptr = (*tmp2);
-
-    (*root_ptr)->height = max(bst_height(&(*root_ptr)->left_ptr), bst_height(&(*root_ptr)->right_ptr)) + 1;
-    (*tmp1)->height = max(bst_height(&(*tmp1)->left_ptr), bst_height(&(*tmp1)->right_ptr)) + 1;
-
-    return (*tmp1);
+bst_node_ptr new_bst_node(char* key, void* data, node_data_type_t data_type) {
+    bst_node_ptr node = (bst_node_ptr)malloc(sizeof(struct bst_node));
+    if (node) {
+        node->key = strdup(key);
+        node->data = data;
+        node->data_type = data_type;
+        node->left_ptr = NULL;
+        node->right_ptr = NULL;
+        node->height = 1;
+    }
+    return node;
 }
 
-bst_node_ptr bst_insert(bst_node_ptr* root_ptr, char* key, void* data, node_data_type_t data_type)
-{
-    if (root_ptr == NULL && (*root_ptr) == NULL)
-    {
-        struct bst_node *tmp;
-        tmp = (struct bst_node*)malloc(sizeof(struct bst_node));
+void bst_init(bst_node_ptr* root) {
+    *root = NULL;
+}
 
-        if (tmp == NULL)
-        {
-            return NULL;
-        }
-        tmp->key = key;
-        tmp->data = data;
-        tmp->data_type = data_type;
-        tmp->left_ptr = tmp->right_ptr = NULL;
+bst_node_ptr bst_insert(bst_node_ptr node, char* key, void* data, node_data_type_t data_type) {
+    if (node == NULL)
+        return(new_bst_node(key, data, data_type));
 
-        (*root_ptr) = tmp;
+    if (strcmp(key, node->key) < 0)
+        node->left_ptr = bst_insert(node->left_ptr, key, data, data_type);
+    else if (strcmp(key, node->key) > 0)
+        node->right_ptr = bst_insert(node->right_ptr, key, data, data_type);
+    else 
+        return node;
+
+    node->height = 1 + max(height(node->left_ptr), height(node->right_ptr));
+
+    int balance = getBalance(node);
+
+
+    if (balance > 1 && strcmp(key, node->left_ptr->key) < 0)
+        return rightRotate(node);
+
+    if (balance < -1 && strcmp(key, node->right_ptr->key) > 0)
+        return leftRotate(node);
+
+    if (balance > 1 && strcmp(key, node->left_ptr->key) > 0) {
+        node->left_ptr = leftRotate(node->left_ptr);
+        return rightRotate(node);
     }
 
-    else
-    {
-        if (strcmp(key, (*root_ptr)->key) != 0)
-        {
-            if (strcmp(key, ((*root_ptr)->key)) < 0 )
-            {
-                bst_insert(&((*root_ptr)->left_ptr), key, data, data_type);
-                if (bst_height(&(*root_ptr)->left_ptr) > bst_height(&(*root_ptr)->right_ptr))
-                {
-                    (*root_ptr)->height = bst_height(&(*root_ptr)->left_ptr);
-                }
-            }
-
-            else if (strcmp(key, (*root_ptr)->key) > 0)
-            {
-                bst_insert(&((*root_ptr)->right_ptr), key, data, data_type);
-                if (bst_height(&(*root_ptr)->left_ptr) < bst_height(&(*root_ptr)->right_ptr))
-                {
-                    (*root_ptr)->height = bst_height(&(*root_ptr)->right_ptr);
-                }
-            }
-
-            int balance = bst_calculate_balance(root_ptr);
-
-            // leaning left
-            if (balance > 1 && key < (*root_ptr)->left_ptr->key)
-            {
-                return bst_rotate_right(root_ptr);
-            }
-
-            // leaning left and then right
-            else if (balance > 1 && key > (*root_ptr)->left_ptr->key)
-            {
-                (*root_ptr)->left_ptr = bst_rotate_left(&(*root_ptr)->left_ptr);
-                return bst_rotate_right(root_ptr);
-            }
-            // leaning right
-            else if (balance < -1 && key > (*root_ptr)->right_ptr->key)
-            {
-                return bst_rotate_left(root_ptr);
-            }
-
-            // leaning right and then left
-            else if (balance < -1 && key > (*root_ptr)->right_ptr->key)
-            {
-                (*root_ptr)->right_ptr = bst_rotate_right(&(*root_ptr)->left_ptr);
-                return bst_rotate_left(root_ptr);
-            }
-        }
-
-        else
-        {
-            (*root_ptr)->data = data;
-        }
+    if (balance < -1 && strcmp(key, node->right_ptr->key) < 0) {
+        node->right_ptr = rightRotate(node->right_ptr);
+        return leftRotate(node);
     }
 
-    return (*root_ptr);
+    return node;
 }
 
-void bst_replace_by_right_most(bst_node_ptr target, bst_node_ptr *root_ptr)
-{
-    if ( (*root_ptr)->right_ptr == NULL)
-    {
-        target->key = (*root_ptr)->key;
-        target->data = (*root_ptr)->data;
-        bst_node_ptr to_delete = *root_ptr;
-        *root_ptr = (*root_ptr)->left_ptr;
-        free(to_delete);
-    }
+bst_node_ptr bst_search(bst_node_ptr root, char* key) {
+    if (root == NULL || strcmp(root->key, key) == 0)
+        return root;
 
-    else
-    {
-        bst_replace_by_right_most(target, &((*root_ptr)->right_ptr));
+    if (strcmp(root->key, key) < 0)
+        return bst_search(root->right_ptr, key);
+
+    return bst_search(root->left_ptr, key);
+}
+
+
+void bst_dispose(bst_node_ptr root) {
+    if (root != NULL) {
+        bst_dispose(root->left_ptr);
+        bst_dispose(root->right_ptr);
+        free(root->key); 
+        free(root); 
     }
 }
 
-bst_node_ptr bst_delete(bst_node_ptr *root_ptr, char* key)
-{
-    if (*root_ptr)
-    {
-        if (strcmp(key, (*root_ptr)->key) < 0)
-        {
-            bst_delete(&(*root_ptr)->left_ptr, key);
-        }
+bst_node_ptr minValueNode(bst_node_ptr node) {
+    bst_node_ptr current = node;
 
-        else if (strcmp(key, (*root_ptr)->key) > 0)
-        {
-            bst_delete(&(*root_ptr)->right_ptr, key);
-        }
+    while (current->left_ptr != NULL)
+        current = current->left_ptr;
 
-        else
-        {
-            if (((*root_ptr)->left_ptr == NULL) && ((*root_ptr)->right_ptr == NULL))// leaf node
-            {
-                free((*root_ptr)->data);
-                free(*root_ptr);
-                *root_ptr = NULL;
-            }
+    return current;
+}
 
-            else if (((*root_ptr)->left_ptr != NULL) && ((*root_ptr)->right_ptr == NULL)) // left subtree
-            {
-                free((*root_ptr)->data);
-                free(*root_ptr);
-                *root_ptr = (*root_ptr)->left_ptr;
-            }
+bst_node_ptr bst_delete(bst_node_ptr root, char* key) {
+    if (root == NULL)
+        return root;
 
-            else if (((*root_ptr)->left_ptr == NULL) && ((*root_ptr)->right_ptr != NULL)) // right subtree
-            {
-                free((*root_ptr)->data);
-                free(*root_ptr);
-                *root_ptr = (*root_ptr)->right_ptr;
-            }
+    // If the key to be deleted is smaller than the root's key, then it lies in left subtree
+    if (strcmp(key, root->key) < 0)
+        root->left_ptr = bst_delete(root->left_ptr, key);
 
-            else
-            {
-                bst_replace_by_right_most((*root_ptr), &((*root_ptr)->left_ptr));
-            }
-        }
-    }
-    else
-    {
-        (*root_ptr)->height = 1 + max(bst_height(&(*root_ptr)->left_ptr), bst_height(&(*root_ptr)->right_ptr));
+    // If the key to be deleted is greater than the root's key, then it lies in right subtree
+    else if (strcmp(key, root->key) > 0)
+        root->right_ptr = bst_delete(root->right_ptr, key);
 
-        int balance = bst_calculate_balance(root_ptr);
-        if (balance > 1 && bst_calculate_balance(&(*root_ptr)->left_ptr) >= 0)
-        {
-            return bst_rotate_right(root_ptr);
-        }
+    // if key is same as root's key, then This is the node to be deleted
+    else {
+        // node with only one child or no child
+        if ((root->left_ptr == NULL) || (root->right_ptr == NULL)) {
+            bst_node_ptr temp = root->left_ptr ? root->left_ptr : root->right_ptr;
 
-        else if (balance > 1 && bst_calculate_balance(&(*root_ptr)->left_ptr) < 0)
-        {
-            (*root_ptr)->left_ptr = bst_rotate_left(&(*root_ptr)->left_ptr);
-            return bst_rotate_right(root_ptr);
-        }
+            // No child case
+            if (temp == NULL) {
+                temp = root;
+                root = NULL;
+            } else // One child case
+                *root = *temp; // Copy the contents of the non-empty child
 
-        else if (balance < -1 && bst_calculate_balance(&(*root_ptr)->right_ptr) <= 0)
-        {
-            return bst_rotate_left(root_ptr);
-        }
+            free(temp);
+        } else {
+            // node with two children: Get the inorder successor (smallest in the right subtree)
+            bst_node_ptr temp = minValueNode(root->right_ptr);
 
-        else if (balance < -1 && bst_calculate_balance(&(*root_ptr)->right_ptr) > 0)
-        {
-            (*root_ptr)->left_ptr = bst_rotate_right(&(*root_ptr)->left_ptr);
-            return bst_rotate_left(root_ptr);
+            // Copy the inorder successor's data to this node
+            root->key = strdup(temp->key);
+            root->data = temp->data; // might need deep copy depending on data structure
+
+            // Delete the inorder successor
+            root->right_ptr = bst_delete(root->right_ptr, temp->key);
         }
     }
 
-    return (*root_ptr);
-}
+    // If the tree had only one node then return
+    if (root == NULL)
+        return root;
 
-bst_node_ptr bst_search(bst_node_ptr *root_ptr, char* key)
-{
-    if ((*root_ptr) == NULL)
-    {
-        return NULL;
+    // STEP 2: UPDATE HEIGHT OF THE CURRENT NODE
+    root->height = 1 + max(height(root->left_ptr), height(root->right_ptr));
+
+    // STEP 3: GET THE BALANCE FACTOR OF THIS NODE (to check whether this node became unbalanced)
+    int balance = getBalance(root);
+
+    // If this node becomes unbalanced, then there are 4 cases
+
+    // Left Left Case
+    if (balance > 1 && getBalance(root->left_ptr) >= 0)
+        return rightRotate(root);
+
+    // Left Right Case
+    if (balance > 1 && getBalance(root->left_ptr) < 0) {
+        root->left_ptr = leftRotate(root->left_ptr);
+        return rightRotate(root);
     }
 
-    else
-    {
-        if (strcmp(key, (*root_ptr)->key) == 0)
-        {
-            return (*root_ptr);
-        }
+    // Right Right Case
+    if (balance < -1 && getBalance(root->right_ptr) <= 0)
+        return leftRotate(root);
 
-        else if (strcmp(key, (*root_ptr)->key) > 0)
-        {
-            return bst_search(&(*root_ptr)->right_ptr, key);
-        }
-
-        else
-        {
-            return bst_search(&(*root_ptr)->left_ptr, key);
-        }
-    }
-}
-
-// int init_string(string *str)
-// {
-//     if ((str->value = (char*)malloc(10 * sizeof(char))) == NULL)
-//     {
-//         return INTERNAL_ERROR;
-//     }
-//     str->value[0] = '\0';
-//     str->len = 0;
-//     str->allocated_len = 10;
-//     return SYNTAX_OK;
-// }
-
-// void dispose_string(string *str)
-// {
-//     free(str->value);
-//     str->value = NULL;
-//     str->len = str->allocated_len = 0;
-// }
-
-void bst_dispose(bst_node_ptr *root_ptr)
-{
-    if ((*root_ptr) != NULL)
-    {
-        bst_dispose(&(*root_ptr)->left_ptr); //disposal of left subtree
-        bst_dispose(&(*root_ptr)->right_ptr); // disposal of right subtree
-
-        free((*root_ptr)->key);
-        (*root_ptr)->key = NULL;
-        if((*root_ptr)->data_type == node_data_type_var)
-        {
-            free((*root_ptr)->data);
-            (*root_ptr)->data = NULL;
-        }
-
-        else if ((*root_ptr)->data_type == node_data_type_function)
-        {
-            function_data_t* data = (function_data_t*)(*root_ptr)->data;
-            for (int i = 0; i < data->param_len; i++) {
-                free(data->param_names[i]);
-                free(data->params_identifiers[i]);
-            }
-
-            free(data);
-            (*root_ptr)->data = NULL;
-        }
-
-
-        free(*root_ptr);
-        *root_ptr = NULL;
-    }
-}
-
-// symtable functions
-void symtable_init(symtable_t* table)
-{
-    bst_init(&(table)->root);
-}
-
-void symtable_insert_var(symtable_t* table, char* key, var_data_t* data)
-{
-    var_data_t *data_ptr;
-    if ((data_ptr = (var_data_t*)malloc(sizeof(var_data_t))) == NULL)
-    {
-        return;
-    }
-    data_ptr->data_type = data->data_type;
-    bst_insert(&(table->root), key, data_ptr, node_data_type_var);
-}
-
-void symtable_insert_function(symtable_t* table, char* key, function_data_t* data)
-{
-    function_data_t *data_ptr;
-    if ((data_ptr = (function_data_t*)malloc(sizeof(function_data_t))) == NULL)
-    {
-        return;
+    // Right Left Case
+    if (balance < -1 && getBalance(root->right_ptr) > 0) {
+        root->right_ptr = rightRotate(root->right_ptr);
+        return leftRotate(root);
     }
 
-    data_ptr->return_data_type = data->return_data_type;
-    data_ptr->defined = data->defined;
-    data_ptr->param_names = data->param_names;
-    data_ptr->param_len = data->param_len;
-    data_ptr->params_types = data->params_types;
-    data_ptr->params_identifiers = data->params_identifiers;
-
-    bst_insert(&(table->root), key, data_ptr, node_data_type_function);
+    return root;
 }
 
 
-void symtable_delete(symtable_t* table, char* key)
-{
-    bst_delete(&(table)->root, key);
-    //table->size--;
+bst_node_ptr symtable_search(symtable_t* table, char* key) {
+    return bst_search(table->root, key);
 }
 
-bst_node_ptr symtable_search(symtable_t* table, char* key)
-{
-    return bst_search(&(table)->root, key);
+void symtable_dispose(symtable_t* table) {
+    bst_dispose(table->root);
 }
 
-void symtable_dispose(symtable_t* table)
-{
-    bst_dispose(&(table)->root);
+void symtable_init(symtable_t* table) {
+    table->root = NULL;
+}
+
+void symtable_insert_var(symtable_t* table, char* key, var_data_t* data) {
+    table->root = bst_insert(table->root, key, data, node_data_type_var);
+}
+
+void symtable_insert_function(symtable_t* table, char* key, function_data_t* data) {
+    table->root = bst_insert(table->root, key, data, node_data_type_function);
+}
+
+void symtable_delete(symtable_t* table, char* key) {
+    table->root = bst_delete(table->root, key);
 }
