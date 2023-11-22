@@ -34,17 +34,18 @@ typedef struct bst_node {
 } *bst_node_ptr;
 
 // BST functions
+bst_node_ptr new_bst_node(char*, void*, node_data_type_t);
 void bst_init(bst_node_ptr *);
-int bst_height(bst_node_ptr *);
-int bst_calculate_balance(bst_node_ptr *);
+int bst_height(bst_node_ptr);
+int bst_calculate_balance(bst_node_ptr);
 int max(int, int);
-bst_node_ptr bst_rotate_right(bst_node_ptr *);
-bst_node_ptr bst_rotate_left(bst_node_ptr *);
-bst_node_ptr bst_insert (bst_node_ptr *, char*, void*, node_data_type_t);
-void bst_replace_by_right_most(bst_node_ptr, bst_node_ptr *);
-bst_node_ptr bst_delete(bst_node_ptr *, char*);
-bst_node_ptr bst_search(bst_node_ptr *, char*);
-void bst_dispose(bst_node_ptr *);
+bst_node_ptr bst_rotate_right(bst_node_ptr);
+bst_node_ptr bst_rotate_left(bst_node_ptr);
+bst_node_ptr bst_insert (bst_node_ptr, char*, void*, node_data_type_t);
+void bst_replace_by_right_most(bst_node_ptr, bst_node_ptr);
+bst_node_ptr bst_delete(bst_node_ptr, char*);
+bst_node_ptr bst_search(bst_node_ptr, char*);
+void bst_dispose(bst_node_ptr);
 
 // symtable helpers and functions
 typedef struct variable {
@@ -56,9 +57,9 @@ typedef struct function {
     int return_data_type;
     bool defined;
     int param_len;
-    var_data_t* params_types;
-    char** params_identifiers;
-    char** param_names;
+    var_data_t params_types[100];
+    char* params_identifiers[100];
+    char* param_names[100];
 } function_data_t;
 
 typedef struct symtable {
