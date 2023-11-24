@@ -5,6 +5,7 @@
  * @brief Implementation of the analysis.c file part of parser
 
  * @author Nikita Koliada xkolia00
+ * @author Maksym Podhornyi xpodho08
 */
 #include "error.h"
 #include "symtable.h"
@@ -15,23 +16,23 @@
 
 //Defining macros for easier work with the parser 
 //and for better readability of the code
-int result = SYNTAX_ERROR;					
+int result = SYNTAX_ERROR;
 
 #define GET_TOKEN()													\
 	if ((result = get_next_token(&data->token)) != 0) {        \
             return result;                                         \
         }                                                          \
 
-#define CHECK_TYPE(type)											\
-	if (data->token.type != (type)) return SYNTAX_ERROR
+#define CHECK_TYPE(t_type)											\
+	if (data->token.type != t_type) return SYNTAX_ERROR
 
 #define CHECK_RULE(rule)											\
 	if ((result = rule(data)) != 0) return result
 
-#define GET_TOKEN_AND_CHECK_TYPE(type)								\
+#define GET_TOKEN_AND_CHECK_TYPE(t_type)								\
 	do {															\
 		GET_TOKEN();												\
-		CHECK_TYPE(type);											\
+		CHECK_TYPE(t_type);											\
 	} while(0)
 
 #define GET_TOKEN_AND_CHECK_RULE(rule)								\
@@ -374,7 +375,7 @@ static int f_call(analyse_data_t* data){
 //         GET_TOKEN_AND_CHECK_TYPE(TOKEN_RIGHT_BRACKET);
 //         return SYNTAX_OK;
 //     }
-    return SYNTAX_ERROR;
+    return SYNTAX_OK;
 }
 
 // //24. 〈 fc_args 〉−→ id: expression 〈fc_ n_args 〉
@@ -566,11 +567,15 @@ int analyse()
         return INTERNAL_ERROR;
 
     result = get_next_token(&data->token);
+
+    if (data->token.type == TOKEN_EOF)
+        return -1;
+
     result = program(data);
-    if(result == SYNTAX_OK)
-        printf("OK\n");
-    else
-        printf("ERROR\n");
+
+    if(result != SYNTAX_OK)
+        fprintf(stderr, "ERROR: %d\n", result);
+
     free_variables(data);
 
     return result;
