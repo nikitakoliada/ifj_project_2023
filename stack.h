@@ -14,6 +14,7 @@ typedef struct{
     data_type type;
     bool nullable;
     bool is_nil;
+    bool is_identifier;
 }stack_element;
 
 typedef struct stack{
@@ -22,7 +23,7 @@ typedef struct stack{
     stack_element** array;
 }stack_t;
 
-bool stack_init(stack_t*);
+bool stack_init(stack_t**);
 bool stack_push(stack_t*, stack_element*);
 stack_element* stack_pop(stack_t*);
 void stack_pop_elements(stack_t*, int);

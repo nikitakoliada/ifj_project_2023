@@ -1,4 +1,5 @@
 #include "analysis.h"
+#include <stdbool.h>
 
 typedef enum{
     IntS,
@@ -25,4 +26,4 @@ typedef enum{
     Handle
 }eSymbol;
 
-int expression(analyse_data_t* data);
+int expression(analyse_data_t*, bool*);

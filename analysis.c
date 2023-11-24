@@ -12,6 +12,7 @@
 #include "stdbool.h"
 #include "analysis.h"
 #include "scanner.h"
+#include "expression.h"
 // include code generator
 
 //Defining macros for easier work with the parser 
@@ -39,6 +40,13 @@ int result = SYNTAX_ERROR;
 	do {															\
 		GET_TOKEN();												\
 		CHECK_RULE(rule);											\
+	} while(0)
+
+#define GET_TOKEN_AND_CHECK_EXPRESSION()								\
+	do {															\
+		GET_TOKEN();                                                  \
+        bool EOL = false;												\
+		if ((result = expression(data, &EOL)) != 0) return result;											\
 	} while(0)
 
 
@@ -279,7 +287,7 @@ static int if_else(analyse_data_t* data){
     if(data->token.type == KEYWORD && data->token.data.Keyword == If_KW){
         data->label_deep++;
         data->in_while_or_if = true;
-        //GET_TOKEN_AND_CHECK_RULE(expression);
+        GET_TOKEN_AND_CHECK_EXPRESSION();
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
         GET_TOKEN_AND_CHECK_RULE(statement);
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
@@ -302,8 +310,8 @@ static int while_(analyse_data_t* data){
     if(data->token.type == KEYWORD && data->token.data.Keyword == While_KW){
         data->label_deep++;
         data->in_while_or_if = true;
-        //GET_TOKEN_AND_CHECK_RULE(expression);
-        GET_TOKEN_AND_CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
+        GET_TOKEN_AND_CHECK_EXPRESSION();
+        CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
         GET_TOKEN_AND_CHECK_RULE(statement);
         GET_TOKEN_AND_CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
         data->label_deep--;
@@ -321,7 +329,7 @@ static int assignment(analyse_data_t* data){
             return SEM_ERROR_UNDEF_VAR;
         }
         GET_TOKEN_AND_CHECK_TYPE(ASSIGNMENT);
-        //GET_TOKEN_AND_CHECK_RULE(expression);
+        GET_TOKEN_AND_CHECK_EXPRESSION();
         return SYNTAX_OK;
     }
 //     //21. 〈 assignment 〉 −→ 〈 modifier 〉〈 id 〉〈 def_type 〉 = 〈 expression 〉
@@ -335,7 +343,7 @@ static int assignment(analyse_data_t* data){
         }
         GET_TOKEN_AND_CHECK_RULE(def_type);
         GET_TOKEN_AND_CHECK_TYPE(ASSIGNMENT);
-        //GET_TOKEN_AND_CHECK_RULE(expression);
+        GET_TOKEN_AND_CHECK_EXPRESSION();
         return SYNTAX_OK;
     }
     return SYNTAX_ERROR;
@@ -387,8 +395,8 @@ static int fc_args(analyse_data_t* data){
 //             return SEM_ERROR_UNDEF_VAR;
 //         }
 //         GET_TOKEN_AND_CHECK_TYPE(COLON);
-//         GET_TOKEN_AND_CHECK_RULE(expression);
-//         GET_TOKEN_AND_CHECK_RULE(fc_n_args);
+//         GET_TOKEN_AND_CHECK_EXPRESSION();
+//         CHECK_RULE(fc_n_args);
 //         return SYNTAX_OK;
 //     }
 //     //25. 〈fc_args 〉−→ ε
@@ -405,8 +413,8 @@ static int fc_args_n_args(analyse_data_t* data){
 //             return SEM_ERROR_UNDEF_VAR;
 //         }
 //         GET_TOKEN_AND_CHECK_TYPE(COLON);
-//         GET_TOKEN_AND_CHECK_RULE(expression);
-//         GET_TOKEN_AND_CHECK_RULE(fc_n_args);
+//         GET_TOKEN_AND_CHECK_EXPRESSION();
+//         CHECK_RULE(fc_n_args);
 //         return SYNTAX_OK;
 //     }
 //     //25. 〈fc_args 〉−→ ε
@@ -453,7 +461,7 @@ static int possible_EOL(analyse_data_t* data){
         return SYNTAX_OK;
     }
 //     //34. 〈 possible_EOL 〉 −→ ε
-    return SYNTAX_ERROR;
+    return SYNTAX_OK;
 }
 
 // //35. 〈 id 〉 −→ identifier
