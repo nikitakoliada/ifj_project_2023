@@ -108,14 +108,15 @@ eSymbol token_to_esymbol(token_t token){
 data_type get_data_type(token_t token, symtable_t table, bool* is_nullable){
     is_nullable = false;
     switch(token.type){
-        case IDENTIFIER:
+        case IDENTIFIER: {
             bst_node_ptr node = symtable_search(&table, token.data.String);
-            if(!node){
+            if (!node) {
                 return Undefined;
             }
-            var_data_t* data = (var_data_t*)node->data;
-            *is_nullable = data->q_type; 
+            var_data_t *data = (var_data_t *) node->data;
+            *is_nullable = data->q_type;
             return data->data_type;
+        }
         case INT_VALUE:
             return Int_Type;
 
