@@ -8,7 +8,7 @@
 ##
 
 CC = gcc
-FLAGS = -std=c99 -pedantic -Wall -Wextra
+FLAGS = -std=c99
 OUT = IFJ23
 SRCS := $(wildcard *.c)
 

@@ -8,7 +8,7 @@
  * @author Pavlo Butenko - xbuten00
  * @author Maksym Podhornyi - xpodho08
 
- */
+*/
 
 #include "scanner.h"
 
@@ -208,7 +208,7 @@ int get_next_token(token_t* token){
                 }
                 break;
             case KEYWORD_OR_IDENTIFIER_S:
-                if(isalnum(symbol) || symbol == '_'){
+                if(isalnum(symbol) || symbol == '_' || symbol == '?'){
                     add_char = true;
                 }else if(symbol == '?' && is_pure_type(raw_token)){
                     add_char = true;
@@ -513,6 +513,7 @@ int get_next_token(token_t* token){
 
     switch (token_type)
     {
+        case BUILT_IN_FUNCTION:
         case KEYWORD:
             get_keyword_type(raw_token, &token->data.Keyword);
             break;
