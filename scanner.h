@@ -63,7 +63,6 @@ typedef enum token_type {
     // values of variables
     STRING_VALUE,
     INT_VALUE,
-    NIL_VALUE, // ?
     DOUBLE_VALUE,
 
     // relation operators
@@ -104,9 +103,9 @@ typedef enum keyword{
     String_KW,
     Var_KW,
     While_KW,
-    String_Nullable_KW,
-    Int_Nullable_KW,
-    Double_Nullable_KW,
+    IntNullable_KW,
+    StringNullable_KW,
+    DoubleNullable_KW,
 } keyword_t;
 
 typedef union token_data {
