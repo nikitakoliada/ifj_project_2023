@@ -49,6 +49,7 @@ void bst_dispose(bst_node_ptr);
 
 // symtable helpers and functions
 typedef struct variable {
+    bool constant; // true if const
     int data_type;
     bool q_type; // true if f.e. int? or string? or double?
 } var_data_t;
