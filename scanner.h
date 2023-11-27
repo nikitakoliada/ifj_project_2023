@@ -63,7 +63,6 @@ typedef enum token_type {
     // values of variables
     STRING_VALUE,
     INT_VALUE,
-    NIL_VALUE, // ?
     DOUBLE_VALUE,
 
     // relation operators

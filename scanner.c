@@ -16,6 +16,7 @@
 
 char *keywords[] = {"Double", "else", "func", "if", "Int", "let", "nil", "return", "String", "var", "while", "Int?", "String?", "Double?"};
 char *built_in_functions[] = {"readString", "readInt", "readDouble", "write", "Int2Double", "Double2Int", "length", "substring", "ord", "chr"};
+char *types[] = {"Double", "Int", "String"};
 
 FILE* file;
 
@@ -69,6 +70,13 @@ void get_keyword_type(char* token_raw, keyword_t* keyword){
             *keyword = (keyword_t)i;
         }
     }
+}
+
+bool is_pure_type(char* token){
+    for(int i = 0; i < 3; i++){
+        if(!strcmp(token, types[i])) return true;
+    }
+    return false;
 }
 
 int get_next_token(token_t* token){
@@ -147,21 +155,17 @@ int get_next_token(token_t* token){
 
             case MINUS_S:
                 if(symbol == '>'){
-                    // state = FUNCTION_TYPE;
                     token_type = TOKEN_FUNCTION_TYPE;
                 }else{
                     ungetc(symbol, file);
                     token_type = MINUS;
-                    //TODO
                 }
                 break;
             case NIL_S:
                 if(symbol == '?'){
-                    //state = NC;
                     token_type = NIL_COLL; // Nullish coalescing operator
                 }else{
-                    ungetc(symbol, file);
-                    token_type = NIL_VALUE;
+                    ERROR_EXIT("Unexpected symbol", LEX_ERROR);
                 }
                 break;
             case NOT_S:
@@ -204,9 +208,13 @@ int get_next_token(token_t* token){
                 }
                 break;
             case KEYWORD_OR_IDENTIFIER_S:
-                if(isalnum(symbol) || symbol == '_' || symbol == '?'){
+                if(isalnum(symbol) || symbol == '_'){
                     add_char = true;
-                }else{
+                }else if(symbol == '?' && is_pure_type(raw_token)){
+                    add_char = true;
+                    token_type = KEYWORD;
+                }
+                else{
                     ungetc(symbol, file);
                     if(is_built_in_function(raw_token)){
                         token_type = BUILT_IN_FUNCTION;

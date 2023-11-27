@@ -85,9 +85,6 @@ void print_token(token_t *token)
             printf("INT_VALUE\n");
             printf("%lld\n", token->data.Int);
             break;
-        case NIL_VALUE:
-            printf("NIL_VALUE\n");
-            break;
         case (PLUS):
             printf("PLUS\n");
             break;
