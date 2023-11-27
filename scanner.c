@@ -72,6 +72,14 @@ void get_keyword_type(char* token_raw, keyword_t* keyword){
     }
 }
 
+void get_built_in_function_type(char* token_raw, built_in_function_t* function){
+    for(int i = 0; i < 10; i++){
+        if(!strcmp(token_raw, built_in_functions[i])){
+            *function = (built_in_function_t)i;
+        }
+    }
+}
+
 bool is_pure_type(char* token){
     for(int i = 0; i < 3; i++){
         if(!strcmp(token, types[i])) return true;
@@ -514,6 +522,8 @@ int get_next_token(token_t* token){
     switch (token_type)
     {
         case BUILT_IN_FUNCTION:
+            get_built_in_function_type(raw_token, &token->data.Built_In_Function);
+            break;
         case KEYWORD:
             get_keyword_type(raw_token, &token->data.Keyword);
             break;

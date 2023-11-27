@@ -108,11 +108,25 @@ typedef enum keyword{
     DoubleNullable_KW,
 } keyword_t;
 
+typedef enum built_in_function{
+    READSTRING_FUNCTION,
+    READINT_FUNCTION,
+    READOUBLE_FUNCTION,
+    WRITE_FUNCTION, 
+    INT2DOUBLE_FUNCTION,
+    DOUBE2INT_FUNCTION,
+    LENGTH_FUNCTION,
+    SUBSTRING_FUNCTION, 
+    ORD_FUNCTION,
+    CHR_FUNCTION,
+} built_in_function_t;
+
 typedef union token_data {
     long long int Int;
     double Double;
     char *String;
     keyword_t Keyword;
+    built_in_function_t Built_In_Function;
 } token_data_t;
 
 typedef struct token {

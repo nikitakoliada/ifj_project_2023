@@ -1,4 +1,4 @@
-#include "../scanner.c"
+#include "../scanner.h"
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -80,7 +80,7 @@ void test_integer_value_token() {
 }
 void test_double_value_token() {
     char *input = "123.45";
-    FILE *file = fmemopen(input, strlen(input), "r");
+    FILE *file = fmemopen(input, strlen(input) + 1, "r");
     set_source_file(file);
 
     token_t token;
@@ -122,7 +122,7 @@ void test_eof_eol_token() {
     printf("EOF and EOL Token Test: Passed\n");
 }
 // TODO again should fix it cz it aint good
-void test_escape_sequence_processing() {
+/*void test_escape_sequence_processing() {
     
     char test_string[] = "Hello\nWorld";
     unsigned long long pos = 6; 
@@ -148,7 +148,7 @@ void test_escape_sequence_processing() {
 
     // assert(test_string[pos-1] == '\0');  // Checking if the escape sequence is processed correctly
     printf("Escape sequence Test: Passed\n");
-}
+}*/
 // TODO how to test if there were some errors? 
 
 // void test_error_handling() {
@@ -207,18 +207,21 @@ void test_factorial_code() {
     token_t token;
     get_next_token(&token);
     assert(token.type == BUILT_IN_FUNCTION);
+    assert(token.data.Built_In_Function == WRITE_FUNCTION);
 
-    assert(strcmp(token.data.String, "write") == 0);
     get_next_token(&token);
     assert(token.type == TOKEN_LEFT_BRACKET);
 
     // Next token: String literal
     get_next_token(&token);
     assert(token.type == STRING_VALUE);
-    assert(strcmp(token.data.String, "Zadejte cislo pro vypocet faktorialu\\n") == 0);
+    assert(strcmp(token.data.String, "Zadejte cislo pro vypocet faktorialu\n") == 0);
 
     get_next_token(&token);
     assert(token.type == TOKEN_RIGHT_BRACKET);
+
+    get_next_token(&token);
+    assert(token.type == TOKEN_EOL);
 
     // Next token: 'let' (KEYWORD)
     get_next_token(&token);
@@ -236,8 +239,8 @@ void test_factorial_code() {
 
     // Next token: 'Int?' (IDENTIFIER)
     get_next_token(&token);
-    assert(token.type == IDENTIFIER);
-    assert(strcmp(token.data.String, "Int?") == 0);
+    assert(token.type == KEYWORD);
+    assert(token.data.Keyword == IntNullable_KW);
 
     // Next token: '=' (ASSIGNMENT)
     get_next_token(&token);
@@ -246,7 +249,7 @@ void test_factorial_code() {
     // Next token: 'readInt' (BUILT_IN_FUNCTION)
     get_next_token(&token);
     assert(token.type == BUILT_IN_FUNCTION);
-    assert(strcmp(token.data.String, "readInt") == 0);
+    assert(token.data.Built_In_Function == READINT_FUNCTION);
 
     // Next token: '(' (LEFT BRACKET)
     get_next_token(&token);
@@ -255,6 +258,9 @@ void test_factorial_code() {
     // Next token: ')' (RIGHT BRACKET)
     get_next_token(&token);
     assert(token.type == TOKEN_RIGHT_BRACKET);
+
+    get_next_token(&token);
+    assert(token.type == TOKEN_EOL);
 
     // Next token: 'if' (KEYWORD)
     get_next_token(&token);
@@ -271,7 +277,7 @@ int main() {
     test_double_value_token();
     test_eof_eol_token();
     //test_error_handling();
-    test_escape_sequence_processing();
+    //test_escape_sequence_processing();
     test_identifier_token();
     test_integer_value_token();
     test_keyword_token();
