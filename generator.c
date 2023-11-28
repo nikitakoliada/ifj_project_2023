@@ -67,10 +67,6 @@ void generate_readDouble()
     GENERATE("LABEL !_readDouble");
 }
 
-void generate_Int2Double()
-{
-    
-}
 /**
  * @brief BuiltIn function Double2Int
  *
@@ -252,4 +248,16 @@ void generate_chr()
     GENERATE("POPFRAME");
     GENERATE("RETURN");
     GENERATE("LABEL !_chr");
+}
+
+void define_built_in_functions()
+{
+    generate_readString();
+    generate_readInt();
+    generate_readDouble();
+    generate_Double2Int();
+    generate_length();
+    generate_substring();
+    generate_ord();
+    generate_chr();
 }
