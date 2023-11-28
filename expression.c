@@ -1,3 +1,13 @@
+/**
+ * Project: Implementation of imperative language compiler IFJ23
+ * @file expression.c
+
+ * @brief Implementation of the expression.c file part of parser
+
+ * @author Pavlo Butenko - xbuten00
+*/
+
+
 //#include "expression.h"
 #include "stack.h"
 #include "error.h"

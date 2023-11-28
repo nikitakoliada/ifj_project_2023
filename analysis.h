@@ -4,7 +4,7 @@
 
  * @brief Implementation of the analysis.h header file part of parser
 
- * @author Nikita Koliada xkolia00
+ * @author Nikita Koliada - xkolia00
 */
 
 #ifndef _ANALYSIS_H

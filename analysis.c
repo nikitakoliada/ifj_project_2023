@@ -7,6 +7,7 @@
  * @author Nikita Koliada xkolia00
  * @author Maksym Podhornyi xpodho08
 */
+
 #include "error.h"
 #include "symtable.h"
 #include "stdbool.h"
@@ -596,4 +597,3 @@ int analyse()
 
     return result;
 }
-
