@@ -129,8 +129,8 @@ static int statement(analyse_data_t* data)
     // 〈 statement 〉 −→ 〈 function 〉 EOL 〈 statement 〉
     if(data->token.type == KEYWORD && data->token.data.Keyword == Function_KW)
     {
-        data->label_deep++;
         CHECK_RULE(function);
+        GET_TOKEN_AND_CHECK_RULE(possible_EOL);
         return statement(data);
     }
     // 〈 statement 〉 −→ 〈 if_else 〉 EOL 〈 statement 〉
@@ -180,7 +180,6 @@ static int statement(analyse_data_t* data)
     else if(data->token.type == KEYWORD && data->token.data.Keyword == Return_KW){
         data->var_id = symtable_search(&data->local_table, "%%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
-        printf("return\n");
         CHECK_RULE(possible_EOL);
         return statement(data);
     }
@@ -195,6 +194,7 @@ static int statement(analyse_data_t* data)
         return end(data); // TODO ig idk maybe inside end
     }
     //10. 〈 statement 〉 −→ ε
+    printf("%d", data->token.type);
     return SYNTAX_OK;
 }
 
@@ -226,9 +226,7 @@ static int function(analyse_data_t* data){
         GET_TOKEN_AND_CHECK_RULE(func_ret);
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
         GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
-        printf("before statement\n");
         GET_TOKEN_AND_CHECK_RULE(statement);
-        printf("after statement\n");
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
         func_data->defined = true;
         data->in_defintion = false;
@@ -338,14 +336,14 @@ static int if_else(analyse_data_t* data){
             data->var_id = symtable_search(&data->local_table, "%%exp_result");
             CHECK_EXPRESSION();
         }
-        
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
         GET_TOKEN_AND_CHECK_RULE(statement);
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
-        GET_TOKEN_AND_CHECK_RULE(possible_EOL);
-        CHECK_TYPE(KEYWORD && data->token.data.Keyword == Else_KW);
-
-        CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
+        GET_TOKEN();
+        if(data->token.data.Keyword != Else_KW){
+            return SYNTAX_ERROR;
+        }
+        GET_TOKEN_AND_CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
         GET_TOKEN_AND_CHECK_RULE(statement);
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
 
@@ -364,10 +362,9 @@ static int while_(analyse_data_t* data){
         data->label_index += 2;
         data->var_id = symtable_search(&data->local_table, "%%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
-        printf("while\n");
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
         GET_TOKEN_AND_CHECK_RULE(statement);
-        GET_TOKEN_AND_CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
+        CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
         data->label_deep--;
         data->in_while_or_if = false;
         return SYNTAX_OK;
@@ -387,6 +384,7 @@ static int assignment(analyse_data_t* data){
         }
         
         GET_TOKEN_AND_CHECK_TYPE(ASSIGNMENT);
+        data->var_id = symtable_search(&data->local_table, "%%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
         return SYNTAX_OK;
     }
@@ -449,14 +447,12 @@ static int def_var(analyse_data_t* data){
         }
         else{
             GET_TOKEN(); // bc GET_TOKEN_AND_CHECK_EXPRESSION also gets token after the expression
-        
         }
         if(no_type && no_assignment){
             return SYNTAX_ERROR;
         }
         
         var_data->constant = constanta;
-        
         return SYNTAX_OK;
     }
 
@@ -711,7 +707,7 @@ static int p_type(analyse_data_t* data){
 }
 int main()
 {
-    char *input = "var b = 7\nif b == 7 {\nvar i = 9\n}else{\nvar t =\"\" \n}";
+    char *input = "var n : Int = 4\nfunc decrement(of n: Int, by m: Int) -> Int {\nn = n + 342\nn = 5\nreturn n - m\n}\nfunc increment(of n: Int, by m: Int) -> Int {\nreturn n + m\n}";
     FILE *file = fmemopen(input, strlen(input), "r");
     set_source_file(file);
     analyse_data_t *data = malloc(sizeof(analyse_data_t));
