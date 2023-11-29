@@ -74,6 +74,7 @@ static bool init_variables(analyse_data_t* data)
 
 	data->in_defintion = false;
 	data->in_while_or_if = false;
+    data->in_var_definition = false;
 
 	return true;
 }
@@ -431,7 +432,9 @@ static int def_var(analyse_data_t* data){
         //21. 〈 def_var 〉 −→ 〈 modifier 〉〈 id 〉〈 def_type 〉 = 〈 expression 〉
         if(data->token.type == ASSIGNMENT){
             no_assignment = false;
+            data->in_var_definition = true;
             GET_TOKEN_AND_CHECK_EXPRESSION();
+            data->in_var_definition = false;
         }
         else{
             GET_TOKEN(); // bc GET_TOKEN_AND_CHECK_EXPRESSION also gets token after the expression
@@ -462,6 +465,22 @@ static int f_call(analyse_data_t* data){
         return SYNTAX_OK;
     }
     return SYNTAX_OK;
+}
+
+// //23.2. 〈f_call 〉−→ id ( 〈fc_args 〉)
+int f_expression_call(analyse_data_t* data, token_t id, data_type* type){
+    if(id.type == IDENTIFIER){
+        data->current_id = symtable_search(&data->local_table, id.data.String);
+        if(data->current_id == NULL){
+            return SEM_ERROR_UNDEF_VAR;
+        }
+        CHECK_TYPE(TOKEN_LEFT_BRACKET);
+        GET_TOKEN_AND_CHECK_RULE(fc_args);
+        GET_TOKEN_AND_CHECK_TYPE(TOKEN_RIGHT_BRACKET);
+        *type = ((function_data_t*)data->current_id->data)->return_data_type;
+        return SYNTAX_OK;
+    }
+    return SYNTAX_ERROR;
 }
 
 // //24. 〈 fc_args 〉−→ id: expression 〈fc_ n_args 〉
@@ -673,7 +692,7 @@ static int p_type(analyse_data_t* data){
 }
 int main()
 {
-    char *input = "func decrement(of n: Int, by m: Int) -> Int {\nreturn 32\n}";
+    char *input = "let c: Int = 5\nwhile (c > 5) {}";
     FILE *file = fmemopen(input, strlen(input), "r");
     set_source_file(file);
     analyse_data_t *data = malloc(sizeof(analyse_data_t));
