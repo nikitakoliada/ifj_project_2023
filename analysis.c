@@ -81,7 +81,7 @@ static bool init_variables(analyse_data_t* data)
     var_data->data_type = Undefined;
     var_data->q_type = false;
 
-    symtable_insert_var(&data->global_table, "%expr_result", var_data);
+    symtable_insert_var(&data->global_table, "%%expr_result", var_data);
 
 	return true;
 }
@@ -172,13 +172,13 @@ static int statement(analyse_data_t* data)
     //6. 〈 statement 〉 −→ 〈def_var 〉 EOL 〈 statement 〉
     else if(data->token.type == KEYWORD && (data->token.data.Keyword == Let_KW || data->token.data.Keyword == Var_KW)){
         CHECK_RULE(def_var);
-        printf("%s", data->var_id->key);
+        //printf("%s", data->var_id->key);
         CHECK_RULE(possible_EOL);
         return statement(data);
     }
     //???. 〈 statement 〉 −→ <return_kw> <expression> EOL <statement>
     else if(data->token.type == KEYWORD && data->token.data.Keyword == Return_KW){
-        data->var_id = symtable_search(&data->local_table, "%exp_result");
+        data->var_id = symtable_search(&data->local_table, "%%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
         printf("return\n");
         CHECK_RULE(possible_EOL);
@@ -335,7 +335,7 @@ static int if_else(analyse_data_t* data){
             }
         }
         else{
-            data->var_id = symtable_search(&data->local_table, "%exp_result");
+            data->var_id = symtable_search(&data->local_table, "%%exp_result");
             CHECK_EXPRESSION();
         }
         
@@ -362,6 +362,7 @@ static int while_(analyse_data_t* data){
         data->label_deep++;
         data->in_while_or_if = true;
         data->label_index += 2;
+        data->var_id = symtable_search(&data->local_table, "%%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
         printf("while\n");
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
@@ -443,7 +444,6 @@ static int def_var(analyse_data_t* data){
         if(data->token.type == ASSIGNMENT){
             no_assignment = false;
             data->in_var_definition = true;
-            data->var_id = symtable_search(&data->local_table, "%exp_result");
             GET_TOKEN_AND_CHECK_EXPRESSION();
             data->in_var_definition = false;
         }
@@ -711,7 +711,7 @@ static int p_type(analyse_data_t* data){
 }
 int main()
 {
-    char *input = "let c: Int = 5\nwhile (c > 5) {}";
+    char *input = "var b = 7\nif b == 7 {\nvar i = 9\n}else{\nvar t =\"\" \n}";
     FILE *file = fmemopen(input, strlen(input), "r");
     set_source_file(file);
     analyse_data_t *data = malloc(sizeof(analyse_data_t));

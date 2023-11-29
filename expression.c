@@ -138,6 +138,7 @@ eSymbol token_to_esymbol(token_t token, analyse_data_t* data, bool* is_nullable)
         case INT_VALUE: return IntS;
         case KEYWORD:
             if(token.data.Keyword == Nil_KW) return NilS; 
+            return DollarS;
         case IDENTIFIER:
             bool a = false;
             data_type t = get_data_type(token, data, is_nullable);
@@ -485,7 +486,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
             else precedence_result = R;
         }
 
-        printf("-****%d - %d*****\n", stack_symbol_index, token.type);
+        //printf("-****%d - %d*****\n", stack_symbol_index, token.type);
         stack_element* new_element = NULL;
 
         switch(precedence_result){
@@ -629,11 +630,9 @@ int expression(analyse_data_t* data, bool* is_EOL){
         return INTERNAL_ERROR;
     }
 
-
-
     if(data->var_id){
         var_data_t* var_data = (var_data_t*)data->var_id->data;
-        if((final_element->nullable || final_element->is_nil) && !var_data->q_type){
+        if((final_element->nullable || final_element->is_nil) && !var_data->q_type && var_data->data_type != Undefined){
             FREE_RECOURCES(stack);
             return SEM_ERROR_TYPE_COMPAT;
         }
@@ -675,6 +674,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
                     var_data->data_type = final_element->type;
                     var_data->q_type = final_element->nullable;
                 }
+
                 // Generate assigment
                 break;
         }
@@ -685,7 +685,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
 
     FREE_RECOURCES(stack);
 
-    printf("End\n");
+    printf("End of Expression\n");
 
     return SYNTAX_OK;
 }
