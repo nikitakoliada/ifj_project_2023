@@ -578,7 +578,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
 
 
     if(data->var_id){
-        var_data_t* var_data = (var_data_t*)(*data->var_id)->data;
+        var_data_t* var_data = (var_data_t*)(*data->var_id).data;
         if((final_element->nullable || final_element->is_nil) && !var_data->q_type){
             FREE_RECOURCES(stack);
             return SEM_ERROR_TYPE_COMPAT;

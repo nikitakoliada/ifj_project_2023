@@ -10,13 +10,6 @@
 #include <stdbool.h>
 #include "expression.h"
 
-typedef enum{
-    Int_Type,
-    String_Type,
-    Double_Type, 
-    Bool_Type,
-    Undefined
-}data_type;
 
 typedef struct{
     eSymbol symbol;

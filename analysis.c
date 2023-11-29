@@ -7,7 +7,6 @@
  * @author Nikita Koliada xkolia00
  * @author Maksym Podhornyi xpodho08
 */
-
 #include "error.h"
 #include "symtable.h"
 #include "stdbool.h"
@@ -43,6 +42,14 @@ int result = SYNTAX_ERROR;
 		CHECK_RULE(rule);											\
 	} while(0)
 
+
+#define CHECK_EXPRESSION()								\
+	do {															\
+        bool EOL = false;												\
+		if ((result = expression(data, &EOL)) != 0) return result;											\
+	} while(0)
+
+
 #define GET_TOKEN_AND_CHECK_EXPRESSION()								\
 	do {															\
 		GET_TOKEN();                                                  \
@@ -56,9 +63,9 @@ static bool init_variables(analyse_data_t* data)
 {
 	symtable_init(&data->global_table);
 	symtable_init(&data->local_table);
-	data->current_id = NULL	;
-    data->var_id = NULL;
-    data->expr_id = NULL;
+	data->current_id = malloc(sizeof(bst_node_ptr))	;
+    data->var_id = malloc(sizeof(bst_node_ptr))	;
+    data->expr_id = malloc(sizeof(bst_node_ptr))	;
 
 	data->args_index = 0;
 	data->label_index = 0;
@@ -93,7 +100,7 @@ static int assignment(analyse_data_t* data);
 static int def_var(analyse_data_t* data);
 static int f_call(analyse_data_t* data);
 static int fc_args(analyse_data_t* data);
-static int fc_n_args(analyse_data_t* data);
+static int fc_args_n_args(analyse_data_t* data);
 static int modifier(analyse_data_t* data);
 static int def_type(analyse_data_t* data);
 static int end(analyse_data_t* data);
@@ -132,21 +139,25 @@ static int statement(analyse_data_t* data)
         return statement(data);
     }
     //5. 〈 statement 〉 −→ 〈 assignment 〉EOL 〈 statement 〉
-    else if(data->token.type == ASSIGNMENT){
+    else if(data->token.type == IDENTIFIER){
+        printf("%d", data->token.type);
         CHECK_RULE(assignment);
-        GET_TOKEN_AND_CHECK_RULE(possible_EOL);
+        printf("%d", data->token.type);
+        CHECK_RULE(possible_EOL);
         return statement(data);
     }
     //6. 〈 statement 〉 −→ 〈def_var 〉 EOL 〈 statement 〉
     else if(data->token.type == KEYWORD && (data->token.data.Keyword == Let_KW || data->token.data.Keyword == Var_KW)){
         CHECK_RULE(def_var);
-        GET_TOKEN_AND_CHECK_RULE(possible_EOL);
+        printf("%s", data->var_id->key);
+        CHECK_RULE(possible_EOL);
         return statement(data);
     }
     //???. 〈 statement 〉 −→ <return_kw> <expression> EOL <statement>
     else if(data->token.type == KEYWORD && data->token.data.Keyword == Return_KW){
-        //GET_TOKEN_CHECK_RULE(expression); //idk pashas part no idea yet
-        GET_TOKEN_AND_CHECK_RULE(possible_EOL);
+        GET_TOKEN_AND_CHECK_EXPRESSION();
+        printf("return\n");
+        CHECK_RULE(possible_EOL);
         return statement(data);
     }
     //7. 〈 statement 〉 −→ 〈 f_call 〉EOL 〈 statement 〉
@@ -198,7 +209,9 @@ static int function(analyse_data_t* data){
         GET_TOKEN_AND_CHECK_RULE(func_ret);
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
         GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
+        printf("before statement\n");
         GET_TOKEN_AND_CHECK_RULE(statement);
+        printf("after statement\n");
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
         func_data->defined = true;
         data->in_defintion = false;
@@ -218,7 +231,7 @@ static int func_ret(analyse_data_t* data){
     }
     //13. 〈 func_ret 〉 −→ ε
     else{
-        ((function_data_t*)(*data->current_id).data)->return_data_type = 0;
+        ((function_data_t*)(*data->current_id).data)->return_data_type = Undefined;
     }
     return SYNTAX_OK;
 
@@ -230,23 +243,26 @@ static int args(analyse_data_t* data){
     if(data->token.type == IDENTIFIER){
         ((function_data_t*)(*data->current_id).data)->param_names[data->args_index] = data->token.data.String;
         // if there is function named as parameter
-		bst_node_ptr is_var = symtable_search(&data->global_table, data->token.data.String);
-        if(is_var != NULL)
+		bst_node_ptr name_var = symtable_search(&data->global_table, data->token.data.String);
+        if(name_var != NULL)
 			return SEM_ERROR_UNDEF_VAR;
 
         GET_TOKEN_AND_CHECK_TYPE(IDENTIFIER);
-        // we are in defintion, we need to add parameters to the local symbol table
+        var_data_t* var_data = malloc(sizeof(var_data_t));
+        bst_node_ptr ident_var = symtable_search(&data->global_table, data->token.data.String);
+        if(ident_var != NULL)
+			return SEM_ERROR_UNDEF_VAR;
+        symtable_insert_var(&data->local_table, data->token.data.String, var_data);
         ((function_data_t*)(*data->current_id).data)->params_identifiers[data->args_index] = data->token.data.String;
 
 
         GET_TOKEN_AND_CHECK_TYPE(COLON);
         GET_TOKEN_AND_CHECK_RULE(type);
-        var_data_t* var_data = malloc(sizeof(var_data_t));
         var_data->q_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index].q_type;
         var_data->data_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index].data_type;
-        symtable_insert_var(&data->local_table, ((function_data_t*)(*data->current_id).data)->params_identifiers[data->args_index], var_data);
         CHECK_RULE(args_n);
         ((function_data_t*)(*data->current_id).data)->param_len = data->args_index;
+
     }    
     //15. 〈 args 〉 −→ ε
 
@@ -264,16 +280,18 @@ static int args_n(analyse_data_t* data){
 			return SEM_ERROR_UNDEF_VAR;
 
         GET_TOKEN_AND_CHECK_TYPE(IDENTIFIER);
-        // we are in defintion, we need to add parameters to the local symbol table
+        bst_node_ptr ident_var = symtable_search(&data->global_table, data->token.data.String);
+        if(ident_var != NULL)
+			return SEM_ERROR_UNDEF_VAR;
+        var_data_t* var_data = malloc(sizeof(var_data_t));
+        symtable_insert_var(&data->local_table, data->token.data.String, var_data);
         ((function_data_t*)(*data->current_id).data)->params_identifiers[data->args_index] = data->token.data.String;
 
 
         GET_TOKEN_AND_CHECK_TYPE(COLON);
         GET_TOKEN_AND_CHECK_RULE(type);
-        var_data_t* var_data = malloc(sizeof(var_data_t));
         var_data->q_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index].q_type;
         var_data->data_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index].data_type;
-        symtable_insert_var(&data->local_table, ((function_data_t*)(*data->current_id).data)->params_identifiers[data->args_index], var_data);
 
         CHECK_RULE(args_n);	
     }    
@@ -287,7 +305,21 @@ static int if_else(analyse_data_t* data){
     if(data->token.type == KEYWORD && data->token.data.Keyword == If_KW){
         data->label_deep++;
         data->in_while_or_if = true;
-        GET_TOKEN_AND_CHECK_EXPRESSION();
+        GET_TOKEN();
+        if(data->token.type == KEYWORD && data->token.data.Keyword == Let_KW){
+            GET_TOKEN_AND_CHECK_TYPE(IDENTIFIER);
+            bst_node_ptr let_id = symtable_search(&data->global_table, data->token.data.String);
+            if(let_id == NULL){
+                return SEM_ERROR_UNDEF_VAR;
+            }
+            else if(((var_data_t*)(*let_id).data)->constant == false){
+                return SEM_ERROR_UNDEF_VAR;
+            }
+        }
+        else{
+            CHECK_EXPRESSION();
+        }
+        
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
         GET_TOKEN_AND_CHECK_RULE(statement);
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
@@ -324,59 +356,96 @@ static int while_(analyse_data_t* data){
 static int assignment(analyse_data_t* data){
 //     //20. 〈 assignment 〉 −→ 〈 id 〉 = 〈 expression 〉
     if(data->token.type == IDENTIFIER){
-        data->var_id = symtable_search(&data->global_table, data->token.data.String); 
+        if(data->in_while_or_if || data->in_defintion){
+            data->var_id = symtable_search(&data->local_table, data->token.data.String); 
+            if(data->var_id == NULL){ // also look in global
+                data->var_id = symtable_search(&data->global_table, data->token.data.String); 
+            }
+        }
+        else{
+            data->var_id = symtable_search(&data->global_table, data->token.data.String); 
+        }
         if(data->var_id == NULL){
             return SEM_ERROR_UNDEF_VAR;
         }
         else if(((var_data_t*)(*data->var_id).data)->constant){
             return SEM_ERROR_UNDEF_VAR;
         }
+        
         GET_TOKEN_AND_CHECK_TYPE(ASSIGNMENT);
         GET_TOKEN_AND_CHECK_EXPRESSION();
-        return SYNTAX_OK;
-    }
-//     //21. 〈 assignment 〉 −→ 〈 modifier 〉〈 id 〉〈 def_type 〉 = 〈 expression 〉
-    else if(data->token.type == KEYWORD)
-    {
-        CHECK_RULE(modifier);
-        GET_TOKEN_AND_CHECK_TYPE(IDENTIFIER);
-        data->var_id = symtable_search(&data->global_table, data->token.data.String);
-        if(data->var_id != NULL){
-            return SYNTAX_ERROR;
-        }
-        GET_TOKEN_AND_CHECK_RULE(def_type);
-        GET_TOKEN_AND_CHECK_TYPE(ASSIGNMENT);
-        GET_TOKEN_AND_CHECK_EXPRESSION();
-        var_data_t* var_data = malloc(sizeof(var_data_t));
-        var_data->q_type = ((var_data_t*)(*data->var_id).data)->q_type;
-        var_data->data_type = ((var_data_t*)(*data->var_id).data)->data_type;
-        var_data->constant = ((var_data_t*)(*data->var_id).data)->constant;
-        symtable_insert_var(&data->global_table, data->token.data.String, var_data);
         return SYNTAX_OK;
     }
     return SYNTAX_ERROR;
+
 }
 
 static int def_var(analyse_data_t* data){
-//     //22. 〈def_var 〉−→ 〈 modifier 〉id :〈type 〉
-    if(data->token.type == KEYWORD){
-        CHECK_RULE(modifier);
-        GET_TOKEN_AND_CHECK_TYPE(IDENTIFIER);
-        data->var_id = symtable_search(&data->global_table, data->token.data.String);
-        if(data->var_id != NULL){
+    //21. 〈 def_var 〉 −→ 〈 modifier 〉〈 id 〉〈 def_type 〉 = 〈 expression 〉
+    if(data->token.type == KEYWORD)
+    {
+        var_data_t* var_data = NULL;
+        bool constanta = false;
+        if(data->token.data.Keyword == Let_KW){
+            constanta = true;
+        }
+        else if(data->token.data.Keyword == Var_KW){
+            constanta = false;
+        }
+        else{
             return SYNTAX_ERROR;
         }
-        GET_TOKEN_AND_CHECK_TYPE(COLON);
-        GET_TOKEN_AND_CHECK_RULE(type);
-        //TODO add type?
-        var_data_t* var_data = malloc(sizeof(var_data_t));
-        var_data->q_type = ((var_data_t*)(*data->var_id).data)->q_type;
-        var_data->data_type = ((var_data_t*)(*data->var_id).data)->data_type;
-        var_data->constant = ((var_data_t*)(*data->var_id).data)->constant;
+        GET_TOKEN_AND_CHECK_TYPE(IDENTIFIER);
+        if(data->in_while_or_if || data->in_defintion){
+            data->var_id = symtable_search(&data->local_table, data->token.data.String); 
+            if(data->var_id == NULL) // also look in global
+                data->var_id = symtable_search(&data->global_table, data->token.data.String); 
+        }
         
-        symtable_insert_var(&data->global_table, data->token.data.String, var_data);
+        else{
+            data->var_id = symtable_search(&data->global_table, data->token.data.String); 
+        }
+		if (data->var_id == NULL)
+		{   	
+            var_data = malloc(sizeof(var_data_t));
+            symtable_insert_var(&data->global_table, data->token.data.String, var_data);
+            data->var_id = symtable_search(&data->global_table,  data->token.data.String);
+        }else {
+            return SEM_ERROR_UNDEF_VAR;
+        }
+        
+        bool no_type = true;
+        bool no_assignment = true;
+        GET_TOKEN();
+        //22. assignment 〉−→ 〈 modifier 〉id :〈type 〉
+        if(data->token.type == COLON){
+            no_type = false;
+            CHECK_RULE(def_type);
+            var_data->q_type = ((var_data_t*)(*data->var_id).data)->q_type;
+            var_data->data_type = ((var_data_t*)(*data->var_id).data)->data_type;
+        }
+        else{
+            var_data->q_type = Undefined;
+            var_data->data_type = Undefined;
+        }
+        //21. 〈 def_var 〉 −→ 〈 modifier 〉〈 id 〉〈 def_type 〉 = 〈 expression 〉
+        if(data->token.type == ASSIGNMENT){
+            no_assignment = false;
+            GET_TOKEN_AND_CHECK_EXPRESSION();
+        }
+        else{
+            GET_TOKEN(); // bc GET_TOKEN_AND_CHECK_EXPRESSION also gets token after the expression
+        
+        }
+        if(no_type && no_assignment){
+            return SYNTAX_ERROR;
+        }
+        
+        var_data->constant = constanta;
+        
         return SYNTAX_OK;
     }
+
     return SYNTAX_ERROR;
 }
 
@@ -400,12 +469,12 @@ static int fc_args(analyse_data_t* data){
     data->args_index = 0;
     if(data->token.type == IDENTIFIER){
         data->var_id = symtable_search(&data->local_table, data->token.data.String);
-        if(data->var_id != data->current_id.param_names[data->args_index]){
+        if(data->var_id->data != ((function_data_t*)(*data->current_id).data)->param_names[data->args_index]){
             return SEM_ERROR_UNDEF_VAR;
         }
         GET_TOKEN_AND_CHECK_TYPE(COLON);
         GET_TOKEN_AND_CHECK_EXPRESSION();
-        GET_TOKEN_CHECK_RULE(fc_n_args);
+        CHECK_RULE(fc_args_n_args);
         return SYNTAX_OK;
     }
 //     //25. 〈fc_args 〉−→ ε
@@ -418,12 +487,12 @@ static int fc_args_n_args(analyse_data_t* data){
         data->args_index++;
         GET_TOKEN_AND_CHECK_TYPE(IDENTIFIER);
         data->var_id = symtable_search(&data->local_table, data->token.data.String);
-        if(data->var_id != data->current_id.param_names[data->args_index]){
+        if(data->var_id->data != ((function_data_t*)(*data->current_id).data)->param_names[data->args_index]){
             return SEM_ERROR_UNDEF_VAR;
         }
         GET_TOKEN_AND_CHECK_TYPE(COLON);
         GET_TOKEN_AND_CHECK_EXPRESSION();
-        CHECK_RULE(fc_n_args);
+        CHECK_RULE(fc_args_n_args);
         return SYNTAX_OK;
     }
 //     //25. 〈fc_args 〉−→ ε
@@ -433,12 +502,14 @@ static int fc_args_n_args(analyse_data_t* data){
 static int modifier(analyse_data_t* data){
     //28. 〈 modifier 〉−→ let
     if(data->token.type == KEYWORD && data->token.data.Keyword == Let_KW){
-        data->var_id->data.constant = true;
+        var_data_t* var_data = (var_data_t*)(*data->var_id).data;
+        var_data->constant = true;
         return SYNTAX_OK;
     }
     //29. 〈 modifier 〉−→ var
     else if(data->token.type == KEYWORD && data->token.data.Keyword == Var_KW){
-        data->var_id->data.constant = false;
+        var_data_t* var_data = (var_data_t*)(*data->var_id).data;
+        var_data->constant = false;
         return SYNTAX_OK;
     }
     return SYNTAX_ERROR;
@@ -452,7 +523,7 @@ static int def_type(analyse_data_t* data){
     }
    //31. 〈def_type 〉−→ ε
 
-    return SYNTAX_ERROR;
+    return SYNTAX_OK;
 }
 
 // //32. 〈 end 〉 −→ EOF
@@ -483,46 +554,18 @@ static int id(analyse_data_t* data){
 }
 
 static int type(analyse_data_t* data){
-    //36. 〈 type 〉 −→ 〈 p_type 〉 〈 ?_value 〉
+    //36. 〈 type 〉 −→ 〈 p_type 〉
     if(data->token.type == KEYWORD && (data->token.data.Keyword == Int_KW || data->token.data.Keyword == Double_KW || data->token.data.Keyword == String_KW)){
         CHECK_RULE(p_type);
-        GET_TOKEN_AND_CHECK_RULE(q_value);
+        GET_TOKEN();
         return SYNTAX_OK;
     }
     return SYNTAX_ERROR;
 }
 
 
-//37. 〈 ?_value 〉 −→ ?
-static int q_value(analyse_data_t* data){
-    if(data->token.type == NIL_COLL){
-        if (data->in_defintion)
-        {
-            function_data_t* func_data = (function_data_t*)(*data->current_id).data;
-            func_data->params_types[data->args_index].q_type = true;
-        }
-        else{
-            var_data_t* var_data = (var_data_t*)(*data->var_id).data;
-            var_data->q_type = true;
-        }
-        return SYNTAX_OK;
-    }
-    //38. 〈 ?_value 〉 −→ ε
-    else{
-        if (data->in_defintion)
-        {
-            function_data_t* func_data = (function_data_t*)(*data->current_id).data;
-            func_data->params_types[data->args_index].q_type = false;
-        }
-        else{
-            var_data_t* var_data = (var_data_t*)(*data->var_id).data;
-            var_data->q_type = false;
-        }
-        return SYNTAX_OK;
-    }
-}
-
 static int p_type(analyse_data_t* data){
+    //36. 〈 p_type 〉 −→ 〈 p_type 〉
     if(data->token.type == KEYWORD){
         switch (data->token.data.Keyword)
 		{
@@ -531,11 +574,13 @@ static int p_type(analyse_data_t* data){
             if (data->in_defintion)
 			{
                 function_data_t* func_data = (function_data_t*)(*data->current_id).data;
-                func_data->params_types[data->args_index].data_type = 'd';
+                func_data->params_types[data->args_index].data_type = Double_Type;
+                func_data->params_types[data->args_index].q_type = false;
 			}
             else{
                 var_data_t* var_data = (var_data_t*)(*data->var_id).data;
-                var_data->data_type = 'd';
+                var_data->data_type = Double_Type;
+                var_data->q_type = false;
             }
             return SYNTAX_OK;
         break;
@@ -544,11 +589,14 @@ static int p_type(analyse_data_t* data){
             if (data->in_defintion)
 			{
                 function_data_t* func_data = (function_data_t*)(*data->current_id).data;
-                func_data->params_types[data->args_index].data_type = 'i';
+                func_data->params_types[data->args_index].data_type = Int_Type;
+                func_data->params_types[data->args_index].q_type = false;
+
 			}
             else{
                 var_data_t* var_data = (var_data_t*)(*data->var_id).data;
-                var_data->data_type = 'i';
+                var_data->data_type = Int_Type;
+                var_data->q_type = false;
             }
             return SYNTAX_OK;
         break;
@@ -558,12 +606,62 @@ static int p_type(analyse_data_t* data){
             if (data->in_defintion)
 			{
                 function_data_t* func_data = (function_data_t*)(*data->current_id).data;
- 
-                func_data->params_types[data->args_index].data_type = 's';
+                func_data->params_types[data->args_index].data_type = String_Type;
+                func_data->params_types[data->args_index].q_type = false;
 			}
             else{
                 var_data_t* var_data = (var_data_t*)(*data->var_id).data;
-                var_data->data_type = 's';
+                var_data->data_type = String_Type;
+                var_data->q_type = false;
+            }
+            
+            return SYNTAX_OK;
+        break;
+        //42. 〈 p_type 〉 −→ StringNullable
+        case StringNullable_KW:
+            if (data->in_defintion)
+			{
+                function_data_t* func_data = (function_data_t*)(*data->current_id).data;
+                func_data->params_types[data->args_index].data_type = String_Type;
+                func_data->params_types[data->args_index].q_type = true;
+
+			}
+            else{
+                var_data_t* var_data = (var_data_t*)(*data->var_id).data;
+                var_data->data_type = String_Type;
+                var_data->q_type = true;
+            }
+            return SYNTAX_OK;
+        break;
+        //42. 〈 p_type 〉 −→ DoubleNullable_KW
+        case DoubleNullable_KW:
+            if (data->in_defintion)
+			{
+                function_data_t* func_data = (function_data_t*)(*data->current_id).data;
+                func_data->params_types[data->args_index].data_type = Double_Type;
+                func_data->params_types[data->args_index].q_type = true;
+
+			}
+            else{
+                var_data_t* var_data = (var_data_t*)(*data->var_id).data;
+                var_data->data_type = Double_Type;
+                var_data->q_type = true;
+            }
+            return SYNTAX_OK;
+        break;
+        //43. 〈 p_type 〉 −→ IntNullable_KW
+        case IntNullable_KW:
+            if (data->in_defintion)
+			{
+                function_data_t* func_data = (function_data_t*)(*data->current_id).data;
+                func_data->params_types[data->args_index].data_type = Int_Type;
+                func_data->params_types[data->args_index].q_type = true;
+
+			}
+            else{
+                var_data_t* var_data = (var_data_t*)(*data->var_id).data;
+                var_data->data_type = Int_Type;
+                var_data->q_type = true;
             }
             return SYNTAX_OK;
         break;
@@ -573,11 +671,11 @@ static int p_type(analyse_data_t* data){
     }
     return SYNTAX_ERROR;
 }
-int analyse()
+int main()
 {
-    // char *input = "func decrement(of n: Int, by m: Int) -> Int {\n\n}";
-    // FILE *file = fmemopen(input, strlen(input), "r");
-    set_source_file(stdin);
+    char *input = "func decrement(of n: Int, by m: Int) -> Int {\nreturn 32\n}";
+    FILE *file = fmemopen(input, strlen(input), "r");
+    set_source_file(file);
     analyse_data_t *data = malloc(sizeof(analyse_data_t));
     
     if (!init_variables(data))
@@ -591,9 +689,13 @@ int analyse()
     result = program(data);
 
     if(result != SYNTAX_OK)
-        fprintf(stderr, "ERROR: %d\n", result);
-
+        printf("ERROR: %d\n", result);
+        // fprintf(stderr, "ERROR: %d\n", result);
+    else{
+        printf("OK\n");
+    }
     free_variables(data);
 
     return result;
 }
+

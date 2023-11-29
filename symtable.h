@@ -75,4 +75,12 @@ void symtable_delete(symtable_t*, char*);
 bst_node_ptr symtable_search(symtable_t*, char*);
 void symtable_dispose(symtable_t*);
 
+typedef enum{
+    Int_Type,
+    String_Type,
+    Double_Type, 
+    Bool_Type,
+    Undefined
+}data_type;
+
 #endif // SYMTABLE_H
