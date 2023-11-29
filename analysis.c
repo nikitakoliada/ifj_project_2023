@@ -75,6 +75,13 @@ static bool init_variables(analyse_data_t* data)
 	data->in_defintion = false;
 	data->in_while_or_if = false;
 
+    var_data_t * var_data = malloc(sizeof(var_data_t));
+    var_data->constant = false;
+    var_data->data_type = Undefined;
+    var_data->q_type = false;
+
+    symtable_insert_var(&data->global_table, "%expr_result", var_data);
+
 	return true;
 }
 
@@ -170,6 +177,7 @@ static int statement(analyse_data_t* data)
     }
     //???. 〈 statement 〉 −→ <return_kw> <expression> EOL <statement>
     else if(data->token.type == KEYWORD && data->token.data.Keyword == Return_KW){
+        data->var_id = symtable_search(&data->local_table, "%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
         printf("return\n");
         CHECK_RULE(possible_EOL);
@@ -326,6 +334,7 @@ static int if_else(analyse_data_t* data){
             }
         }
         else{
+            data->var_id = symtable_search(&data->local_table, "%exp_result");
             CHECK_EXPRESSION();
         }
         
@@ -432,6 +441,7 @@ static int def_var(analyse_data_t* data){
         // = 〈 expression 〉
         if(data->token.type == ASSIGNMENT){
             no_assignment = false;
+            data->var_id = symtable_search(&data->local_table, "%exp_result");
             GET_TOKEN_AND_CHECK_EXPRESSION();
         }
         else{
@@ -476,6 +486,7 @@ static int fc_args(analyse_data_t* data){
             return SEM_ERROR_UNDEF_VAR;
         }
         GET_TOKEN_AND_CHECK_TYPE(COLON);
+        data->var_id = symtable_search(&data->local_table, "%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
         CHECK_RULE(fc_args_n_args);
         return SYNTAX_OK;
@@ -494,6 +505,7 @@ static int fc_args_n_args(analyse_data_t* data){
             return SEM_ERROR_UNDEF_VAR;
         }
         GET_TOKEN_AND_CHECK_TYPE(COLON);
+        data->var_id = symtable_search(&data->local_table, "%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
         CHECK_RULE(fc_args_n_args);
         return SYNTAX_OK;
@@ -680,7 +692,7 @@ static int p_type(analyse_data_t* data){
 }
 int main()
 {
-    char *input = "var c : Int = 3\nwhile (c > 0) { c = c - 1\n }";
+    char *input = "var c : Int = 3\nc = 4";
     FILE *file = fmemopen(input, strlen(input), "r");
     set_source_file(file);
     analyse_data_t *data = malloc(sizeof(analyse_data_t));
