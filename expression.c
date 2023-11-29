@@ -584,7 +584,14 @@ int expression(analyse_data_t* data, bool* is_EOL){
                 // Generate assignment
                 break;
             case Double_Type:
-                if(final_element->type != Double_Type){
+                if(final_element->type == Int_Type){
+                    if(final_element->is_identifier){
+                        FREE_RECOURCES(stack);
+                        return SEM_ERROR_TYPE_COMPAT;
+                    }
+                    // Generate Int2Double
+                }
+                else if(final_element->type != Double_Type){
                     // Free recources
                     FREE_RECOURCES(stack);
                     return SEM_ERROR_TYPE_COMPAT;
