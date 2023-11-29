@@ -13,7 +13,7 @@
 #include <stdbool.h>
 
 #include "symtable.h"
-#include "scanner.h"    
+#include "scanner.h"  
 
 
 
@@ -43,6 +43,7 @@ typedef struct
 
 //starts the analysis
 int analyse();
+int f_expression_call(analyse_data_t*, token_t, data_type*);
 
 
 #endif //_ANALYSIS_H
