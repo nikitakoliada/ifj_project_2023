@@ -103,6 +103,7 @@ int get_next_token(token_t* token){
     }
     unsigned index = 0;
     unsigned str_size = DEFAULT_TOKEN_LENGTH;
+    int block_comment_counter = 0;
 
     do{
         bool add_char = false;
@@ -317,6 +318,7 @@ int get_next_token(token_t* token){
                     break;
                 }else if(symbol == '*'){
                     state = BLOCK_COMMENT_S;
+                    block_comment_counter++;
                     break;
                 }else{
                     token_type = DIV;
@@ -335,11 +337,27 @@ int get_next_token(token_t* token){
                 break;
 
             case BLOCK_COMMENT_S:
-                if (symbol >= 32 && symbol <= 126 && symbol != '*') {
+                if (symbol >= 32 && symbol <= 126 && symbol != '*' && symbol != '/') {
                     state = BLOCK_COMMENT_S;
                     break;
                 }else if(symbol == '*'){
                     state = BLOCK_COMMENT_POSSIBLE_END_S;
+                    break;
+                }else if(symbol == '/'){
+                    state = BLOCK_COMMENT_NEW_POSSIBLE_START_S;
+                    break;
+                }else if(symbol == EOF){
+                    ERROR_EXIT("Unexpected EOF in block comment", LEX_ERROR)
+                }
+                break;
+
+            case BLOCK_COMMENT_NEW_POSSIBLE_START_S:
+                if(symbol == '*'){
+                    state = BLOCK_COMMENT_S;
+                    block_comment_counter++;
+                    break;
+                }else if(symbol >= 32 && symbol <= 126){
+                    state = BLOCK_COMMENT_S;
                     break;
                 }else if(symbol == EOF){
                     ERROR_EXIT("Unexpected EOF in block comment", LEX_ERROR)
@@ -348,7 +366,8 @@ int get_next_token(token_t* token){
 
             case BLOCK_COMMENT_POSSIBLE_END_S:
                 if(symbol == '/'){
-                    state = BLOCK_COMMENT_END_S;
+                    if(--block_comment_counter > 0) state = BLOCK_COMMENT_S;
+                    else state = BLOCK_COMMENT_END_S;
                     break;
                 }else if(symbol == '*'){
                     state = BLOCK_COMMENT_POSSIBLE_END_S;
@@ -363,6 +382,7 @@ int get_next_token(token_t* token){
 
             case BLOCK_COMMENT_END_S:
                 state = NEW_TOKEN_S;
+                ungetc(symbol, file);
 
                 break;
 
