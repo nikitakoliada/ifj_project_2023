@@ -57,6 +57,7 @@ void bst_dispose(bst_node_ptr);
 
 // symtable helpers and functions
 typedef struct variable {
+    bool constant; // true if const
     int data_type;
     bool q_type; // true if f.e. int? or string? or double?
 } var_data_t;
@@ -81,5 +82,13 @@ void symtable_insert_function(symtable_t* table, char* key, function_data_t* dat
 void symtable_delete(symtable_t*, char*);
 bst_node_ptr symtable_search(symtable_t*, char*);
 void symtable_dispose(symtable_t*);
+
+typedef enum{
+    Int_Type,
+    String_Type,
+    Double_Type, 
+    Bool_Type,
+    Undefined
+}data_type;
 
 #endif // SYMTABLE_H

@@ -14,8 +14,9 @@
 
 #include "ctype.h"
 
-char *keywords[] = {"Double", "else", "func", "if", "Int", "let", "nil", "return", "String", "var", "while", "String?", "Int?", "Double?"};
+char *keywords[] = {"Double", "else", "func", "if", "Int", "let", "nil", "return", "String", "var", "while", "Int?", "String?", "Double?"};
 char *built_in_functions[] = {"readString", "readInt", "readDouble", "write", "Int2Double", "Double2Int", "length", "substring", "ord", "chr"};
+char *types[] = {"Double", "Int", "String"};
 
 FILE* file;
 
@@ -71,6 +72,21 @@ void get_keyword_type(char* token_raw, keyword_t* keyword){
     }
 }
 
+void get_built_in_function_type(char* token_raw, built_in_function_t* function){
+    for(int i = 0; i < 10; i++){
+        if(!strcmp(token_raw, built_in_functions[i])){
+            *function = (built_in_function_t)i;
+        }
+    }
+}
+
+bool is_pure_type(char* token){
+    for(int i = 0; i < 3; i++){
+        if(!strcmp(token, types[i])) return true;
+    }
+    return false;
+}
+
 int get_next_token(token_t* token){
     // current state of the scanner
     scanner_states_t state = NEW_TOKEN_S;
@@ -87,6 +103,7 @@ int get_next_token(token_t* token){
     }
     unsigned index = 0;
     unsigned str_size = DEFAULT_TOKEN_LENGTH;
+    int block_comment_counter = 0;
 
     do{
         bool add_char = false;
@@ -147,21 +164,17 @@ int get_next_token(token_t* token){
 
             case MINUS_S:
                 if(symbol == '>'){
-                    // state = FUNCTION_TYPE;
                     token_type = TOKEN_FUNCTION_TYPE;
                 }else{
                     ungetc(symbol, file);
                     token_type = MINUS;
-                    //TODO
                 }
                 break;
             case NIL_S:
                 if(symbol == '?'){
-                    //state = NC;
                     token_type = NIL_COLL; // Nullish coalescing operator
                 }else{
-                    ungetc(symbol, file);
-                    token_type = NIL_VALUE;
+                    ERROR_EXIT("Unexpected symbol", LEX_ERROR);
                 }
                 break;
             case NOT_S:
@@ -206,7 +219,11 @@ int get_next_token(token_t* token){
             case KEYWORD_OR_IDENTIFIER_S:
                 if(isalnum(symbol) || symbol == '_' || symbol == '?'){
                     add_char = true;
-                }else{
+                }else if(symbol == '?' && is_pure_type(raw_token)){
+                    add_char = true;
+                    token_type = KEYWORD;
+                }
+                else{
                     ungetc(symbol, file);
                     if(is_built_in_function(raw_token)){
                         token_type = BUILT_IN_FUNCTION;
@@ -301,6 +318,7 @@ int get_next_token(token_t* token){
                     break;
                 }else if(symbol == '*'){
                     state = BLOCK_COMMENT_S;
+                    block_comment_counter++;
                     break;
                 }else{
                     token_type = DIV;
@@ -319,11 +337,27 @@ int get_next_token(token_t* token){
                 break;
 
             case BLOCK_COMMENT_S:
-                if (symbol >= 32 && symbol <= 126 && symbol != '*') {
+                if (symbol >= 32 && symbol <= 126 && symbol != '*' && symbol != '/') {
                     state = BLOCK_COMMENT_S;
                     break;
                 }else if(symbol == '*'){
                     state = BLOCK_COMMENT_POSSIBLE_END_S;
+                    break;
+                }else if(symbol == '/'){
+                    state = BLOCK_COMMENT_NEW_POSSIBLE_START_S;
+                    break;
+                }else if(symbol == EOF){
+                    ERROR_EXIT("Unexpected EOF in block comment", LEX_ERROR)
+                }
+                break;
+
+            case BLOCK_COMMENT_NEW_POSSIBLE_START_S:
+                if(symbol == '*'){
+                    state = BLOCK_COMMENT_S;
+                    block_comment_counter++;
+                    break;
+                }else if(symbol >= 32 && symbol <= 126){
+                    state = BLOCK_COMMENT_S;
                     break;
                 }else if(symbol == EOF){
                     ERROR_EXIT("Unexpected EOF in block comment", LEX_ERROR)
@@ -332,7 +366,8 @@ int get_next_token(token_t* token){
 
             case BLOCK_COMMENT_POSSIBLE_END_S:
                 if(symbol == '/'){
-                    state = BLOCK_COMMENT_END_S;
+                    if(--block_comment_counter > 0) state = BLOCK_COMMENT_S;
+                    else state = BLOCK_COMMENT_END_S;
                     break;
                 }else if(symbol == '*'){
                     state = BLOCK_COMMENT_POSSIBLE_END_S;
@@ -347,6 +382,7 @@ int get_next_token(token_t* token){
 
             case BLOCK_COMMENT_END_S:
                 state = NEW_TOKEN_S;
+                ungetc(symbol, file);
 
                 break;
 
@@ -506,6 +542,8 @@ int get_next_token(token_t* token){
     switch (token_type)
     {
         case BUILT_IN_FUNCTION:
+            get_built_in_function_type(raw_token, &token->data.Built_In_Function);
+            break;
         case KEYWORD:
             get_keyword_type(raw_token, &token->data.Keyword);
             break;

@@ -1,3 +1,13 @@
+/**
+ * Project: Implementation of imperative language compiler IFJ23
+ * @file stack.c
+
+ * @brief Implementation of the stack
+
+ * @author Pavlo Butenko - xbuten00
+*/
+
+
 #include "stack.h"
 #include <assert.h>
 #include <stdlib.h>

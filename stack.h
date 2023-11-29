@@ -1,3 +1,12 @@
+/**
+ * Project: Implementation of imperative language compiler IFJ23
+ * @file stack.h
+
+ * @brief Header file for the stack
+
+ * @author Pavlo Butenko - xbuten00
+*/
+
 #include <stdbool.h>
 #include "expression.h"
 

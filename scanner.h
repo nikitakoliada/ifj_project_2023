@@ -43,6 +43,7 @@ typedef enum scanner_states {
     DIVIDE_S,
     COMMENT_S,
     BLOCK_COMMENT_S,
+    BLOCK_COMMENT_NEW_POSSIBLE_START_S,
     BLOCK_COMMENT_POSSIBLE_END_S,
     BLOCK_COMMENT_END_S,
     ASSIGNMENT_S,
@@ -63,7 +64,6 @@ typedef enum token_type {
     // values of variables
     STRING_VALUE,
     INT_VALUE,
-    NIL_VALUE, // ?
     DOUBLE_VALUE,
 
     // relation operators
@@ -104,16 +104,30 @@ typedef enum keyword{
     String_KW,
     Var_KW,
     While_KW,
-    String_Nullable_KW,
-    Int_Nullable_KW,
-    Double_Nullable_KW,
+    IntNullable_KW,
+    StringNullable_KW,
+    DoubleNullable_KW,
 } keyword_t;
+
+typedef enum built_in_function{
+    READSTRING_FUNCTION,
+    READINT_FUNCTION,
+    READOUBLE_FUNCTION,
+    WRITE_FUNCTION, 
+    INT2DOUBLE_FUNCTION,
+    DOUBE2INT_FUNCTION,
+    LENGTH_FUNCTION,
+    SUBSTRING_FUNCTION, 
+    ORD_FUNCTION,
+    CHR_FUNCTION,
+} built_in_function_t;
 
 typedef union token_data {
     long long int Int;
     double Double;
     char *String;
     keyword_t Keyword;
+    built_in_function_t Built_In_Function;
 } token_data_t;
 
 typedef struct token {
