@@ -10,7 +10,6 @@
 #include <stdbool.h>
 #include "expression.h"
 
-
 typedef struct{
     eSymbol symbol;
     data_type type;

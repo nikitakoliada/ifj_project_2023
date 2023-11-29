@@ -9,11 +9,11 @@
 
 
 //#include "expression.h"
+#include "analysis.h"
 #include "stack.h"
 #include "error.h"
 #include "scanner.h"
 #include "symtable.h"
-#include "analysis.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -25,11 +25,12 @@
 #define PT_SIZE 9
 
 typedef enum{
-    S, // <
-    R, // >
-    E, // =
-    F, // Failure
-    P, // Pass
+    S,      // <
+    R,      // >
+    E,      // =
+    F,      // Failure
+    P,      // Pass
+    FUNC,   // Function
 } precedence_value_t;
 
 typedef enum{
@@ -45,16 +46,16 @@ typedef enum{
 }pt_index;
 
 precedence_value_t predence_table[PT_SIZE][PT_SIZE] = {
-    //        +-  */  (   )   r   ??  !  id   $          
-    /* +- */{ R,  S,  S,  R,  R,  R,  S,  S,  R},
-    /* /* */{ S,  R,  S,  R,  R,  R,  S,  S,  R},
-    /* (  */{ S,  S,  S,  E,  S,  S,  S,  S,  F},
-    /* )  */{ R,  R,  F,  R,  R,  R,  S,  R,  R},
-    /* r  */{ S,  S,  S,  R,  F,  R,  S,  S,  R},
-    /* ?? */{ S,  S,  S,  R,  S,  S,  S,  S,  R},
-    /* !  */{ R,  R,  S,  R,  R,  R,  F,  S,  R},
-    /* id */{ R,  R,  F,  R,  R,  R,  R,  F,  R},
-    /* $  */{ S,  S,  S,  F,  S,  S,  S,  S,  F}
+    //        +-  */  (     )   r   ??  !  id   $          
+    /* +- */{ R,  S,  S,    R,  R,  R,  S,  S,  R},
+    /* /* */{ S,  R,  S,    R,  R,  R,  S,  S,  R},
+    /* (  */{ S,  S,  S,    E,  S,  S,  S,  S,  F},
+    /* )  */{ R,  R,  F,    R,  R,  R,  S,  R,  R},
+    /* r  */{ S,  S,  S,    R,  F,  R,  S,  S,  R},
+    /* ?? */{ S,  S,  S,    R,  S,  S,  S,  S,  R},
+    /* !  */{ R,  R,  S,    R,  R,  R,  F,  S,  R},
+    /* id */{ R,  R, FUNC,  R,  R,  R,  R,  F,  R},
+    /* $  */{ S,  S,  S,    F,  S,  S,  S,  S,  F}
 };
 
 int get_pt_index(eSymbol symbol){
@@ -92,12 +93,13 @@ int get_pt_index(eSymbol symbol){
 }
 
 
-data_type get_data_type(token_t token, symtable_t table, bool* is_nullable){
+data_type get_data_type(token_t token, analyse_data_t* data, bool* is_nullable){
     switch(token.type){
         case IDENTIFIER:
-            bst_node_ptr node = symtable_search(&table, token.data.String);
+            bst_node_ptr node = symtable_search(&data->local_table, token.data.String);
             if(!node){
-                return Undefined;
+                node = symtable_search(&data->global_table, token.data.String);
+                if(!node) return Undefined;
             }
             var_data_t* data = (var_data_t*)node->data;
             if(is_nullable) *is_nullable = data->q_type;
@@ -115,7 +117,7 @@ data_type get_data_type(token_t token, symtable_t table, bool* is_nullable){
     }
 }
 
-eSymbol token_to_esymbol(token_t token, symtable_t table, bool* is_nullable){
+eSymbol token_to_esymbol(token_t token, analyse_data_t* data, bool* is_nullable){
     switch(token.type){
         case PLUS:  return PlusS;
         case MINUS: return MinusS;
@@ -136,13 +138,23 @@ eSymbol token_to_esymbol(token_t token, symtable_t table, bool* is_nullable){
         case INT_VALUE: return IntS;
         case KEYWORD:
             if(token.data.Keyword == Nil_KW) return NilS; 
+            return DollarS;
         case IDENTIFIER:
             bool a = false;
-            data_type t = get_data_type(token, table, is_nullable);
+            data_type t = get_data_type(token, data, is_nullable);
             if(t == Int_Type) return IntS;
             if(t == String_Type) return StringS;
             if(t == Double_Type) return DoubleS;
         default: return DollarS; // Process
+    }
+}
+
+eSymbol type_to_symbol(data_type type){
+    switch(type){
+        case Int_Type: return IntS;
+        case String_Type: return StringS;
+        case Double_Type: return DoubleS;
+        case Undefined: return DollarS;
     }
 }
 
@@ -451,6 +463,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
     bool is_success = false;
     bool was_EOL = false;
     int parantheses_counter = 0;
+    token_t prev_token;
     token_t token = data->token;
 
     process_parenthese(token, &parantheses_counter);
@@ -459,15 +472,12 @@ int expression(analyse_data_t* data, bool* is_EOL){
         stack_print(stack);
         int result = 0;
         bool nullable = false;
-        eSymbol input_symbol = token_to_esymbol(token, data->local_table, &nullable);
+        eSymbol input_symbol = token_to_esymbol(token, data, &nullable);
         pt_index input_index = get_pt_index(input_symbol);
         stack_element* st_element = stack_top_terminal(stack);
         if(!st_element) return INTERNAL_ERROR;
         eSymbol stack_symbol = st_element->symbol;
         pt_index stack_symbol_index = get_pt_index(stack_symbol);
-
-        stack_element* new_element = malloc(sizeof(stack_element));
-        if(!new_element) return INTERNAL_ERROR;
 
         precedence_value_t precedence_result = predence_table[stack_symbol_index][input_index];
 
@@ -476,7 +486,8 @@ int expression(analyse_data_t* data, bool* is_EOL){
             else precedence_result = R;
         }
 
-        printf("-****%d*****\n", parantheses_counter);
+        //printf("-****%d - %d*****\n", stack_symbol_index, token.type);
+        stack_element* new_element = NULL;
 
         switch(precedence_result){
             case R:
@@ -489,13 +500,15 @@ int expression(analyse_data_t* data, bool* is_EOL){
                 break;
 
             case S:
+                new_element = malloc(sizeof(stack_element));
+                if(!new_element) return INTERNAL_ERROR;
                 was_EOL = false;
                 if(!stack_insert_after_top_terminal(stack, Handle, Undefined)){
                     FREE_RECOURCES(stack);
                     return INTERNAL_ERROR;
                 }
                 new_element->symbol = input_symbol;
-                new_element->type = get_data_type(token, data->local_table, &nullable);
+                new_element->type = get_data_type(token, data, &nullable);
                 new_element->nullable = nullable;
                 new_element->is_identifier = token.type == IDENTIFIER;
                 if(!stack_push(stack, new_element))
@@ -504,6 +517,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
                     return INTERNAL_ERROR;
                 } 
 
+                prev_token = token;
 
                 do{
                     if((result = get_next_token(&token))){
@@ -518,9 +532,11 @@ int expression(analyse_data_t* data, bool* is_EOL){
                 break;
 
             case E:
+                new_element = malloc(sizeof(stack_element));
+                if(!new_element) return INTERNAL_ERROR;
                 was_EOL = false;
                 new_element->symbol = input_symbol;
-                new_element->type = get_data_type(token, data->local_table, &nullable);
+                new_element->type = get_data_type(token, data, &nullable);
                 new_element->nullable = nullable;
                 new_element->is_identifier = token.type == IDENTIFIER;
                 if(!stack_push(stack, new_element))
@@ -539,6 +555,45 @@ int expression(analyse_data_t* data, bool* is_EOL){
                 process_parenthese(token, &parantheses_counter);
 
                 break;
+
+            case FUNC:
+                new_element = malloc(sizeof(stack_element));
+                if(!new_element) return INTERNAL_ERROR;
+                data_type type = Int_Type;
+                data->token = token;
+                if((result = f_expression_call(data, prev_token, &type))){
+                    FREE_RECOURCES(stack);
+                    return result;
+                }
+                new_element->is_identifier = true;
+                new_element->is_nil = false;
+                new_element->nullable = false; // TODO: Could be true (no support at this moment)
+                new_element->type = type;
+                new_element->symbol = type_to_symbol(type);
+                printf("---%d\n", type);
+                if(!stack_pop(stack))
+                {
+                    FREE_RECOURCES(stack);
+                    return INTERNAL_ERROR;
+                }
+                if(!stack_push(stack, new_element))
+                {
+                    FREE_RECOURCES(stack);
+                    return INTERNAL_ERROR;
+                }
+
+                do{
+                    if((result = get_next_token(&token))){
+                        FREE_RECOURCES(stack);
+                        return result;
+                    }
+                    if(token.type == TOKEN_EOL) was_EOL = true;
+                }while(token.type == TOKEN_EOL);
+
+                process_parenthese(token, &parantheses_counter);
+
+                break;
+
             case F:
                 if(input_symbol == DollarS && stack_symbol == DollarS){
                     is_success = true;
@@ -575,11 +630,9 @@ int expression(analyse_data_t* data, bool* is_EOL){
         return INTERNAL_ERROR;
     }
 
-
-
     if(data->var_id){
-        var_data_t* var_data = (var_data_t*)(*data->var_id).data;
-        if((final_element->nullable || final_element->is_nil) && !var_data->q_type){
+        var_data_t* var_data = (var_data_t*)data->var_id->data;
+        if((final_element->nullable || final_element->is_nil) && !var_data->q_type && var_data->data_type != Undefined){
             FREE_RECOURCES(stack);
             return SEM_ERROR_TYPE_COMPAT;
         }
@@ -594,7 +647,14 @@ int expression(analyse_data_t* data, bool* is_EOL){
                 // Generate assignment
                 break;
             case Double_Type:
-                if(final_element->type != Double_Type){
+                if(final_element->type == Int_Type){
+                    if(final_element->is_identifier){
+                        FREE_RECOURCES(stack);
+                        return SEM_ERROR_TYPE_COMPAT;
+                    }
+                    // Generate Int2Double
+                }
+                else if(final_element->type != Double_Type){
                     // Free recources
                     FREE_RECOURCES(stack);
                     return SEM_ERROR_TYPE_COMPAT;
@@ -609,6 +669,14 @@ int expression(analyse_data_t* data, bool* is_EOL){
                 }
                 // Generate assignment
                 break;
+            case Undefined:
+                if(data->in_var_definition){
+                    var_data->data_type = final_element->type;
+                    var_data->q_type = final_element->nullable;
+                }
+
+                // Generate assigment
+                break;
         }
     }
 
@@ -616,6 +684,8 @@ int expression(analyse_data_t* data, bool* is_EOL){
     *is_EOL = was_EOL; 
 
     FREE_RECOURCES(stack);
+
+    printf("End of Expression\n");
 
     return SYNTAX_OK;
 }

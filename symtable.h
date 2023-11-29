@@ -17,6 +17,14 @@
 #ifndef SYMTABLE_H
 #define SYMTABLE_H
 
+typedef enum{
+    Int_Type,
+    String_Type,
+    Double_Type, 
+    Bool_Type,
+    Undefined
+}data_type;
+
 // BST helpers and functions
 typedef enum node_data_type {
     node_data_type_var,
@@ -74,13 +82,5 @@ void symtable_insert_function(symtable_t* table, char* key, function_data_t* dat
 void symtable_delete(symtable_t*, char*);
 bst_node_ptr symtable_search(symtable_t*, char*);
 void symtable_dispose(symtable_t*);
-
-typedef enum{
-    Int_Type,
-    String_Type,
-    Double_Type, 
-    Bool_Type,
-    Undefined
-}data_type;
 
 #endif // SYMTABLE_H

@@ -13,7 +13,7 @@
 #include <stdbool.h>
 
 #include "symtable.h"
-#include "scanner.h"    
+#include "scanner.h"  
 
 
 
@@ -39,10 +39,12 @@ typedef struct
 
 	bool in_defintion;		// Defines if фкпі rule should add or check it's фкпі
 	bool in_while_or_if;		// Defines if the parser is in construction while, if or then
+	bool in_var_definition;
 } analyse_data_t;
 
 //starts the analysis
 int analyse();
+int f_expression_call(analyse_data_t*, token_t, data_type*);
 
 
 #endif //_ANALYSIS_H
