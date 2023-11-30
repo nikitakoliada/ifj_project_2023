@@ -19,10 +19,150 @@
 //and for better readability of the code
 int result = SYNTAX_ERROR;
 
+
+void print_token(token_t *token)
+{
+   switch (token->type) {
+       case KEYWORD:
+           printf("KEYWORD\n");
+           switch (token->data.Keyword) {
+               case Double_KW:
+                   printf("Double_KW\n");
+                   break;
+               case Else_KW:
+                   printf("Else_KW\n");
+                   break;
+               case If_KW:
+                   printf("If_KW\n");
+                   break;
+               case Int_KW:
+                   printf("Int_KW\n");
+                   break;
+               case Return_KW:
+                   printf("Return_KW\n");
+                   break;
+               case String_KW:
+                   printf("String_KW\n");
+                   break;
+               case Var_KW:
+                   printf("Var_KW\n");
+                   break;
+               case While_KW:
+                   printf("While_KW\n");
+                   break;
+               case Nil_KW:
+                   printf("Nil_KW\n");
+                   break;
+               case Function_KW:
+                   printf("Function_KW\n");
+                   break;
+               case Let_KW:
+                   printf("Let_KW\n");
+                   break;
+               case StringNullable_KW:
+                   printf("String_Nullable_KW\n");
+                   break;
+               case IntNullable_KW:
+                   printf("Int_Nullable_KW\n");
+                   break;
+               case DoubleNullable_KW:
+                   printf("Double_Nullable_KW\n");
+                   break;
+           }
+           break;
+       case IDENTIFIER:
+           printf("IDENTIFIER\n");
+           printf("%s\n", token->data.String);
+           break;
+       case TOKEN_EOF:
+           printf("TOKEN_EOF\n");
+           break;
+       case TOKEN_EOL:
+           printf("TOKEN_EOL\n");
+           break;
+       case BUILT_IN_FUNCTION:
+           printf("BUILT_IN_FUNCTION\n");
+           break;
+       case TOKEN_FUNCTION_TYPE:
+           printf("TOKEN_FUNCTION_TYPE\n");
+           break;
+       case STRING_VALUE:
+           printf("STRING_VALUE\n");
+           printf("%s\n", token->data.String);
+           break;
+       case INT_VALUE:
+           printf("INT_VALUE\n");
+           printf("%lld\n", token->data.Int);
+           break;
+       case (PLUS):
+           printf("PLUS\n");
+           break;
+       case (MINUS):
+           printf("MINUS\n");
+           break;
+       case (MUL):
+           printf("MULTIPLY\n");
+           break;
+       case (DIV):
+           printf("DIVIDE\n");
+           break;
+       case (EQUAL):
+           printf("EQUAL\n");
+           break;
+       case (NOT_EQUAL):
+           printf("NOT_EQUAL\n");
+           break;
+       case (LESS_THAN):
+           printf("LESS_THAN\n");
+           break;
+       case (LESS_THAN_OR_EQUAL):
+           printf("LESS_THAN_OR_EQUAL\n");
+           break;
+       case (MORE_THAN):
+           printf("MORE_THAN\n");
+           break;
+       case (MORE_THAN_OR_EQUAL):
+           printf("MORE_THAN_OR_EQUAL\n");
+           break;
+       case (TOKEN_LEFT_BRACKET):
+           printf("TOKEN_LEFT_BRACKET\n");
+           break;
+       case (TOKEN_RIGHT_BRACKET):
+           printf("TOKEN_RIGHT_BRACKET\n");
+           break;
+       case (TOKEN_LEFT_CURLY_BRACKET):
+           printf("TOKEN_LEFT_CURLY_BRACKET\n");
+           break;
+       case (TOKEN_RIGHT_CURLY_BRACKET):
+           printf("TOKEN_RIGHT_CURLY_BRACKET\n");
+           break;
+       case (COMMA):
+           printf("COMMA\n");
+           break;
+       case (COLON):
+           printf("COLON\n");
+           break;
+       case (NOT):
+           printf("NOT\n");
+           break;
+       case (DOUBLE_VALUE):
+           printf("DOUBLE_VALUE\n");
+           printf("%f\n", token->data.Double);
+           break;
+       case ASSIGNMENT:
+           printf("ASSIGNMENT\n");
+           break;
+       default:
+           printf("%d\n", token->type);
+           break;
+   }
+}
+
 #define GET_TOKEN()													\
 	if ((result = get_next_token(&data->token)) != 0) {        \
             return result;                                         \
         }                                                          \
+                        print_token(&data->token);                         \
 
 #define CHECK_TYPE(t_type)											\
 	if (data->token.type != t_type) return SYNTAX_ERROR
@@ -57,12 +197,24 @@ int result = SYNTAX_ERROR;
 		if ((result = expression(data, &EOL)) != 0) return result;											\
 	} while(0)
 
-
+// search for the variable starting with current deepness up until the global table
+bst_node_ptr var_search(analyse_data_t* data, int deepness, char* key){
+    for (int i = deepness; i >= 0; i--){
+        bst_node_ptr ptr = symtable_search(&data->local_table[i], key);
+        if(ptr != NULL){
+            return ptr;
+        }
+    }
+    return NULL;
+}
 
 static bool init_variables(analyse_data_t* data)
 {
+    data->st_length = 10;
 	symtable_init(&data->global_table);
-	symtable_init(&data->local_table);
+    for (int length = 0; length < data->st_length; length++){
+        symtable_init(&data->local_table[length]);
+    }
 	data->current_id = malloc(sizeof(bst_node_ptr))	;
     data->var_id = malloc(sizeof(bst_node_ptr))	;
     data->expr_id = malloc(sizeof(bst_node_ptr))	;
@@ -92,7 +244,9 @@ static bool init_variables(analyse_data_t* data)
 static void free_variables(analyse_data_t* data)
 {
 	symtable_dispose(&data->global_table);
-	symtable_dispose(&data->local_table);
+    for (int length = 0; data->st_length < 10; length++){
+        symtable_dispose(&data->local_table[length]);
+    }
 }
 
 // forward declarations(LL table)
@@ -147,8 +301,8 @@ static int statement(analyse_data_t* data)
     }
     else if(data->token.type == IDENTIFIER){
         //5. 〈 statement 〉 −→ 〈 assignment 〉EOL 〈 statement 〉
-        data->var_id = symtable_search(&data->local_table, data->token.data.String);
-        data->current_id = symtable_search(&data->local_table, data->token.data.String);
+        data->var_id = var_search(data, data->label_deep, data->token.data.String);
+        data->current_id = symtable_search(&data->global_table, data->token.data.String);
         if (data->var_id != NULL){
             if(assignment(data) != SYNTAX_OK && data->current_id != NULL){
                 //7. 〈 statement 〉 −→ 〈 f_call 〉EOL 〈 statement 〉
@@ -178,7 +332,7 @@ static int statement(analyse_data_t* data)
     }
     //???. 〈 statement 〉 −→ <return_kw> <expression> EOL <statement>
     else if(data->token.type == KEYWORD && data->token.data.Keyword == Return_KW){
-        data->var_id = symtable_search(&data->local_table, "%%exp_result");
+        data->var_id = symtable_search(&data->local_table[0], "%%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
         CHECK_RULE(possible_EOL);
         return statement(data);
@@ -194,7 +348,6 @@ static int statement(analyse_data_t* data)
         return end(data); // TODO ig idk maybe inside end
     }
     //10. 〈 statement 〉 −→ ε
-    printf("%d", data->token.type);
     return SYNTAX_OK;
 }
 
@@ -228,10 +381,10 @@ static int function(analyse_data_t* data){
         GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
         GET_TOKEN_AND_CHECK_RULE(statement);
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
+        symtable_dispose(&data->local_table[data->label_deep]);
         func_data->defined = true;
         data->in_defintion = false;
         data->label_deep--;
-        symtable_dispose(&data->local_table);
         return SYNTAX_OK;
     }
     return SYNTAX_ERROR;
@@ -264,10 +417,10 @@ static int args(analyse_data_t* data){
 
         GET_TOKEN_AND_CHECK_TYPE(IDENTIFIER);
         var_data_t* var_data = malloc(sizeof(var_data_t));
-        bst_node_ptr ident_var = symtable_search(&data->global_table, data->token.data.String);
+        bst_node_ptr ident_var = symtable_search(&data->local_table[data->label_deep], data->token.data.String);
         if(ident_var != NULL)
 			return SEM_ERROR_UNDEF_VAR;
-        symtable_insert_var(&data->local_table, data->token.data.String, var_data);
+        symtable_insert_var(&data->local_table[data->label_deep], data->token.data.String, var_data);
         ((function_data_t*)(*data->current_id).data)->params_identifiers[data->args_index] = data->token.data.String;
 
 
@@ -275,6 +428,7 @@ static int args(analyse_data_t* data){
         GET_TOKEN_AND_CHECK_RULE(type);
         var_data->q_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index].q_type;
         var_data->data_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index].data_type;
+        var_data->constant = false;
         CHECK_RULE(args_n);
         ((function_data_t*)(*data->current_id).data)->param_len = data->args_index;
 
@@ -290,16 +444,16 @@ static int args_n(analyse_data_t* data){
         GET_TOKEN_AND_CHECK_TYPE(IDENTIFIER);
         ((function_data_t*)(*data->current_id).data)->param_names[data->args_index] = data->token.data.String;
         // if there is function named as parameter
-		bst_node_ptr is_var = symtable_search(&data->global_table, data->token.data.String);
-        if(is_var != NULL)
+		bst_node_ptr name_var = symtable_search(&data->global_table, data->token.data.String);
+        if(name_var != NULL)
 			return SEM_ERROR_UNDEF_VAR;
 
         GET_TOKEN_AND_CHECK_TYPE(IDENTIFIER);
-        bst_node_ptr ident_var = symtable_search(&data->global_table, data->token.data.String);
+        bst_node_ptr ident_var = symtable_search(&data->local_table[data->label_deep], data->token.data.String);
         if(ident_var != NULL)
 			return SEM_ERROR_UNDEF_VAR;
         var_data_t* var_data = malloc(sizeof(var_data_t));
-        symtable_insert_var(&data->local_table, data->token.data.String, var_data);
+        symtable_insert_var(&data->local_table[data->label_deep], data->token.data.String, var_data);
         ((function_data_t*)(*data->current_id).data)->params_identifiers[data->args_index] = data->token.data.String;
 
 
@@ -307,7 +461,7 @@ static int args_n(analyse_data_t* data){
         GET_TOKEN_AND_CHECK_RULE(type);
         var_data->q_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index].q_type;
         var_data->data_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index].data_type;
-
+        var_data->constant = false;
         CHECK_RULE(args_n);	
     }    
 //16. 〈 args_n 〉 −→ ε
@@ -324,7 +478,7 @@ static int if_else(analyse_data_t* data){
         GET_TOKEN();
         if(data->token.type == KEYWORD && data->token.data.Keyword == Let_KW){
             GET_TOKEN_AND_CHECK_TYPE(IDENTIFIER);
-            bst_node_ptr let_id = symtable_search(&data->global_table, data->token.data.String);
+            bst_node_ptr let_id = var_search(data, data->label_deep, data->token.data.String);
             if(let_id == NULL){
                 return SEM_ERROR_UNDEF_VAR;
             }
@@ -333,7 +487,7 @@ static int if_else(analyse_data_t* data){
             }
         }
         else{
-            data->var_id = symtable_search(&data->local_table, "%%exp_result");
+            data->var_id = symtable_search(&data->local_table[0], "%%exp_result");
             CHECK_EXPRESSION();
         }
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
@@ -346,7 +500,7 @@ static int if_else(analyse_data_t* data){
         GET_TOKEN_AND_CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
         GET_TOKEN_AND_CHECK_RULE(statement);
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
-
+        symtable_dispose(&data->local_table[data->label_deep]);
         data->label_deep--;
 		data->in_while_or_if = false;
         return SYNTAX_OK;
@@ -360,11 +514,12 @@ static int while_(analyse_data_t* data){
         data->label_deep++;
         data->in_while_or_if = true;
         data->label_index += 2;
-        data->var_id = symtable_search(&data->local_table, "%%exp_result");
+        data->var_id = symtable_search(&data->local_table[0], "%%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
         GET_TOKEN_AND_CHECK_RULE(statement);
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
+        symtable_dispose(&data->local_table[data->label_deep]);
         data->label_deep--;
         data->in_while_or_if = false;
         return SYNTAX_OK;
@@ -375,16 +530,14 @@ static int while_(analyse_data_t* data){
 static int assignment(analyse_data_t* data){
 //     //20. 〈 assignment 〉 −→ 〈 id 〉 = 〈 expression 〉
     if(data->token.type == IDENTIFIER){
-        data->var_id = symtable_search(&data->local_table, data->token.data.String); 
+        data->var_id = var_search(data, data->label_deep, data->token.data.String);
         if(data->var_id == NULL){
             return SEM_ERROR_UNDEF_VAR;
         }
         else if(((var_data_t*)(*data->var_id).data)->constant){
             return SEM_ERROR_UNDEF_VAR;
         }
-        
         GET_TOKEN_AND_CHECK_TYPE(ASSIGNMENT);
-        data->var_id = symtable_search(&data->local_table, "%%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
         return SYNTAX_OK;
     }
@@ -413,13 +566,13 @@ static int def_var(analyse_data_t* data){
             return SEM_ERROR_UNDEF_VAR;
         }
         else{
-            data->var_id = symtable_search(&data->local_table, data->token.data.String); 
+            data->var_id = symtable_search(&data->local_table[data->label_deep], data->token.data.String); 
         }
 		if (data->var_id == NULL)
 		{   	
             var_data = malloc(sizeof(var_data_t));
-            symtable_insert_var(&data->local_table, data->token.data.String, var_data);
-            data->var_id = symtable_search(&data->local_table,  data->token.data.String);
+            symtable_insert_var(&data->local_table[data->label_deep], data->token.data.String, var_data);
+            data->var_id = symtable_search(&data->local_table[data->label_deep],  data->token.data.String);
         }else {
             return SEM_ERROR_UNDEF_VAR;
         }
@@ -479,7 +632,7 @@ static int f_call(analyse_data_t* data){
 // //23.2. 〈f_call 〉−→ id ( 〈fc_args 〉)
 int f_expression_call(analyse_data_t* data, token_t id, data_type* type){
     if(id.type == IDENTIFIER){
-        data->current_id = symtable_search(&data->local_table, id.data.String);
+        data->current_id = symtable_search(&data->local_table[0], id.data.String);
         if(data->current_id == NULL){
             return SEM_ERROR_UNDEF_VAR;
         }
@@ -496,12 +649,13 @@ int f_expression_call(analyse_data_t* data, token_t id, data_type* type){
 static int fc_args(analyse_data_t* data){
     data->args_index = 0;
     if(data->token.type == IDENTIFIER){
-        data->var_id = symtable_search(&data->local_table, data->token.data.String);
+        // functions' params are in local[0] table
+        data->var_id = var_search(data, data->label_deep, data->token.data.String);
         if(data->var_id->data != ((function_data_t*)(*data->current_id).data)->param_names[data->args_index]){
             return SEM_ERROR_UNDEF_VAR;
         }
         GET_TOKEN_AND_CHECK_TYPE(COLON);
-        data->var_id = symtable_search(&data->local_table, "%exp_result");
+        data->var_id = symtable_search(&data->local_table[0], "%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
         CHECK_RULE(fc_args_n_args);
         return SYNTAX_OK;
@@ -515,12 +669,12 @@ static int fc_args_n_args(analyse_data_t* data){
     if(data->token.type == COMMA){
         data->args_index++;
         GET_TOKEN_AND_CHECK_TYPE(IDENTIFIER);
-        data->var_id = symtable_search(&data->local_table, data->token.data.String);
+        data->var_id = var_search(data, data->label_deep, data->token.data.String);
         if(data->var_id->data != ((function_data_t*)(*data->current_id).data)->param_names[data->args_index]){
             return SEM_ERROR_UNDEF_VAR;
         }
         GET_TOKEN_AND_CHECK_TYPE(COLON);
-        data->var_id = symtable_search(&data->local_table, "%exp_result");
+        data->var_id = symtable_search(&data->local_table[0], "%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
         CHECK_RULE(fc_args_n_args);
         return SYNTAX_OK;

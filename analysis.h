@@ -25,8 +25,10 @@
 typedef struct
 {
 	symtable_t global_table;		// Global symbol table
-	symtable_t local_table;		// Local symbol table
-
+	symtable_t local_table[100];	//[] ?? so we can acces the global - local_table[0] 	// Local symbol table
+			//also the table in 2 layer 3, 4 resp. after we go out this layer we delete the table
+	int st_length; // length of the local table
+	
 	token_t token;				// Token
 
 	bst_node_ptr current_id;			// ID of currently processed function
@@ -45,6 +47,7 @@ typedef struct
 //starts the analysis
 int analyse();
 int f_expression_call(analyse_data_t*, token_t, data_type*);
+bst_node_ptr var_search(analyse_data_t* data, int deepness, char* key);
 
 
 #endif //_ANALYSIS_H

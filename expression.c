@@ -96,7 +96,7 @@ int get_pt_index(eSymbol symbol){
 data_type get_data_type(token_t token, analyse_data_t* data, bool* is_nullable){
     switch(token.type){
         case IDENTIFIER:
-            bst_node_ptr node = symtable_search(&data->local_table, token.data.String);
+            bst_node_ptr node = var_search(data, data->st_length, token.data.String);
             if(!node){
                 node = symtable_search(&data->global_table, token.data.String);
                 if(!node) return Undefined;
