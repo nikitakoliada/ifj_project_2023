@@ -668,7 +668,7 @@ static int fc_args(analyse_data_t* data){
     //if _ as name var
     else if (((function_data_t*)(*data->current_id).data)->param_names[data->args_index] = "_";){
         data->var_id = symtable_search(&data->local_table[0], "%exp_result");
-        GET_TOKEN_AND_CHECK_EXPRESSION();
+        CHECK_EXPRESSION();
         CHECK_RULE(fc_args_n_args);
         return SYNTAX_OK;
     }
@@ -680,24 +680,28 @@ static int fc_args(analyse_data_t* data){
 static int fc_args_n_args(analyse_data_t* data){
     if(data->token.type == COMMA){
         data->args_index++;
-        GET_TOKEN_AND_CHECK_TYPE(IDENTIFIER);
-        data->var_id = var_search(data, data->label_deep, data->token.data.String);
-        if(data->var_id->data != ((function_data_t*)(*data->current_id).data)->param_names[data->args_index]){
-            return SEM_ERROR_UNDEF_VAR;
+        //if _ as name var
+        if (((function_data_t*)(*data->current_id).data)->param_names[data->args_index] = "_";){
+            data->var_id = symtable_search(&data->local_table[0], "%exp_result");
+            GET_TOKEN_AND_CHECK_EXPRESSION();
+            CHECK_RULE(fc_args_n_args);
+            return SYNTAX_OK;
         }
-        GET_TOKEN_AND_CHECK_TYPE(COLON);
-        data->var_id = symtable_search(&data->local_table[0], "%exp_result");
-        GET_TOKEN_AND_CHECK_EXPRESSION();
-        CHECK_RULE(fc_args_n_args);
-        return SYNTAX_OK;
+        else{
+            GET_TOKEN_AND_CHECK_TYPE(IDENTIFIER);
+            data->var_id = var_search(data, data->label_deep, data->token.data.String);
+            if(data->var_id->data != ((function_data_t*)(*data->current_id).data)->param_names[data->args_index]){
+                return SEM_ERROR_UNDEF_VAR;
+            }
+            GET_TOKEN_AND_CHECK_TYPE(COLON);
+            data->var_id = symtable_search(&data->local_table[0], "%exp_result");
+            GET_TOKEN_AND_CHECK_EXPRESSION();
+            CHECK_RULE(fc_args_n_args);
+            return SYNTAX_OK;
+        }
     }
-    //if _ as name var
-    else if (((function_data_t*)(*data->current_id).data)->param_names[data->args_index] = "_";){
-        data->var_id = symtable_search(&data->local_table[0], "%exp_result");
-        GET_TOKEN_AND_CHECK_EXPRESSION();
-        CHECK_RULE(fc_args_n_args);
-        return SYNTAX_OK;
-    }
+
+
 //     //25. 〈fc_args 〉−→ ε
     return SYNTAX_OK;
 }
