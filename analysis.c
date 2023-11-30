@@ -221,7 +221,7 @@ static bool init_variables(analyse_data_t* data)
 
 	data->args_index = 0;
 	data->label_index = 0;
-	data->label_deep = -1;
+	data->label_deep = 0;
 
 
 	data->in_defintion = false;
@@ -244,7 +244,7 @@ static bool init_variables(analyse_data_t* data)
 static void free_variables(analyse_data_t* data)
 {
 	symtable_dispose(&data->global_table);
-    for (int length = 0; data->st_length < 10; length++){
+    for (int length = 0; length < 10; length++){
         symtable_dispose(&data->local_table[length]);
     }
 }
@@ -302,6 +302,7 @@ static int statement(analyse_data_t* data)
     else if(data->token.type == IDENTIFIER){
         //5. 〈 statement 〉 −→ 〈 assignment 〉EOL 〈 statement 〉
         data->var_id = var_search(data, data->label_deep, data->token.data.String);
+        printf("%s", data->var_id->key);
         data->current_id = symtable_search(&data->global_table, data->token.data.String);
         if (data->var_id != NULL){
             if(assignment(data) != SYNTAX_OK && data->current_id != NULL){
@@ -312,6 +313,7 @@ static int statement(analyse_data_t* data)
                 return statement(data);
             }
             else{
+                //bc of expression no next token
                 CHECK_RULE(possible_EOL);
                 return statement(data);
             }
@@ -379,7 +381,11 @@ static int function(analyse_data_t* data){
         GET_TOKEN_AND_CHECK_RULE(func_ret);
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
         GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
+        // so we can difine the variable with the same name as arguments 
+        data->label_deep++;
         GET_TOKEN_AND_CHECK_RULE(statement);
+        symtable_dispose(&data->local_table[data->label_deep]);
+        data->label_deep--;
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
         symtable_dispose(&data->local_table[data->label_deep]);
         func_data->defined = true;
@@ -428,7 +434,7 @@ static int args(analyse_data_t* data){
         GET_TOKEN_AND_CHECK_RULE(type);
         var_data->q_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index].q_type;
         var_data->data_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index].data_type;
-        var_data->constant = false;
+        var_data->constant = true;
         CHECK_RULE(args_n);
         ((function_data_t*)(*data->current_id).data)->param_len = data->args_index;
 
@@ -461,7 +467,7 @@ static int args_n(analyse_data_t* data){
         GET_TOKEN_AND_CHECK_RULE(type);
         var_data->q_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index].q_type;
         var_data->data_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index].data_type;
-        var_data->constant = false;
+        var_data->constant = true;
         CHECK_RULE(args_n);	
     }    
 //16. 〈 args_n 〉 −→ ε
@@ -487,13 +493,13 @@ static int if_else(analyse_data_t* data){
             }
         }
         else{
-            data->var_id = symtable_search(&data->local_table[0], "%%exp_result");
+            data->var_id = symtable_search(&data->local_table[0], "%exp_result");
             CHECK_EXPRESSION();
         }
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
         GET_TOKEN_AND_CHECK_RULE(statement);
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
-        GET_TOKEN();
+        GET_TOKEN_AND_CHECK_RULE(possible_EOL);
         if(data->token.data.Keyword != Else_KW){
             return SYNTAX_ERROR;
         }
@@ -561,13 +567,8 @@ static int def_var(analyse_data_t* data){
             return SYNTAX_ERROR;
         }
         GET_TOKEN_AND_CHECK_TYPE(IDENTIFIER);
-        data->var_id = symtable_search(&data->global_table, data->token.data.String); 
-        if (data->var_id != NULL){
-            return SEM_ERROR_UNDEF_VAR;
-        }
-        else{
-            data->var_id = symtable_search(&data->local_table[data->label_deep], data->token.data.String); 
-        }
+
+        data->var_id = symtable_search(&data->local_table[data->label_deep], data->token.data.String); 
 		if (data->var_id == NULL)
 		{   	
             var_data = malloc(sizeof(var_data_t));
@@ -638,8 +639,12 @@ int f_expression_call(analyse_data_t* data, token_t id, data_type* type){
         }
         CHECK_TYPE(TOKEN_LEFT_BRACKET);
         GET_TOKEN_AND_CHECK_RULE(fc_args);
+        if(data->args_index != ((function_data_t*)data->current_id->data)->param_len){
+            return SEM_ERROR_PARAM;
+        }
         GET_TOKEN_AND_CHECK_TYPE(TOKEN_RIGHT_BRACKET);
         *type = ((function_data_t*)data->current_id->data)->return_data_type;
+        data->args_index = 0;
         return SYNTAX_OK;
     }
     return SYNTAX_ERROR;
@@ -861,7 +866,7 @@ static int p_type(analyse_data_t* data){
 }
 int main()
 {
-    char *input = "var n : Int = 4\nfunc decrement(of n: Int, by m: Int) -> Int {\nn = n + 342\nn = 5\nreturn n - m\n}\nfunc increment(of n: Int, by m: Int) -> Int {\nreturn n + m\n}";
+    char *input = "var n : Int = 4\nfunc f() -> Int { \nvar n : Int = 4\nreturn n\n}\n";
     FILE *file = fmemopen(input, strlen(input), "r");
     set_source_file(file);
     analyse_data_t *data = malloc(sizeof(analyse_data_t));
