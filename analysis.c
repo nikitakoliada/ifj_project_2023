@@ -653,13 +653,20 @@ int f_expression_call(analyse_data_t* data, token_t id, data_type* type){
 // //24. 〈 fc_args 〉−→ id: expression 〈fc_ n_args 〉
 static int fc_args(analyse_data_t* data){
     data->args_index = 0;
-    if(data->token.type == IDENTIFIER){
+    if(data->token.type == IDENTIFIER ){
         // functions' params are in local[0] table
         data->var_id = var_search(data, data->label_deep, data->token.data.String);
         if(data->var_id->data != ((function_data_t*)(*data->current_id).data)->param_names[data->args_index]){
             return SEM_ERROR_UNDEF_VAR;
         }
         GET_TOKEN_AND_CHECK_TYPE(COLON);
+        data->var_id = symtable_search(&data->local_table[0], "%exp_result");
+        GET_TOKEN_AND_CHECK_EXPRESSION();
+        CHECK_RULE(fc_args_n_args);
+        return SYNTAX_OK;
+    }
+    //if _ as name var
+    else if (((function_data_t*)(*data->current_id).data)->param_names[data->args_index] = "_";){
         data->var_id = symtable_search(&data->local_table[0], "%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
         CHECK_RULE(fc_args_n_args);
@@ -679,6 +686,13 @@ static int fc_args_n_args(analyse_data_t* data){
             return SEM_ERROR_UNDEF_VAR;
         }
         GET_TOKEN_AND_CHECK_TYPE(COLON);
+        data->var_id = symtable_search(&data->local_table[0], "%exp_result");
+        GET_TOKEN_AND_CHECK_EXPRESSION();
+        CHECK_RULE(fc_args_n_args);
+        return SYNTAX_OK;
+    }
+    //if _ as name var
+    else if (((function_data_t*)(*data->current_id).data)->param_names[data->args_index] = "_";){
         data->var_id = symtable_search(&data->local_table[0], "%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
         CHECK_RULE(fc_args_n_args);
@@ -866,7 +880,7 @@ static int p_type(analyse_data_t* data){
 }
 int main()
 {
-    char *input = "var n : Int = 4\nfunc f() -> Int { \nvar n : Int = 4\nreturn n\n}\n";
+    char *input = "var n : Int = 4\nvar c : Int = 4\nfunc i(i)";
     FILE *file = fmemopen(input, strlen(input), "r");
     set_source_file(file);
     analyse_data_t *data = malloc(sizeof(analyse_data_t));
