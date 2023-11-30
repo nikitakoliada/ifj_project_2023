@@ -205,7 +205,7 @@ bst_node_ptr var_search(analyse_data_t* data, int deepness, char* key){
             return ptr;
         }
     }
-    return NULL;
+    return symtable_search(&data->global_table, key);
 }
 
 static bool init_variables(analyse_data_t* data)
@@ -216,8 +216,8 @@ static bool init_variables(analyse_data_t* data)
         symtable_init(&data->local_table[length]);
     }
 	data->current_id = malloc(sizeof(bst_node_ptr))	;
-    data->var_id = malloc(sizeof(bst_node_ptr))	;
-    data->expr_id = malloc(sizeof(bst_node_ptr))	;
+    data->var_id = malloc(sizeof(bst_node_ptr));
+    data->expr_id = malloc(sizeof(bst_node_ptr));
 
 	data->args_index = 0;
 	data->label_index = 0;
@@ -334,7 +334,7 @@ static int statement(analyse_data_t* data)
     }
     //???. 〈 statement 〉 −→ <return_kw> <expression> EOL <statement>
     else if(data->token.type == KEYWORD && data->token.data.Keyword == Return_KW){
-        data->var_id = symtable_search(&data->local_table[0], "%%exp_result");
+        data->var_id = symtable_search(&data->global_table, "%%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
         CHECK_RULE(possible_EOL);
         return statement(data);
@@ -383,8 +383,8 @@ static int function(analyse_data_t* data){
         GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
         // so we can difine the variable with the same name as arguments 
         data->label_deep++;
+        symtable_init(&data->local_table[data->label_deep]);
         GET_TOKEN_AND_CHECK_RULE(statement);
-        symtable_dispose(&data->local_table[data->label_deep]);
         data->label_deep--;
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
         symtable_dispose(&data->local_table[data->label_deep]);
@@ -493,7 +493,7 @@ static int if_else(analyse_data_t* data){
             }
         }
         else{
-            data->var_id = symtable_search(&data->local_table[0], "%exp_result");
+            data->var_id = symtable_search(&data->global_table, "%%exp_result");
             CHECK_EXPRESSION();
         }
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
@@ -660,14 +660,14 @@ static int fc_args(analyse_data_t* data){
             return SEM_ERROR_UNDEF_VAR;
         }
         GET_TOKEN_AND_CHECK_TYPE(COLON);
-        data->var_id = symtable_search(&data->local_table[0], "%exp_result");
+        data->var_id = symtable_search(&data->global_table, "%%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
         CHECK_RULE(fc_args_n_args);
         return SYNTAX_OK;
     }
     //if _ as name var
-    else if (((function_data_t*)(*data->current_id).data)->param_names[data->args_index] = "_";){
-        data->var_id = symtable_search(&data->local_table[0], "%exp_result");
+    else if (((function_data_t*)(*data->current_id).data)->param_names[data->args_index] = "_"){
+        data->var_id = symtable_search(&data->global_table, "%%exp_result");
         CHECK_EXPRESSION();
         CHECK_RULE(fc_args_n_args);
         return SYNTAX_OK;
@@ -681,7 +681,7 @@ static int fc_args_n_args(analyse_data_t* data){
     if(data->token.type == COMMA){
         data->args_index++;
         //if _ as name var
-        if (((function_data_t*)(*data->current_id).data)->param_names[data->args_index] = "_";){
+        if (((function_data_t*)(*data->current_id).data)->param_names[data->args_index] = "_"){
             data->var_id = symtable_search(&data->local_table[0], "%exp_result");
             GET_TOKEN_AND_CHECK_EXPRESSION();
             CHECK_RULE(fc_args_n_args);
@@ -700,7 +700,6 @@ static int fc_args_n_args(analyse_data_t* data){
             return SYNTAX_OK;
         }
     }
-
 
 //     //25. 〈fc_args 〉−→ ε
     return SYNTAX_OK;
@@ -884,7 +883,7 @@ static int p_type(analyse_data_t* data){
 }
 int main()
 {
-    char *input = "var n : Int = 4\nvar c : Int = 4\nfunc i(i)";
+    char *input = "var n : Int = 4\nfunc f() -> Int { \nvar n : Int = 4\nreturn n\n}\n";
     FILE *file = fmemopen(input, strlen(input), "r");
     set_source_file(file);
     analyse_data_t *data = malloc(sizeof(analyse_data_t));
