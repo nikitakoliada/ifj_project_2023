@@ -54,6 +54,7 @@ void bst_replace_by_right_most(bst_node_ptr, bst_node_ptr);
 bst_node_ptr bst_delete(bst_node_ptr, char*);
 bst_node_ptr bst_search(bst_node_ptr, char*);
 void bst_dispose(bst_node_ptr);
+int has_undefined_function(bst_node_ptr node);
 
 // symtable helpers and functions
 typedef struct variable {
@@ -64,6 +65,7 @@ typedef struct variable {
 
 typedef struct function {
     int return_data_type;
+    bool return_data_q_type;
     bool defined;
     int param_len;
     var_data_t params_types[100];

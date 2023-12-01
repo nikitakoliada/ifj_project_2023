@@ -37,7 +37,7 @@ typedef struct
 
 	char *tmp_key; // used for storing the key of the current variable
 
-	int args_index;		// Index of currently checked args
+	int args_index;		// Index of currently checked args -1 = 0 because of the reurn type which we should access as well
 	int label_index;			// Index for generating unique labels.
 	int label_deep;				// Deep of labes.
 
