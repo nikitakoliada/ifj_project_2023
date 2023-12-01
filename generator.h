@@ -20,14 +20,18 @@
     fprintf(stdout, "\n");        \
   } while (0)
 
-void generate_readString();
-void generate_readInt();
-void generate_readDouble();
-void generate_Double2Int();
-void generate_length();
-void generate_substring();
-void generate_ord();
-void generate_chr();
-void define_built_in_functions();
+void generate_readString(void);
+void generate_readInt(void);
+void generate_readDouble(void);
+void generate_write(void);
+void generate_Int2Double(void);
+void generate_Double2Int(void);
+void generate_length(void);
+void generate_substring(void);
+void generate_ord(void);
+void generate_chr(void);
+void define_built_in_functions(void);
+
+void generate_header(void);
 
 #endif //GENERATOR_H

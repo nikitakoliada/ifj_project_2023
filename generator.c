@@ -15,7 +15,7 @@
  *
  * @return string without a line break symbol
  */
-void generate_readString()
+void generate_readString(void)
 {
     GENERATE("JUMP !_readString");
     GENERATE("LABEL !function_readString");
@@ -34,7 +34,7 @@ void generate_readString()
  *
  * @return integer
  */
-void generate_readInt()
+void generate_readInt(void)
 {
     GENERATE("JUMP !_readInt");
     GENERATE("LABEL !function_readInt");
@@ -53,7 +53,7 @@ void generate_readInt()
  *
  * @return decimal number
  */
-void generate_readDouble()
+void generate_readDouble(void)
 {
     GENERATE("JUMP !_readDouble");
     GENERATE("LABEL !function_readDouble");
@@ -68,13 +68,58 @@ void generate_readDouble()
 }
 
 /**
+ * @brief BuiltIn function write
+ *
+ * @return void
+ */
+
+void generate_write(void)
+{
+    GENERATE("JUMP !_write");
+    GENERATE("LABEL !function_write");
+    GENERATE("PUSHFRAME");
+
+    GENERATE("WRITE LF@%0");
+
+    GENERATE("POPFRAME");
+    GENERATE("RETURN");
+    GENERATE("LABEL !_write");
+}
+
+/**
+ * @brief BuiltIn function Int2Double
+ *
+ * @return The value of the integer parameter i converted to
+ * a decimal value.
+ *
+ */
+
+void generate_Int2Double(void)
+{
+    GENERATE("JUMP !_Int2Double");
+    GENERATE("LABEL !function_Int2Double");
+    GENERATE("PUSHFRAME");
+    GENERATE("DEFVAR LF@%%retval0");
+
+    GENERATE("MOVE LF@%%retval0 nil@nil");
+    GENERATE("JUMPIFEQ nil$error_Int2Double nil@nil LF@_Int2Double$i");
+    GENERATE("INT2FLOAT LF@%%retval0 LF@_Int2Double$i");
+
+    GENERATE("LABEL nil$error_Int2Double");
+
+    GENERATE("POPFRAME");
+    GENERATE("RETURN");
+    GENERATE("LABEL !_Int2Double");
+}
+
+/**
  * @brief BuiltIn function Double2Int
  *
  * @return The value of the decimal parameter f converted to
  * an integer value by trimming the decimal part.
  *
  */
-void generate_Double2Int()
+void generate_Double2Int(void)
 {
     GENERATE("JUMP !_Double2Int");
     GENERATE("LABEL !function_Double2Int");
@@ -97,7 +142,7 @@ void generate_Double2Int()
  *
  * @return the length of given string
  */
-void generate_length()
+void generate_length(void)
 {
     GENERATE("JUMP !_length");
     GENERATE("LABEL !function_length");
@@ -121,7 +166,7 @@ void generate_length()
  * error 8 occurs.
  */
 
-void generate_substring()
+void generate_substring(void)
 {
     GENERATE("JUMP !_substr");
     GENERATE("LABEL !function_substr");
@@ -182,7 +227,7 @@ void generate_substring()
  * If one of the parameters is nil, error 8 occurs.
  * If the index i is outside the bounds of the string (1 to #s), the function returns nil.
  */
-void generate_ord()
+void generate_ord(void)
 {
     GENERATE("JUMP !_ord");
     GENERATE("LABEL !function_ord");
@@ -225,7 +270,7 @@ void generate_ord()
  * The case when i is outside the interval [0; 255], leads
  * to nil. If i nil, error 8 occurs.
  */
-void generate_chr()
+void generate_chr(void)
 {
     GENERATE("JUMP !_chr");
     GENERATE("LABEL !function_chr");
@@ -250,7 +295,7 @@ void generate_chr()
     GENERATE("LABEL !_chr");
 }
 
-void define_built_in_functions()
+void define_built_in_functions(void)
 {
     generate_readString();
     generate_readInt();
@@ -261,3 +306,4 @@ void define_built_in_functions()
     generate_ord();
     generate_chr();
 }
+
