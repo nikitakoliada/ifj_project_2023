@@ -14,6 +14,8 @@ typedef enum{
     IntS,
     DoubleS,
     StringS,
+    IdS,
+    FunctionS,
     PlusS,
     MinusS, 
     MultS,
@@ -26,7 +28,6 @@ typedef enum{
     LessS,   // <
     NotS,    // !
     NilCS,  // ??
-    IdS,     
     LPS,     // (
     RPS,     // )
     DollarS, // $

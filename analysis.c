@@ -479,9 +479,9 @@ static int func_ret(analyse_data_t* data){
 
     if(data->token.type == TOKEN_FUNCTION_TYPE){
         GET_TOKEN_AND_CHECK_RULE(type);
-		((function_data_t*)(*data->current_id).data)->return_data_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index + 1].data_type;
-        ((function_data_t*)(*data->current_id).data)->return_data_q_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index + 1].q_type;
 
+		((function_data_t*)(*data->current_id).data)->return_data_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index].data_type;
+        ((function_data_t*)(*data->current_id).data)->return_data_q_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index].q_type;
     }
     //13. 〈 func_ret 〉 −→ ε
     else{
@@ -993,10 +993,10 @@ static int p_type(analyse_data_t* data){
 }
 int main()
 {
-    char *input = "func main() {}\n func new() {\nvar i = 12\n}\nlet c : Int = 4\nfunc empty(){\n}\nfunc concat(b x : String, with y : String) -> String {\nlet x = y + y\nwhile (c > 3) {\nvar x : Double\n}\nreturn x + \" \" + y\n}\nlet a = \"ahoj \"\nvar ct : String\nconcat(b: a, with: \"svete\")\nempty()\n";
+    /*char *input = "func empty(){\n}\nfunc concat(b x : String, with y : String) -> String {\nlet x = x + y\nreturn x + \" \" + y\n}\nlet a = \"ahoj \"\nvar ct : String\nconcat(b: a, with: \"svete\")\nempty()trachnutebe()\n";
 
-    FILE *file = fmemopen(input, strlen(input), "r");
-    set_source_file(file);
+    FILE *file = fmemopen(input, strlen(input), "r");*/
+    set_source_file(stdin);
     analyse_data_t *data = malloc(sizeof(analyse_data_t));
     
     if (!init_variables(data))
@@ -1016,7 +1016,7 @@ int main()
         printf("OK\n");
     }
     //free_variables(data);
-    fclose(file);
+    //fclose(file);
 
     return result;
 }
