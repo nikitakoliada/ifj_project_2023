@@ -636,22 +636,10 @@ static int f_call(analyse_data_t* data){
 
 // //23.2. 〈f_call 〉−→ id ( 〈fc_args 〉)
 int f_expression_call(analyse_data_t* data, token_t id, data_type* type){
-    if(id.type == IDENTIFIER){
-        data->current_id = symtable_search(&data->local_table[0], id.data.String);
-        if(data->current_id == NULL){
-            return SEM_ERROR_UNDEF_VAR;
-        }
-        CHECK_TYPE(TOKEN_LEFT_BRACKET);
-        GET_TOKEN_AND_CHECK_RULE(fc_args);
-        if(data->args_index != ((function_data_t*)data->current_id->data)->param_len){
-            return SEM_ERROR_PARAM;
-        }
-        GET_TOKEN_AND_CHECK_TYPE(TOKEN_RIGHT_BRACKET);
-        *type = ((function_data_t*)data->current_id->data)->return_data_type;
-        data->args_index = 0;
-        return SYNTAX_OK;
-    }
-    return SYNTAX_ERROR;
+    data->current_id = symtable_search(&data->global_table, id.data.String);
+    data->tmp_key = id.data.String;
+    *type = ((function_data_t*)data->current_id->data)->return_data_type;
+    return f_call(data);    
 }
 
 // //24. 〈 fc_args 〉−→ id: expression 〈fc_ n_args 〉
@@ -661,13 +649,13 @@ static int fc_args(analyse_data_t* data){
     // a kak delat s undefined functions
     if(!((function_data_t*)(*data->current_id).data)->defined && data->token.type == IDENTIFIER)
     {
-        data->var_id = symtable_search(&data->local_table[0], "%exp_result");
+        data->var_id = symtable_search(&data->local_table[0], "%%exp_result");
         CHECK_EXPRESSION();
         CHECK_RULE(fc_args_n_args);
         return SYNTAX_OK;
     }
     else if (strcmp(((function_data_t*)(*data->current_id).data)->param_names[data->args_index], "_") == 0){
-        data->var_id = symtable_search(&data->local_table[0], "%exp_result");
+        data->var_id = symtable_search(&data->local_table[0], "%%exp_result");
         CHECK_EXPRESSION();
         CHECK_RULE(fc_args_n_args);
         return SYNTAX_OK;
@@ -697,13 +685,13 @@ static int fc_args_n_args(analyse_data_t* data){
         //if _ as name var
         if(!((function_data_t*)(*data->current_id).data)->defined && data->token.type == IDENTIFIER)
         {
-            data->var_id = symtable_search(&data->local_table[0], "%exp_result");
+            data->var_id = symtable_search(&data->local_table[0], "%%exp_result");
             CHECK_EXPRESSION();
             CHECK_RULE(fc_args_n_args);
             return SYNTAX_OK;
         }
         else if (strcmp(((function_data_t*)(*data->current_id).data)->param_names[data->args_index], "_") == 0){
-            data->var_id = symtable_search(&data->local_table[0], "%exp_result");
+            data->var_id = symtable_search(&data->local_table[0], "%%exp_result");
             GET_TOKEN_AND_CHECK_EXPRESSION();
             CHECK_RULE(fc_args_n_args);
             return SYNTAX_OK;
@@ -716,7 +704,7 @@ static int fc_args_n_args(analyse_data_t* data){
                 }
             }
             GET_TOKEN_AND_CHECK_TYPE(COLON);
-            data->var_id = symtable_search(&data->local_table[0], "%exp_result");
+            data->var_id = symtable_search(&data->local_table[0], "%%exp_result");
             GET_TOKEN_AND_CHECK_EXPRESSION();
             CHECK_RULE(fc_args_n_args);
             return SYNTAX_OK;
