@@ -669,26 +669,27 @@ static int fc_args(analyse_data_t* data){
         CHECK_RULE(fc_args_n_args);
         return SYNTAX_OK;
     }
-    else if (strcmp(((function_data_t*)(*data->current_id).data)->param_names[data->args_index], "_") == 0){
-        data->var_id = symtable_search(&data->local_table[0], "%exp_result");
-        CHECK_EXPRESSION();
-        CHECK_RULE(fc_args_n_args);
-        return SYNTAX_OK;
-    }
     else{
-        // functions' params are in local[0] table
-        if(((function_data_t*)data->current_id->data)->defined){
-            if(strcmp(data->token.data.String, ((function_data_t*)(*data->current_id).data)->param_names[data->args_index])){
-                return SEM_ERROR_PARAM;
-            }
+        if (strcmp(((function_data_t*)(*data->current_id).data)->param_names[data->args_index], "_") == 0){
+            data->var_id = symtable_search(&data->local_table[0], "%exp_result");
+            CHECK_EXPRESSION();
+            CHECK_RULE(fc_args_n_args);
+            return SYNTAX_OK;
         }
-        GET_TOKEN_AND_CHECK_TYPE(COLON);
-        data->var_id = symtable_search(&data->local_table[0], "%exp_result");
-        GET_TOKEN_AND_CHECK_EXPRESSION();
-        CHECK_RULE(fc_args_n_args);
-        return SYNTAX_OK;
+        else{
+            // functions' params are in local[0] table
+            if(((function_data_t*)data->current_id->data)->defined){
+                if(strcmp(data->token.data.String, ((function_data_t*)(*data->current_id).data)->param_names[data->args_index])){
+                    return SEM_ERROR_PARAM;
+                }
+            }
+            GET_TOKEN_AND_CHECK_TYPE(COLON);
+            data->var_id = symtable_search(&data->local_table[0], "%exp_result");
+            GET_TOKEN_AND_CHECK_EXPRESSION();
+            CHECK_RULE(fc_args_n_args);
+            return SYNTAX_OK;
+        }
     }
-    
     //25. 〈fc_args 〉−→ ε
     return SYNTAX_OK;
 }
@@ -698,13 +699,14 @@ static int fc_args_n_args(analyse_data_t* data){
     if(data->token.type == COMMA){
         data->args_index++;
         //if _ as name var
-        if(!((function_data_t*)(*data->current_id).data)->defined && data->token.type == IDENTIFIER)
+        if(!((function_data_t*)(*data->current_id).data)->defined)
         {
             data->var_id = symtable_search(&data->local_table[0], "%exp_result");
-            CHECK_EXPRESSION();
+            GET_TOKEN_AND_CHECK_EXPRESSION();
             CHECK_RULE(fc_args_n_args);
             return SYNTAX_OK;
         }
+        
         else if (strcmp(((function_data_t*)(*data->current_id).data)->param_names[data->args_index], "_") == 0){
             data->var_id = symtable_search(&data->local_table[0], "%exp_result");
             GET_TOKEN_AND_CHECK_EXPRESSION();
@@ -762,10 +764,10 @@ static int def_type(analyse_data_t* data){
 static int end(analyse_data_t* data){
     if(data->token.type == TOKEN_EOF){
         // check if all functions are defined
-		// for (int i = 0; i < data->global_table->length; i++)
-		// 	for (function_data_t* it = data->global_table[i]; it != NULL; it = it->next)
-		// 		if (!it->data.defined) return SEM_ERROR_UNDEF_FUNC;
-        return SYNTAX_OK;
+		if(has_undefined_function(data->global_table.root))
+            return SEM_ERROR_UNDEF_FUNC;
+        else
+            return SYNTAX_OK;
     }
     return SYNTAX_ERROR;
 }
@@ -909,7 +911,7 @@ static int p_type(analyse_data_t* data){
 }
 int main()
 {
-    char *input = "func empty(){\n}\nfunc concat(b x : String, with y : String) -> String {\nlet x = y + y\nreturn x + \" \" + y\n}\nlet a = \"ahoj \"\nvar ct : String\nconcat(b: a, with: \"svete\")\nempty()trachnutebe()\n";
+    char *input = "func empty(){\n}\nfunc concat(b x : String, with y : String) -> String {\nlet x = y + y\nreturn x + \" \" + y\n}\nlet a = \"ahoj \"\nvar ct : String\nconcat(b: a, with: \"svete\")\nempty()\n";
 
     FILE *file = fmemopen(input, strlen(input), "r");
     set_source_file(file);
