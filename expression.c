@@ -16,6 +16,7 @@
 #include "symtable.h"
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
 
 #define FREE_RECOURCES(stack)do{\
         stack_dispose(stack);\
@@ -96,11 +97,13 @@ int get_pt_index(eSymbol symbol){
 data_type get_data_type(token_t token, analyse_data_t* data, bool* is_nullable){
     switch(token.type){
         case IDENTIFIER:
-            bst_node_ptr node = var_search(data, data->label_deep, token.data.String);
-            if(!node){
-                node = symtable_search(&data->global_table, token.data.String);
-                if(!node) return Undefined;
+            assert(data->var_id);
+            int label_deep = data->label_deep;
+            if(!strcmp(token.data.String, data->var_id->key) && data->in_var_definition){
+                label_deep = label_deep > 0 ? label_deep - 1 : 0;
             }
+            bst_node_ptr node = var_search(data, label_deep, token.data.String);
+            if(!node) return Undefined;
             var_data_t* data = (var_data_t*)node->data;
             if(is_nullable) *is_nullable = data->q_type;
             return data->data_type;
@@ -486,7 +489,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
             else precedence_result = R;
         }
 
-        //printf("-****%d - %d*****\n", stack_symbol_index, token.type);
+        printf("-****%d - %d*****\n", stack_symbol_index, input_index);
         stack_element* new_element = NULL;
 
         switch(precedence_result){
@@ -597,6 +600,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
             case F:
                 if(input_symbol == DollarS && stack_symbol == DollarS){
                     is_success = true;
+                    printf("lol");
                 }
                 else{
                     // free recources
@@ -636,6 +640,9 @@ int expression(analyse_data_t* data, bool* is_EOL){
             FREE_RECOURCES(stack);
             return SEM_ERROR_TYPE_COMPAT;
         }
+
+            printf("%d****\n", var_data->data_type);
+
 
         switch(var_data->data_type){
             case Int_Type:
