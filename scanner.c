@@ -24,19 +24,6 @@ void set_source_file(FILE *file_arg){
     file = file_arg;
 }
 
-bool is_built_in_function(char *token)
-{
-    for (int i = 0; i < 10; i++)
-    {
-        if (strcmp(token, built_in_functions[i]) == 0)
-        {
-            return true;
-        }
-    }
-
-        return false;
-}
-
 bool is_keyword(char *token)
 {
     for (int i = 0; i < 14; i++)
@@ -68,14 +55,6 @@ void get_keyword_type(char* token_raw, keyword_t* keyword){
     for(int i = 0; i < 14; i++){
         if(!strcmp(token_raw, keywords[i])){
             *keyword = (keyword_t)i;
-        }
-    }
-}
-
-void get_built_in_function_type(char* token_raw, built_in_function_t* function){
-    for(int i = 0; i < 10; i++){
-        if(!strcmp(token_raw, built_in_functions[i])){
-            *function = (built_in_function_t)i;
         }
     }
 }
@@ -225,9 +204,7 @@ int get_next_token(token_t* token){
                 }
                 else{
                     ungetc(symbol, file);
-                    if(is_built_in_function(raw_token)){
-                        token_type = BUILT_IN_FUNCTION;
-                    }else if (is_keyword(raw_token)){
+                    if (is_keyword(raw_token)){
                         token_type = KEYWORD;
                     }else{
                         token_type = IDENTIFIER;
@@ -541,9 +518,6 @@ int get_next_token(token_t* token){
 
     switch (token_type)
     {
-        case BUILT_IN_FUNCTION:
-            get_built_in_function_type(raw_token, &token->data.Built_In_Function);
-            break;
         case KEYWORD:
             get_keyword_type(raw_token, &token->data.Keyword);
             break;
