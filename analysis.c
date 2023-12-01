@@ -230,7 +230,7 @@ static bool init_variables(analyse_data_t* data)
     var_data->data_type = Undefined;
     var_data->q_type = false;
 
-    symtable_insert_var(&data->global_table, "%%expr_result", var_data);
+    symtable_insert_var(&data->global_table, "%%exp_result", var_data);
 
 	return true;
 }
@@ -515,7 +515,7 @@ static int while_(analyse_data_t* data){
         data->label_deep++;
         data->in_while_or_if = true;
         data->label_index += 2;
-        data->var_id = symtable_search(&data->local_table[0], "%%exp_result");
+        data->var_id = symtable_search(&data->global_table, "%%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
         GET_TOKEN_AND_CHECK_RULE(statement);
@@ -649,13 +649,13 @@ static int fc_args(analyse_data_t* data){
     // a kak delat s undefined functions
     if(!((function_data_t*)(*data->current_id).data)->defined && data->token.type == IDENTIFIER)
     {
-        data->var_id = symtable_search(&data->local_table[0], "%%exp_result");
+        data->var_id = symtable_search(&data->global_table, "%%exp_result");
         CHECK_EXPRESSION();
         CHECK_RULE(fc_args_n_args);
         return SYNTAX_OK;
     }
     else if (strcmp(((function_data_t*)(*data->current_id).data)->param_names[data->args_index], "_") == 0){
-        data->var_id = symtable_search(&data->local_table[0], "%%exp_result");
+        data->var_id = symtable_search(&data->global_table, "%%exp_result");
         CHECK_EXPRESSION();
         CHECK_RULE(fc_args_n_args);
         return SYNTAX_OK;
@@ -685,13 +685,13 @@ static int fc_args_n_args(analyse_data_t* data){
         //if _ as name var
         if(!((function_data_t*)(*data->current_id).data)->defined && data->token.type == IDENTIFIER)
         {
-            data->var_id = symtable_search(&data->local_table[0], "%%exp_result");
+            data->var_id = symtable_search(&data->global_table, "%%exp_result");
             CHECK_EXPRESSION();
             CHECK_RULE(fc_args_n_args);
             return SYNTAX_OK;
         }
         else if (strcmp(((function_data_t*)(*data->current_id).data)->param_names[data->args_index], "_") == 0){
-            data->var_id = symtable_search(&data->local_table[0], "%%exp_result");
+            data->var_id = symtable_search(&data->global_table, "%%exp_result");
             GET_TOKEN_AND_CHECK_EXPRESSION();
             CHECK_RULE(fc_args_n_args);
             return SYNTAX_OK;
@@ -704,7 +704,7 @@ static int fc_args_n_args(analyse_data_t* data){
                 }
             }
             GET_TOKEN_AND_CHECK_TYPE(COLON);
-            data->var_id = symtable_search(&data->local_table[0], "%%exp_result");
+            data->var_id = symtable_search(&data->global_table, "%%exp_result");
             GET_TOKEN_AND_CHECK_EXPRESSION();
             CHECK_RULE(fc_args_n_args);
             return SYNTAX_OK;
@@ -893,7 +893,7 @@ static int p_type(analyse_data_t* data){
 }
 int main()
 {
-    char *input = "func empty(){\n}\nfunc concat(b x : String, with y : String) -> String {\nlet x = y + y\nreturn x + \" \" + y\n}\nlet a = \"ahoj \"\nvar ct : String\nconcat(b: a, with: \"svete\")\nempty()trachnutebe()\n";
+    char *input = "func empty(){\n}\nfunc concat(b x : String, with y : String) -> String {\nlet x = x + y\nreturn x + \" \" + y\n}\nlet a = \"ahoj \"\nvar ct : String\nconcat(b: a, with: \"svete\")\nempty()trachnutebe()\n";
 
     FILE *file = fmemopen(input, strlen(input), "r");
     set_source_file(file);
