@@ -41,11 +41,9 @@ void test_builtin_function_token() {
     token_t token;
     get_next_token(&token);
 
-    assert(token.type == BUILT_IN_FUNCTION);
+    assert(token.type == IDENTIFIER);
 
-    // TODO ??
-    // assert(strcmp(token.data.String, "readInt") == 0); it does not work hmmmmmmmm
-
+    assert(strcmp(token.data.String, "readInt") == 0);
 
     fclose(file);
     printf("Built-in Function Token Test: Passed\n");
@@ -206,8 +204,8 @@ void test_factorial_code() {
 
     token_t token;
     get_next_token(&token);
-    assert(token.type == BUILT_IN_FUNCTION);
-    assert(token.data.Built_In_Function == WRITE_FUNCTION);
+    assert(token.type == IDENTIFIER);
+    assert(!strcmp(token.data.String, "write"));
 
     get_next_token(&token);
     assert(token.type == TOKEN_LEFT_BRACKET);
@@ -248,8 +246,8 @@ void test_factorial_code() {
 
     // Next token: 'readInt' (BUILT_IN_FUNCTION)
     get_next_token(&token);
-    assert(token.type == BUILT_IN_FUNCTION);
-    assert(token.data.Built_In_Function == READINT_FUNCTION);
+    assert(token.type == IDENTIFIER);
+    assert(!strcmp(token.data.String, "readInt"));
 
     // Next token: '(' (LEFT BRACKET)
     get_next_token(&token);
