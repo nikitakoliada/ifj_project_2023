@@ -217,14 +217,14 @@ bst_node_ptr bst_delete(bst_node_ptr root, char* key) {
     return root;
 }
 
-bool has_undefined_function(bst_node_ptr node) {
+int has_undefined_function(bst_node_ptr node) {
     if (node == NULL) {
-        return false;
+        return 0;
     }
 
     // Check if the current node is a function
     if (node->data_type == node_data_type_function && !((function_data_t*)node->data)->defined) {
-        return true;
+        return 1;
     }
 
     // Recursively check the left and right subtrees

@@ -54,7 +54,7 @@ void bst_replace_by_right_most(bst_node_ptr, bst_node_ptr);
 bst_node_ptr bst_delete(bst_node_ptr, char*);
 bst_node_ptr bst_search(bst_node_ptr, char*);
 void bst_dispose(bst_node_ptr);
-bool has_undefined_function(bst_node_ptr node);
+int has_undefined_function(bst_node_ptr node);
 
 // symtable helpers and functions
 typedef struct variable {

@@ -316,6 +316,7 @@ static int statement(analyse_data_t* data)
             CHECK_RULE(f_call);
             GET_TOKEN_AND_CHECK_RULE(possible_EOL);
             data->tmp_key = "";
+
             return statement(data);
         }
     }
@@ -340,7 +341,7 @@ static int statement(analyse_data_t* data)
         return statement(data);
     }
     //9. 〈 statement 〉 −→ 〈 end 〉
-    else if(data->token.type == KEYWORD && data->token.data.Keyword == TOKEN_EOF){
+    else if(data->token.type == TOKEN_EOF){
         return end(data); // TODO ig idk maybe inside end
     }
     //10. 〈 statement 〉 −→ ε
@@ -662,11 +663,13 @@ static int fc_args(analyse_data_t* data){
     data->args_index = 0;
     //if _ as name var
     // a kak delat s undefined functions
-    if(!((function_data_t*)(*data->current_id).data)->defined && data->token.type == IDENTIFIER)
+    if(!((function_data_t*)(*data->current_id).data)->defined)
     {
+        if(data->token.type == IDENTIFIER){
         data->var_id = symtable_search(&data->local_table[0], "%exp_result");
         CHECK_EXPRESSION();
         CHECK_RULE(fc_args_n_args);
+        }
         return SYNTAX_OK;
     }
     else{
@@ -764,7 +767,7 @@ static int def_type(analyse_data_t* data){
 static int end(analyse_data_t* data){
     if(data->token.type == TOKEN_EOF){
         // check if all functions are defined
-		if(has_undefined_function(data->global_table.root))
+		if(has_undefined_function(data->global_table.root) == 1)
             return SEM_ERROR_UNDEF_FUNC;
         else
             return SYNTAX_OK;
@@ -911,7 +914,7 @@ static int p_type(analyse_data_t* data){
 }
 int main()
 {
-    char *input = "func empty(){\n}\nfunc concat(b x : String, with y : String) -> String {\nlet x = y + y\nreturn x + \" \" + y\n}\nlet a = \"ahoj \"\nvar ct : String\nconcat(b: a, with: \"svete\")\nempty()\n";
+    char *input = "let c : Int = 4\nfunc empty(){\n}\nfunc concat(b x : String, with y : String) -> String {\nlet x = y + y\nwhile (c > 3) {\nvar x : Double\n}\nreturn x + \" \" + y\n}\nlet a = \"ahoj \"\nvar ct : String\nconcat(b: a, with: \"svete\")\nempty()\nempty()\n";
 
     FILE *file = fmemopen(input, strlen(input), "r");
     set_source_file(file);
