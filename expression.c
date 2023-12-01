@@ -501,7 +501,9 @@ int expression(analyse_data_t* data, bool* is_EOL){
                     return INTERNAL_ERROR;
                 }
                 new_element->symbol = input_symbol;
-                new_element->type = get_data_type(token, data, &nullable);
+                new_element->type = input_symbol == IdS 
+                    ? input_id_data_type 
+                    : get_data_type(token, data, &nullable);
                 new_element->nullable = nullable;
                 new_element->is_identifier = token.type == IDENTIFIER;
                 if(!stack_push(stack, new_element))
