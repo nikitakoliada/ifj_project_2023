@@ -18,8 +18,6 @@
 //Defining macros for easier work with the parser 
 //and for better readability of the code
 int result = SYNTAX_ERROR;
-
-
 void print_token(token_t *token)
 {
    switch (token->type) {
@@ -58,15 +56,6 @@ void print_token(token_t *token)
                    break;
                case Let_KW:
                    printf("Let_KW\n");
-                   break;
-               case StringNullable_KW:
-                   printf("String_Nullable_KW\n");
-                   break;
-               case IntNullable_KW:
-                   printf("Int_Nullable_KW\n");
-                   break;
-               case DoubleNullable_KW:
-                   printf("Double_Nullable_KW\n");
                    break;
            }
            break;
@@ -162,7 +151,7 @@ void print_token(token_t *token)
 	if ((result = get_next_token(&data->token)) != 0) {        \
             return result;                                         \
         }                                                          \
-                        print_token(&data->token);                         \
+        print_token(&data->token);                                 \
 
 #define CHECK_TYPE(t_type)											\
 	if (data->token.type != t_type) return SYNTAX_ERROR
@@ -234,6 +223,103 @@ static bool init_variables(analyse_data_t* data)
     var_data->q_type = false;
 
     symtable_insert_var(&data->global_table, "%%expr_result", var_data);
+    function_data_t * readString = malloc(sizeof(function_data_t));
+    readString->defined = true;
+    readString->param_len = -1;
+    readString->return_data_type = String_Type;
+    readString->return_data_q_type = false;
+    symtable_insert_function(&data->global_table, "readString", readString);
+    function_data_t * readInt = malloc(sizeof(function_data_t));
+    readInt->defined = true;
+    readInt->param_len = -1;
+    readInt->return_data_type = Int_Type;
+    readInt->return_data_q_type = false;
+    symtable_insert_function(&data->global_table, "readInt", readInt);
+    function_data_t * readDouble = malloc(sizeof(function_data_t));
+    readDouble->defined = true;
+    readDouble->param_len = -1; // -1 == 0 in our compiler
+    readDouble->return_data_type = Double_Type;
+    readDouble->return_data_q_type = false;
+    symtable_insert_function(&data->global_table, "readDouble", readDouble);
+
+    function_data_t * Int2Double = malloc(sizeof(function_data_t));
+    Int2Double->defined = true;
+    Int2Double->param_len = 0; // 0 == 1 in our compiler
+    Int2Double->params_types[0].data_type = Int_Type;
+    Int2Double->params_types[0].q_type = false;
+    Int2Double->params_types[0].constant = true;
+    Int2Double->param_names[0] = "_";
+    Int2Double->params_identifiers[0] = "term";
+    Int2Double->return_data_type = Double_Type;
+    Int2Double->return_data_q_type = false;
+    symtable_insert_function(&data->global_table, "Int2Double", Int2Double);
+    function_data_t * Double2Int = malloc(sizeof(function_data_t));
+    Double2Int->defined = true;
+    Double2Int->param_len = 0; // 0 == 1 in our compiler
+    Double2Int->params_types[0].data_type = Double_Type;
+    Double2Int->params_types[0].q_type = false;
+    Double2Int->params_types[0].constant = true;
+    Double2Int->param_names[0] = "_";
+    Double2Int->params_identifiers[0] = "term";
+    Double2Int->return_data_type = Int_Type;
+    Double2Int->return_data_q_type = false;
+    symtable_insert_function(&data->global_table, "Double2Int", Double2Int);
+
+    function_data_t * length = malloc(sizeof(function_data_t));
+    length->defined = true;
+    length->param_len = 0; // 0 == 1 in our compiler
+    length->params_types[0].data_type = String_Type;
+    length->params_types[0].q_type = false;
+    length->params_types[0].constant = true;
+    length->param_names[0] = "_";
+    length->params_identifiers[0] = "s";
+    length->return_data_type = Int_Type;
+    length->return_data_q_type = false;
+    symtable_insert_function(&data->global_table, "length", length);
+    function_data_t * ord = malloc(sizeof(function_data_t));
+    ord->defined = true;
+    ord->param_len = 0; // 0 == 1 in our compiler
+    ord->params_types[0].data_type = String_Type;
+    ord->params_types[0].q_type = false;
+    ord->params_types[0].constant = true;
+    ord->param_names[0] = "_";
+    ord->params_identifiers[0] = "c";
+    ord->return_data_type = Int_Type;
+    ord->return_data_q_type = false;
+    symtable_insert_function(&data->global_table, "ord", ord);
+    function_data_t * chr = malloc(sizeof(function_data_t));
+    chr->defined = true;
+    chr->param_len = 0; // 0 == 1 in our compiler
+    chr->params_types[0].data_type = Int_Type;
+    chr->params_types[0].q_type = false;
+    chr->params_types[0].constant = true;
+    chr->param_names[0] = "_";
+    chr->params_identifiers[0] = "i";
+    chr->return_data_type = String_Type;
+    chr->return_data_q_type = false;
+    symtable_insert_function(&data->global_table, "chr", chr);
+
+    function_data_t * substring = malloc(sizeof(function_data_t));
+    substring->defined = true;
+    substring->param_len = 2;// 2 == 3 in our compiler 
+    substring->params_types[0].data_type = String_Type;
+    substring->params_types[0].q_type = false;
+    substring->params_types[0].constant = true;
+    substring->param_names[0] = "of";
+    substring->params_identifiers[0] = "s";
+    substring->params_types[1].data_type = Int_Type;
+    substring->params_types[1].q_type = false;
+    substring->params_types[1].constant = true;
+    substring->param_names[1] = "startingAt";
+    substring->params_identifiers[1] = "i";
+    substring->params_types[2].data_type = Int_Type;
+    substring->params_types[2].q_type = false;
+    substring->params_types[2].constant = true;
+    substring->param_names[2] = "endingBefore";
+    substring->params_identifiers[2] = "j";
+    substring->return_data_type = String_Type;
+    substring->return_data_q_type = true;
+    symtable_insert_function(&data->global_table, "substring", substring);
 
 	return true;
 }
@@ -375,10 +461,10 @@ static int function(analyse_data_t* data){
         CHECK_TYPE(TOKEN_RIGHT_BRACKET);
         GET_TOKEN_AND_CHECK_RULE(func_ret);
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
-        GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
+        GET_TOKEN_AND_CHECK_RULE(possible_EOL);
         // so we can difine the variable with the same name as arguments 
         data->label_deep++;
-        GET_TOKEN_AND_CHECK_RULE(statement);
+        CHECK_RULE(statement);
         symtable_dispose(&data->local_table[data->label_deep]);
         data->label_deep--;
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
@@ -397,10 +483,13 @@ static int func_ret(analyse_data_t* data){
     if(data->token.type == TOKEN_FUNCTION_TYPE){
         GET_TOKEN_AND_CHECK_RULE(type);
 		((function_data_t*)(*data->current_id).data)->return_data_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index + 1].data_type;
+        ((function_data_t*)(*data->current_id).data)->return_data_q_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index + 1].q_type;
+
     }
     //13. 〈 func_ret 〉 −→ ε
     else{
         ((function_data_t*)(*data->current_id).data)->return_data_type = Undefined;
+        ((function_data_t*)(*data->current_id).data)->return_data_q_type = false;
     }
     return SYNTAX_OK;
 
@@ -663,6 +752,9 @@ static int fc_args(analyse_data_t* data){
     data->args_index = 0;
     //if _ as name var
     // a kak delat s undefined functions
+    if(((function_data_t*)(*data->current_id).data)->param_len < data->args_index){
+        return SEM_ERROR_PARAM;
+    }
     if(!((function_data_t*)(*data->current_id).data)->defined)
     {
         if(data->token.type == IDENTIFIER){
@@ -702,6 +794,9 @@ static int fc_args_n_args(analyse_data_t* data){
     if(data->token.type == COMMA){
         data->args_index++;
         //if _ as name var
+        if(((function_data_t*)(*data->current_id).data)->param_len < data->args_index){
+            return SEM_ERROR_PARAM;
+        }
         if(!((function_data_t*)(*data->current_id).data)->defined)
         {
             data->var_id = symtable_search(&data->local_table[0], "%exp_result");
@@ -914,7 +1009,7 @@ static int p_type(analyse_data_t* data){
 }
 int main()
 {
-    char *input = "let c : Int = 4\nfunc empty(){\n}\nfunc concat(b x : String, with y : String) -> String {\nlet x = y + y\nwhile (c > 3) {\nvar x : Double\n}\nreturn x + \" \" + y\n}\nlet a = \"ahoj \"\nvar ct : String\nconcat(b: a, with: \"svete\")\nempty()\nempty()\n";
+    char *input = "func main() {}\n func new() {\nvar i = 12\n}\nlet c : Int = 4\nfunc empty(){\n}\nfunc concat(b x : String, with y : String) -> String {\nlet x = y + y\nwhile (c > 3) {\nvar x : Double\n}\nreturn x + \" \" + y\n}\nlet a = \"ahoj \"\nvar ct : String\nconcat(b: a, with: \"svete\")\nempty()\n";
 
     FILE *file = fmemopen(input, strlen(input), "r");
     set_source_file(file);

@@ -65,6 +65,7 @@ typedef struct variable {
 
 typedef struct function {
     int return_data_type;
+    bool return_data_q_type;
     bool defined;
     int param_len;
     var_data_t params_types[100];
