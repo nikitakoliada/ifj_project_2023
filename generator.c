@@ -16,7 +16,7 @@
  *
  * @return string without a line break symbol
  */
-void generate_readString(void)
+void generate_readString()
 {
     GENERATE("#readString");
     GENERATE("JUMP !_readString");
@@ -37,7 +37,7 @@ void generate_readString(void)
  *
  * @return integer
  */
-void generate_readInt(void)
+void generate_readInt()
 {
     GENERATE("#readInt");
     GENERATE("JUMP !_readInt");
@@ -58,7 +58,7 @@ void generate_readInt(void)
  *
  * @return decimal number
  */
-void generate_readDouble(void)
+void generate_readDouble()
 {
     GENERATE("#readDouble");
     GENERATE("JUMP !_readDouble");
@@ -80,7 +80,7 @@ void generate_readDouble(void)
  * @return void
  */
 
-void generate_write(void)
+void generate_write()
 {
     GENERATE("#write");
     GENERATE("JUMP !_write");
@@ -103,7 +103,7 @@ void generate_write(void)
  *
  */
 
-void generate_Int2Double(void)
+void generate_Int2Double()
 {
     GENERATE("#Int2Double");
     GENERATE("JUMP !_Int2Double");
@@ -130,7 +130,7 @@ void generate_Int2Double(void)
  * an integer value by trimming the decimal part.
  *
  */
-void generate_Double2Int(void)
+void generate_Double2Int()
 {
     GENERATE("#Double2Int");
     GENERATE("JUMP !_Double2Int");
@@ -155,7 +155,7 @@ void generate_Double2Int(void)
  *
  * @return the length of given string
  */
-void generate_length(void)
+void generate_length()
 {
     GENERATE("#length");
     GENERATE("JUMP !_length");
@@ -181,7 +181,7 @@ void generate_length(void)
  * error 8 occurs.
  */
 
-void generate_substring(void)
+void generate_substring()
 {
     GENERATE("#substr");
     GENERATE("JUMP !_substr");
@@ -244,7 +244,7 @@ void generate_substring(void)
  * If one of the parameters is nil, error 8 occurs.
  * If the index i is outside the bounds of the string (1 to #s), the function returns nil.
  */
-void generate_ord(void)
+void generate_ord()
 {
     GENERATE("#ord");
     GENERATE("JUMP !_ord");
@@ -289,7 +289,7 @@ void generate_ord(void)
  * The case when i is outside the interval [0; 255], leads
  * to nil. If i nil, error 8 occurs.
  */
-void generate_chr(void)
+void generate_chr()
 {
     GENERATE("#chr");
     GENERATE("JUMP !_chr");
@@ -316,7 +316,7 @@ void generate_chr(void)
     GENERATE_EMPTY_LINE();
 }
 
-void define_built_in_functions(void)
+void define_built_in_functions()
 {
     generate_readString();
     generate_readInt();
@@ -335,12 +335,15 @@ void define_built_in_functions(void)
  *
  * @return void
  */
-void generator_start(void)
+void generator_start()
 {
     GENERATE(".IFJcode23");
     GENERATE("DEFVAR GF@%%exp_result");
+    GENERATE("DEFVAR GF@%%tmp1");
+    GENERATE("DEFVAR GF@%%tmp2");
+    GENERATE("DEFVAR GF@%%tmp3");
     define_built_in_functions();
-    GENERATE("LABEL $main");
+    GENERATE("LABEL $$main");
     GENERATE("CREATEFRAME");
     GENERATE("PUSHFRAME");
 }
@@ -371,17 +374,224 @@ void generate_var_definition(char *id, data_type type)
         case Bool_Type:
             GENERATE("MOVE LF@%s bool@false", id);
             break;
+        default:
+            break;
     }
 }
 
 void generate_var_assignment(char *id)
 {
-    GENERATE("MOVE LF@%s LF@%%exp_result", id);
+    GENERATE("MOVE LF@%s GF@%%exp_result", id);
+}
+
+void generate_read(char *id, data_type type)
+{
+    switch (type)
+    {
+        case Int_Type:
+            GENERATE("CREATEFRAME");
+            GENERATE("CALL !function_readInt");
+            GENERATE("MOVE LF@%s TF@%%retval0", id);
+            break;
+        case String_Type:
+            GENERATE("CREATEFRAME");
+            GENERATE("CALL !function_readString");
+            GENERATE("MOVE LF@%s TF@%%retval0", id);
+            break;
+        case Double_Type:
+            GENERATE("CREATEFRAME");
+            GENERATE("CALL !function_readDouble");
+            GENERATE("MOVE LF@%s TF@%%retval0", id);
+            break;
+        default:
+            break;
+    }
+}
+
+void generate_write_var(char *id)
+{
+    GENERATE("CREATEFRAME");
+    GENERATE("DEFVAR TF@%%0");
+    GENERATE("MOVE TF@%%0 LF@%s", id);
+    GENERATE("CALL !function_write");
+
+}
+
+void gen_term(token_t *token){
+    switch (token->type){
+        case INT_VALUE:
+            GENERATE("int@%lld", token->data.Int);
+            break;
+        case DOUBLE_VALUE:
+            GENERATE("float@%a", token->data.Double);
+            break;
+        case STRING_VALUE:
+            GENERATE("string@%s", token->data.String);
+            break;
+        case IDENTIFIER:
+            GENERATE("LF@%s", token->data.String);
+            break;
+        default:
+            break;
+    }
+}
+
+void gen_push(token_t *token){
+    GENERATE_WITHOUT_NEW_LINE("PUSHS ");
+    gen_term(token);
+}
+
+void gen_int2double(void){
+    GENERATE("INT2FLOATS");
+}
+
+void gen_double2int(void){
+    GENERATE("FLOAT2INTS");
+}
+
+void gen_operation(rules rule){
+    switch (rule){
+        case PLUS_R:
+            GENERATE("ADDS");
+            break;
+        case MINUS_R:
+            GENERATE("SUBS");
+            break;
+        case MUL_R:
+            GENERATE("MULS");
+            break;
+        case DIV_R:
+            GENERATE("DIVS");
+            break;
+        case IDIV_R:
+            GENERATE("POPS GF@%%tmp1");
+            GENERATE("INT2FLOATS");
+            GENERATE("PUSHS GF@%%tmp1");
+            GENERATE("INT2FLOATS");
+            GENERATE("DIVS");
+            GENERATE("FLOAT2INTS");
+            break;
+        case EQ:
+            GENERATE("EQS");
+            break;
+        case NEQ:
+            GENERATE("EQS");
+            GENERATE("NOTS");
+            break;
+        case L:
+            GENERATE("LTS");
+            break;
+        case LEQ:
+            GENERATE("GTS");
+            GENERATE("NOTS");
+            break;
+        case G:
+            GENERATE("GTS");
+            break;
+        case GEQ:
+            GENERATE("LTS");
+            GENERATE("NOTS");
+            break;
+        case NOT_NIL_R:
+//           E == NIL ? ERROR : E IS NOT NULLABLE
+            GENERATE("POPS GF@%%tmp1");
+            GENERATE("PUSHS GF@%%tmp1");
+            GENERATE("PUSHS nil@nil");
+            GENERATE("EQS");
+            GENERATE("ORS");
+            GENERATE("PUSHS GF@%%tmp1");
+            break;
+        case NOT_NULL_R:
+//          E1 == NULL ? E2 : E1
+            GENERATE("POPS GF@%%tmp1");
+            GENERATE("POPS GF@%%tmp2");
+            GENERATE("POPS GF@%%tmp3");
+            GENERATE("PUSHS GF@%%tmp3");
+            GENERATE("PUSHS GF@%%tmp2");
+            GENERATE("EQS");
+            GENERATE("PUSHS GF@%%tmp1");
+            GENERATE("PUSHS GF@%%tmp3");
+            GENERATE("EQS");
+            GENERATE("ORS");
+            GENERATE("PUSHS GF@%%tmp2");
+            GENERATE("PUSHS GF@%%tmp1");
+            GENERATE("EQS");
+            GENERATE("ORS");
+            break;
+        default:
+            break;
+    }
+}
+
+void concat(void){
+    GENERATE("POPS GF@%%tmp1");
+    GENERATE("POPS GF@%%tmp2");
+    GENERATE("CONCAT GF@%%tmp3 GF@%%tmp2 GF@%%tmp1");
+    GENERATE("PUSHS GF@%%tmp3");
+}
+
+
+
+
+void generate_call(func_params_t *params)
+{
+  GENERATE("CREATEFRAME");
+  for (size_t i = 0; i < params->params_size; i++)
+  {
+    GENERATE("DEFVAR TF@%s$%s", params->name, params->pair[i].target);
+    GENERATE("MOVE TF@%s$%s %s", params->name, params->pair[i].target, params->pair[i].source);
+  }
+  GENERATE("CALL !FUNC_%s", params->name);
+}
+
+void generate_function_start(func_params_t *params)
+{
+  GENERATE("JUMP !BYPASS_%s", params->name);
+  GENERATE("LABEL !FUNC_%s", params->name);
+  GENERATE("PUSHFRAME");
+  for (size_t i = 0; i < params->returns_size; i++)
+  {
+    GENERATE("DEFVAR LF@%%retval%zu", i);
+    GENERATE("MOVE LF@%%retval%zu nil@nil", i);
+  }
+}
+
+void generate_return_params(func_params_t *params)
+{
+  for (size_t i = 0; i < params->returns_size; i++)
+  {
+    if (params->returns)
+    {
+        GENERATE("MOVE LF@%%retval%zu %s", i, params->returns[i]);
+    }
+
+    else
+    {
+        GENERATE("MOVE LF@%%retval%zu nil@nil", i);
+    }
+  }
+}
+
+void generate_function_end(func_params_t *params)
+{
+  generate_return(params);
+  GENERATE("LABEL !BYPASS_%s", params->name);
+}
+
+void generate_return(func_params_t *params)
+{
+  generate_return_params(params);
+  GENERATE("POPFRAME");
+  GENERATE("RETURN");
 }
 
 int main()
 {
     generator_start();
+    generate_var_declaration("a");
+    generate_var_definition("a", Int_Type);
+    generate_read("a", Int_Type);
+    generate_write_var("a");
     generator_end();
     return 0;
 }
