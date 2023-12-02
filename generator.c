@@ -338,7 +338,7 @@ void define_built_in_functions(void)
 void generator_start(void)
 {
     GENERATE(".IFJcode23");
-    GENERATE("DEFVAR GF@%%expr_result");
+    GENERATE("DEFVAR GF@%%exp_result");
     define_built_in_functions();
     GENERATE("LABEL $main");
     GENERATE("CREATEFRAME");
@@ -376,7 +376,7 @@ void generate_var_definition(char *id, data_type type)
 
 void generate_var_assignment(char *id)
 {
-    GENERATE("MOVE LF@%s LF@%%expr_result", id);
+    GENERATE("MOVE LF@%s LF@%%exp_result", id);
 }
 
 int main()
