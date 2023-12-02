@@ -55,6 +55,8 @@ bst_node_ptr bst_delete(bst_node_ptr, char*);
 bst_node_ptr bst_search(bst_node_ptr, char*);
 void bst_dispose(bst_node_ptr);
 int has_undefined_function(bst_node_ptr node);
+void print_all_keys(bst_node_ptr node);
+
 
 // symtable helpers and functions
 typedef struct variable {

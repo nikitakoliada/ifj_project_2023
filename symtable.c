@@ -231,6 +231,21 @@ int has_undefined_function(bst_node_ptr node) {
     return has_undefined_function(node->left_ptr) || has_undefined_function(node->right_ptr);
 }
 
+void print_all_keys(bst_node_ptr node) {
+    if (node == NULL) {
+        return;
+    }
+
+    // Recursively visit the left subtree
+    print_all_keys(node->left_ptr);
+
+    // Print the key of the current node
+    printf("%s, ", node->key);
+
+    // Recursively visit the right subtree
+    print_all_keys(node->right_ptr);
+}
+
 bst_node_ptr symtable_search(symtable_t* table, char* key) {
     return bst_search(table->root, key);
 }
