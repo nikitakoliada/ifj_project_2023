@@ -461,6 +461,7 @@ static int function(analyse_data_t* data){
         GET_TOKEN_AND_CHECK_RULE(possible_EOL);
         // so we can difine the variable with the same name as arguments 
         data->label_deep++;
+        symtable_init(&data->local_table[data->label_deep]);
         CHECK_RULE(statement);
         symtable_dispose(&data->local_table[data->label_deep]);
         data->label_deep--;
