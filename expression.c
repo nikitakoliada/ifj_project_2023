@@ -532,7 +532,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
     process_parenthese(token, &parantheses_counter);
 
     do{
-        stack_print(stack);
+        //stack_print(stack);
         bool nullable = false;
         data_type input_id_data_type = Undefined;
         eSymbol input_symbol = token_to_esymbol(token, data, &input_id_data_type, &nullable);
@@ -549,7 +549,6 @@ int expression(analyse_data_t* data, bool* is_EOL){
             else precedence_result = R;
         }
 
-        printf("-****%d - %d*****\n", stack_symbol_index, input_index);
         stack_element* new_element = NULL;
         
         if(input_index == IdI && stack_symbol_index == IdI && was_EOL){
@@ -638,7 +637,6 @@ int expression(analyse_data_t* data, bool* is_EOL){
                 new_element->nullable = nullable;
                 new_element->type = type;
                 new_element->symbol = FunctionS;
-                printf("---%d\n", type);
                 if(!stack_pop(stack))
                 {
                     FREE_RECOURCES(stack);
@@ -659,7 +657,6 @@ int expression(analyse_data_t* data, bool* is_EOL){
             case F:
                 if(input_symbol == DollarS && stack_symbol == DollarS){
                     is_success = true;
-                    printf("lol");
                 }
                 else{
                     // free recources
@@ -710,7 +707,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
 
     FREE_RECOURCES(stack);
 
-    printf("End of Expression\n");
+    //printf("End of Expression\n");
 
     return SYNTAX_OK;
 }
