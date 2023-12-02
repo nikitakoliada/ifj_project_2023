@@ -5,6 +5,7 @@
  * @brief Generator definitions and header file for generator.c - generator of code
 
  * @author Juraj Remeň - xremen02
+ * @author Maksym Podhornyi - xpodho08
  */
 
 #include <stdio.h>

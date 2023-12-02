@@ -5,6 +5,7 @@
  * @brief Generator implementation - generator of code
 
  * @author Juraj Remeň - xremen02
+ * @author Maksym Podhornyi - xpodho08
  */
 
 #include "generator.h"
@@ -17,6 +18,7 @@
  */
 void generate_readString(void)
 {
+    GENERATE("#readString");
     GENERATE("JUMP !_readString");
     GENERATE("LABEL !function_readString");
     GENERATE("PUSHFRAME");
@@ -27,6 +29,7 @@ void generate_readString(void)
     GENERATE("POPFRAME");
     GENERATE("RETURN");
     GENERATE("LABEL !_readString");
+    GENERATE("");
 }
 
 /**
@@ -36,6 +39,7 @@ void generate_readString(void)
  */
 void generate_readInt(void)
 {
+    GENERATE("#readInt");
     GENERATE("JUMP !_readInt");
     GENERATE("LABEL !function_readInt");
     GENERATE("PUSHFRAME");
@@ -46,6 +50,7 @@ void generate_readInt(void)
     GENERATE("POPFRAME");
     GENERATE("RETURN");
     GENERATE("LABEL !_readInt");
+    GENERATE("");
 }
 
 /**
@@ -55,6 +60,7 @@ void generate_readInt(void)
  */
 void generate_readDouble(void)
 {
+    GENERATE("#readDouble");
     GENERATE("JUMP !_readDouble");
     GENERATE("LABEL !function_readDouble");
     GENERATE("PUSHFRAME");
@@ -65,6 +71,7 @@ void generate_readDouble(void)
     GENERATE("POPFRAME");
     GENERATE("RETURN");
     GENERATE("LABEL !_readDouble");
+    GENERATE("");
 }
 
 /**
@@ -75,6 +82,7 @@ void generate_readDouble(void)
 
 void generate_write(void)
 {
+    GENERATE("#write");
     GENERATE("JUMP !_write");
     GENERATE("LABEL !function_write");
     GENERATE("PUSHFRAME");
@@ -84,6 +92,7 @@ void generate_write(void)
     GENERATE("POPFRAME");
     GENERATE("RETURN");
     GENERATE("LABEL !_write");
+    GENERATE("");
 }
 
 /**
@@ -96,6 +105,7 @@ void generate_write(void)
 
 void generate_Int2Double(void)
 {
+    GENERATE("#Int2Double");
     GENERATE("JUMP !_Int2Double");
     GENERATE("LABEL !function_Int2Double");
     GENERATE("PUSHFRAME");
@@ -110,6 +120,7 @@ void generate_Int2Double(void)
     GENERATE("POPFRAME");
     GENERATE("RETURN");
     GENERATE("LABEL !_Int2Double");
+    GENERATE("");
 }
 
 /**
@@ -121,6 +132,7 @@ void generate_Int2Double(void)
  */
 void generate_Double2Int(void)
 {
+    GENERATE("#Double2Int");
     GENERATE("JUMP !_Double2Int");
     GENERATE("LABEL !function_Double2Int");
     GENERATE("PUSHFRAME");
@@ -135,6 +147,7 @@ void generate_Double2Int(void)
     GENERATE("POPFRAME");
     GENERATE("RETURN");
     GENERATE("LABEL !_Double2Int");
+    GENERATE("");
 }
 
 /**
@@ -144,16 +157,18 @@ void generate_Double2Int(void)
  */
 void generate_length(void)
 {
+    GENERATE("#length");
     GENERATE("JUMP !_length");
     GENERATE("LABEL !function_length");
     GENERATE("PUSHFRAME");
     GENERATE("DEFVAR LF@%%retval0");
 
-    GENERATE("STRLEN LF@%%retval0 LF@%0");
+    GENERATE("STRLEN LF@%%retval0 LF@%%0");
 
     GENERATE("POPFRAME");
     GENERATE("RETURN");
     GENERATE("LABEL !_length");
+    GENERATE("");
 }
 
 /**
@@ -168,9 +183,10 @@ void generate_length(void)
 
 void generate_substring(void)
 {
+    GENERATE("#substr");
     GENERATE("JUMP !_substr");
     GENERATE("LABEL !function_substr");
-    GENERATE("PUSHRAME");
+    GENERATE("PUSHFRAME");
     GENERATE("DEFVAR LF@%%retval0");
     GENERATE("DEFVAR LF@%%cond_range");
     GENERATE("DEFVAR LF@%%length");
@@ -218,6 +234,7 @@ void generate_substring(void)
     GENERATE("POPFRAME");
     GENERATE("RETURN");
     GENERATE("LABEL !_substr");
+    GENERATE("");
 }
 
 /**
@@ -229,6 +246,7 @@ void generate_substring(void)
  */
 void generate_ord(void)
 {
+    GENERATE("#ord");
     GENERATE("JUMP !_ord");
     GENERATE("LABEL !function_ord");
     GENERATE("PUSHFRAME");
@@ -260,6 +278,7 @@ void generate_ord(void)
     GENERATE("POPFRAME");
     GENERATE("RETURN");
     GENERATE("LABEL !_ord");
+    GENERATE("");
 }
 
 /**
@@ -272,6 +291,7 @@ void generate_ord(void)
  */
 void generate_chr(void)
 {
+    GENERATE("#chr");
     GENERATE("JUMP !_chr");
     GENERATE("LABEL !function_chr");
     GENERATE("PUSHFRAME");
@@ -293,17 +313,38 @@ void generate_chr(void)
     GENERATE("POPFRAME");
     GENERATE("RETURN");
     GENERATE("LABEL !_chr");
+    GENERATE("");
 }
 
 void define_built_in_functions(void)
 {
     generate_readString();
-    generate_readInt();
-    generate_readDouble();
-    generate_Double2Int();
-    generate_length();
-    generate_substring();
-    generate_ord();
-    generate_chr();
+//    generate_readInt();
+//    generate_readDouble();
+//    generate_Double2Int();
+//    generate_length();
+//    generate_substring();
+//    generate_ord();
+//    generate_chr();
+//    generate_write();
+//    generate_Int2Double();
 }
+
+/**
+ * @brief Generate header of the code
+ *
+ * @return void
+ */
+void generate_header(void)
+{
+    GENERATE(".IFJcode23");
+    define_built_in_functions();
+}
+
+int main()
+{
+    generate_header();
+    return 0;
+}
+
 
