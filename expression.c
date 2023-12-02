@@ -10,6 +10,7 @@
 
 //#include "expression.h"
 #include "analysis.h"
+#include "generator.h"
 #include "stack.h"
 #include "error.h"
 #include "scanner.h"
@@ -175,6 +176,7 @@ void swap(void** a, void** b){
 }
 
 int reduce(stack_t* stack){
+    int gen_rule = -1;
     stack_element* elements[3];
     int elements_count = 0;
 
@@ -241,6 +243,7 @@ int reduce(stack_t* stack){
         new_element->nullable = false;
         new_element->type = elements[0]->type;
         new_element->is_identifier = elements[0]->is_identifier;
+        gen_rule = NOT_NULL_R;
 
         // Generate ! code
     }
@@ -280,7 +283,7 @@ int reduce(stack_t* stack){
                 }
 
                 new_element->type = elements[2]->type;
-
+                gen_rule = NOT_NULL_R;
                 // Generate ?? code
             }
             else if(elements[1]->symbol == DivS){
@@ -293,6 +296,7 @@ int reduce(stack_t* stack){
                 if(elements[0]->type == Int_Type && elements[2]->type == Int_Type){
                     new_element->type = Int_Type;
                     // Generate decimal division
+                    gen_rule = IDIV_R;
                 }
                 else{
                     if(elements[0]->type == Int_Type ) {
@@ -306,7 +310,7 @@ int reduce(stack_t* stack){
                     }
 
                     // Generate float division
-
+                    gen_rule = DIV_R;
                     new_element->type = Double_Type;
                 }
             }
@@ -324,6 +328,7 @@ int reduce(stack_t* stack){
                     new_element->type = String_Type;
 
                     // Generate concatenation
+                    gen_concat();
                 }
                 else{
                     if((elements[0]->type != Int_Type && elements[0]->type != Double_Type) 
@@ -350,12 +355,15 @@ int reduce(stack_t* stack){
                     switch(elements[1]->symbol){
                         case PlusS:
                             // Generate sum
+                            gen_rule = PLUS_R;
                             break;
                         case MinusS:
                             // Generate difference
+                            gen_rule = MINUS_R;
                             break;
                         case MultS:
                             // Generate multiplication
+                            gen_rule = MUL_R;
                             break;
                     }
                 }
@@ -368,11 +376,14 @@ int reduce(stack_t* stack){
                     if(elements[0]->type == Double_Type && elements[2]->type == Int_Type){
                         if(elements[2]->is_identifier) return SEM_ERROR_TYPE_COMPAT;
                         // Generate Int2Double code
+                        // Could be for both of the terms
+                        // No solution at code gen yet
                     }
 
                     if(elements[2]->type == Double_Type && elements[0]->type == Int_Type){
                         if(elements[0]->is_identifier) return SEM_ERROR_TYPE_COMPAT;
                         // Generate Int2Double code
+                        //gen_int2double();
                     }
                 }
                 else if(elements[0]->type != elements[2]->type 
@@ -383,9 +394,11 @@ int reduce(stack_t* stack){
                 switch(elements[1]->symbol){
                     case EqS:
                         // Generate ==
+                        gen_rule = EQ;
                         break;
                     case NEqS:
                         // Generate !=
+                        gen_rule = EQ;
                         break;
                 }
 
@@ -403,15 +416,19 @@ int reduce(stack_t* stack){
                 switch(elements[1]->symbol){
                     case LessS:
                         // Generate <
+                        gen_rule = L;
                         break;
                     case GreaterS:
                         // Generate >
+                        gen_rule = G;
                         break;
                     case GEqS:
-                        // Geenrate >= 
+                        // Geenrate >=
+                        gen_rule = GEQ;
                         break;
                     case LEqs:
                         // Generate <=
+                        gen_rule = LEQ;
                         break;
                 }   
 
@@ -426,6 +443,10 @@ int reduce(stack_t* stack){
     }
     else{
         return SYNTAX_ERROR;
+    }
+
+    if(gen_rule != -1){
+        gen_operation(gen_rule); // Needs to be checked for an error
     }
 
     if(!stack_push(stack, new_element)) return INTERNAL_ERROR;
@@ -602,6 +623,11 @@ int expression(analyse_data_t* data, bool* is_EOL){
                     return INTERNAL_ERROR;
                 } 
 
+                // Push new term
+                if(input_symbol == IdS || input_symbol == StringS || input_symbol == IntS || input_symbol == DoubleS){
+                    gen_push(&token);
+                }
+
                 prev_token = token;
 
                 GET_NEXT_NOT_EOL_TOKEN(token);
@@ -656,6 +682,10 @@ int expression(analyse_data_t* data, bool* is_EOL){
                     return INTERNAL_ERROR;
                 }
 
+                // Pop identifier from the stack
+                // Push function value
+                // No solution yet
+
                 GET_NEXT_NOT_EOL_TOKEN(token);
 
                 process_parenthese(token, &parantheses_counter);
@@ -707,6 +737,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
     }
 
     // Generate assignment
+    generate_var_assignment(data->var_id->key);
 
     data->token = token;
     *is_EOL = was_EOL; 

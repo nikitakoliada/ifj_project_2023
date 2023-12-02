@@ -523,7 +523,7 @@ void gen_operation(rules rule){
     }
 }
 
-void concat(void){
+void gen_concat(void){
     GENERATE("POPS GF@%%tmp1");
     GENERATE("POPS GF@%%tmp2");
     GENERATE("CONCAT GF@%%tmp3 GF@%%tmp2 GF@%%tmp1");
@@ -585,7 +585,7 @@ void generate_return(func_params_t *params)
   GENERATE("RETURN");
 }
 
-int main()
+/*int main()
 {
     generator_start();
     generate_var_declaration("a");
@@ -594,6 +594,6 @@ int main()
     generate_write_var("a");
     generator_end();
     return 0;
-}
+}*/
 
 
