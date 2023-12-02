@@ -382,19 +382,19 @@ static int statement(analyse_data_t* data)
     if(data->token.type == KEYWORD && data->token.data.Keyword == Function_KW)
     {
         CHECK_RULE(function);
-        GET_TOKEN_AND_CHECK_RULE(possible_EOL);
+        CHECK_RULE(possible_EOL);
         return statement(data);
     }
     // 〈 statement 〉 −→ 〈 if_else 〉 EOL 〈 statement 〉
     else if(data->token.type == KEYWORD && data->token.data.Keyword == If_KW){
         CHECK_RULE(if_else);
-        GET_TOKEN_AND_CHECK_RULE(possible_EOL);
+        CHECK_RULE(possible_EOL);
         return statement(data);
     }
     // 〈 statement 〉 −→ 〈 while 〉EOL 〈 statement 〉
     else if(data->token.type == KEYWORD && data->token.data.Keyword == While_KW){
         CHECK_RULE(while_);
-        GET_TOKEN_AND_CHECK_RULE(possible_EOL);
+        CHECK_RULE(possible_EOL);
         return statement(data);
     }
     else if(data->token.type == IDENTIFIER){
@@ -417,7 +417,6 @@ static int statement(analyse_data_t* data)
             else{
                 CHECK_RULE(f_call);
             }
-            GET_TOKEN_AND_CHECK_RULE(possible_EOL);
             data->tmp_key = "";
 
             return statement(data);
@@ -533,6 +532,7 @@ static int function(analyse_data_t* data){
         symtable_dispose(&data->local_table[data->label_deep]);
         func_data->defined = true;
         data->label_deep--;
+        GET_TOKEN_AND_CHECK_RULE(possible_EOL);
         return SYNTAX_OK;
     }
     return SYNTAX_ERROR;
@@ -663,6 +663,7 @@ static int if_else(analyse_data_t* data){
         symtable_dispose(&data->local_table[data->label_deep]);
         data->label_deep--;
 		data->in_while_or_if = false;
+        GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
         return SYNTAX_OK;
     }
     return SYNTAX_ERROR;
@@ -683,6 +684,7 @@ static int while_(analyse_data_t* data){
         symtable_dispose(&data->local_table[data->label_deep]);
         data->label_deep--;
         data->in_while_or_if = false;
+        GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
         return SYNTAX_OK;
     }
     return SYNTAX_ERROR;
@@ -753,6 +755,10 @@ static int def_var(analyse_data_t* data){
             GET_TOKEN_AND_CHECK_EXPRESSION();
             data->in_var_definition = false;
         }
+        else{
+            CHECK_TYPE(TOKEN_EOL);
+	    GET_TOKEN(); // expression gets new token so we need to balance it
+        }
         if(no_type && no_assignment){
             return SYNTAX_ERROR;
         }
@@ -768,6 +774,7 @@ static int write(analyse_data_t* data){
     CHECK_TYPE(TOKEN_LEFT_BRACKET);
     GET_TOKEN_AND_CHECK_RULE(possible_EOL);
     if(data->token.type == TOKEN_RIGHT_BRACKET){
+        GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
         return SYNTAX_OK;
     }
     data->var_id = symtable_search(&data->global_table, "%%exp_result");
@@ -779,6 +786,7 @@ static int write(analyse_data_t* data){
     }
     CHECK_RULE(possible_EOL);
     CHECK_TYPE(TOKEN_RIGHT_BRACKET);
+    GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
     return SYNTAX_OK;
 
 }
@@ -798,10 +806,7 @@ static int f_call(analyse_data_t* data){
         CHECK_RULE(fc_args);
     }
     else{
-        if(data->token.type == TOKEN_RIGHT_BRACKET){
-            return SYNTAX_OK;
-        }
-        else{
+        if(data->token.type != TOKEN_RIGHT_BRACKET){
             return SEM_ERROR_PARAM;
         }
     }
@@ -811,6 +816,7 @@ static int f_call(analyse_data_t* data){
     data->args_index = 0;
     CHECK_RULE(possible_EOL);
     CHECK_TYPE(TOKEN_RIGHT_BRACKET);
+    GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
     return SYNTAX_OK;
 }
 
@@ -1053,7 +1059,8 @@ static int p_type(analyse_data_t* data){
 }
 int main()
 {
-    char *input = "negr(23, 23)\nfunc negr(_ b : Int){}\nadd(1,2)\nfunc add(_ a: Int, _ b: Int) -> Int {\nreturn a + b\n}";
+    char *    input = "empty()\nlet c: Int\nfunc empty(){\n\n}\nfunc concat(b x : String, with y : String) -> String {\n    let x = y + y\n    if (4 > 3) {\n        var x : Double\n    }else{\n        var x: String\n    }\n    return x + \" \" + y\n}";
+
 
     FILE *file = fmemopen(input, strlen(input), "r");
     set_source_file(file);
@@ -1069,6 +1076,7 @@ int main()
 
     //first go through
     result = program_first(data);
+    printf("\n\nEND OF FIRST GO THROUGH\n\n");
     bst_node_ptr node = symtable_search(&data->global_table, "add");
     fclose(file);
     FILE *file2 = fmemopen(input, strlen(input), "r");
