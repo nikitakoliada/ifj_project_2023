@@ -540,7 +540,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
     process_parenthese(token, &parantheses_counter);
 
     do{
-        //stack_print(stack);
+        stack_print(stack);
         bool nullable = false;
         data_type input_id_data_type = Undefined;
         eSymbol input_symbol = token_to_esymbol(token, data, &input_id_data_type, &nullable);
@@ -706,12 +706,6 @@ int expression(analyse_data_t* data, bool* is_EOL){
         return result;
     }
 
-    else if(data->in_var_definition){
-        var_data_t* var_data = (var_data_t*)data->var_id->data;
-        var_data->data_type = final_element->type;
-        var_data->q_type = final_element->nullable;
-    }
-
     // Generate assignment
 
     data->token = token;
@@ -719,7 +713,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
 
     FREE_RECOURCES(stack);
 
-    //printf("End of Expression\n");
+    printf("End of Expression\n");
 
     return SYNTAX_OK;
 }
