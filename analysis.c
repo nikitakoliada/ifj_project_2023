@@ -757,6 +757,7 @@ static int def_var(analyse_data_t* data){
         }
         else{
             CHECK_TYPE(TOKEN_EOL);
+	    GET_TOKEN(); // expression gets new token so we need to balance it
         }
         if(no_type && no_assignment){
             return SYNTAX_ERROR;
