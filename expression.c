@@ -456,6 +456,10 @@ int compare_output_types(analyse_data_t* data, stack_element* final_element){
         return SEM_ERROR_TYPE_COMPAT;
     }
 
+    if(nullable && final_element->is_nil){
+        return SYNTAX_OK;
+    }
+
     switch(expected_type){
         case Int_Type:
             if(final_element->type != Int_Type){
@@ -634,13 +638,13 @@ int expression(analyse_data_t* data, bool* is_EOL){
                 if(!new_element) return INTERNAL_ERROR;
                 data_type type = Int_Type;
                 data->token = token;
-                if((result = f_expression_call(data, prev_token, &type))){
+                if((result = f_expression_call(data, prev_token, &type, &nullable))){
                     FREE_RECOURCES(stack);
                     return result;
                 }
                 new_element->is_identifier = true;
                 new_element->is_nil = false;
-                new_element->nullable = false; // TODO: Could be true (no support at this moment)
+                new_element->nullable = nullable;
                 new_element->type = type;
                 new_element->symbol = FunctionS;
                 printf("---%d\n", type);

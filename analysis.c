@@ -761,11 +761,15 @@ static int f_call(analyse_data_t* data){
 }
 
 // //23.2. 〈f_call 〉−→ id ( 〈fc_args 〉)
-int f_expression_call(analyse_data_t* data, token_t id, data_type* type){
+int f_expression_call(analyse_data_t* data, token_t id, data_type* type, bool* nullable){
+    bst_node_ptr prev_current = data->current_id;
     data->current_id = symtable_search(&data->global_table, id.data.String);
     data->tmp_key = id.data.String;
     *type = ((function_data_t*)data->current_id->data)->return_data_type;
-    return f_call(data);    
+    *nullable = ((function_data_t*)data->current_id->data)->return_data_q_type;
+    CHECK_RULE(f_call);
+    data->current_id = prev_current;
+    return SYNTAX_OK;   
 }
 
 // //24. 〈 fc_args 〉−→ id: expression 〈fc_ n_args 〉
