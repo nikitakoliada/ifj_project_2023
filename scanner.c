@@ -310,6 +310,8 @@ int get_next_token(token_t* token){
                 } else if(symbol == '\n'){
                     state = NEW_TOKEN_S;
                     break;
+                }else if(symbol == EOF){
+                    token_type = EOF;
                 }
                 break;
 
