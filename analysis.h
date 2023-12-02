@@ -45,6 +45,7 @@ typedef struct
 	bool in_defintion;		// Defines if фкпі rule should add or check it's фкпі
 	bool in_while_or_if;		// Defines if the parser is in construction while, if or then
 	bool in_var_definition;
+	bool in_call_func;
 } analyse_data_t;
 
 //starts the analysis
