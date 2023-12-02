@@ -198,9 +198,7 @@ static bool init_variables(analyse_data_t* data)
 {
     data->st_length = 10;
 	symtable_init(&data->global_table);
-    for (int length = 0; length < data->st_length; length++){
-        symtable_init(&data->local_table[length]);
-    }
+    symtable_init(&data->local_table[0]);
 	data->current_id = malloc(sizeof(bst_node_ptr))	;
     data->var_id = malloc(sizeof(bst_node_ptr));
     data->expr_id = malloc(sizeof(bst_node_ptr));
@@ -437,6 +435,7 @@ static int function(analyse_data_t* data){
         data->in_defintion = true;
 		data->label_index = 0;
         data->label_deep++;
+        symtable_init(&data->local_table[data->label_deep]);
         GET_TOKEN_AND_CHECK_TYPE(IDENTIFIER);
         // if function wasn't declared add it to the global symbol table
         data->current_id = symtable_search(&data->global_table, data->token.data.String);
@@ -566,6 +565,7 @@ static int if_else(analyse_data_t* data){
     if(data->token.type == KEYWORD && data->token.data.Keyword == If_KW){
         data->label_deep++;
         data->in_while_or_if = true;
+        symtable_init(&data->local_table[data->label_deep]);
         data->label_index += 2;
         GET_TOKEN();
         if(data->token.type == KEYWORD && data->token.data.Keyword == Let_KW){
@@ -584,12 +584,14 @@ static int if_else(analyse_data_t* data){
         }
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
         GET_TOKEN_AND_CHECK_RULE(statement);
+        symtable_dispose(&data->local_table[data->label_deep]);
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
         GET_TOKEN_AND_CHECK_RULE(possible_EOL);
         if(data->token.data.Keyword != Else_KW){
             return SYNTAX_ERROR;
         }
         GET_TOKEN_AND_CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
+        symtable_init(&data->local_table[data->label_deep]);
         GET_TOKEN_AND_CHECK_RULE(statement);
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
         symtable_dispose(&data->local_table[data->label_deep]);
@@ -606,6 +608,7 @@ static int while_(analyse_data_t* data){
         data->label_deep++;
         data->in_while_or_if = true;
         data->label_index += 2;
+        symtable_init(&data->local_table[data->label_deep]);
         data->var_id = symtable_search(&data->global_table, "%%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
@@ -994,10 +997,10 @@ static int p_type(analyse_data_t* data){
 }
 int main()
 {
-    /*char *input = "func empty(){\n}\nfunc concat(b x : String, with y : String) -> String {\nlet x = x + y\nreturn x + \" \" + y\n}\nlet a = \"ahoj \"\nvar ct : String\nconcat(b: a, with: \"svete\")\nempty()trachnutebe()\n";
+    char *input = "let c: Int\nfunc empty(){\n\n}\nfunc concat(b x : String, with y : String) -> String {\n    let x = y + y\n    if (c > 3) {\n        var x : Double\n    }else{\n        var x: String\n    }\n    return x + " " + y\n}";
 
-    FILE *file = fmemopen(input, strlen(input), "r");*/
-    set_source_file(stdin);
+    FILE *file = fmemopen(input, strlen(input), "r");
+    set_source_file(file);
     analyse_data_t *data = malloc(sizeof(analyse_data_t));
     
     if (!init_variables(data))
