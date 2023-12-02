@@ -23,6 +23,15 @@
         free(stack);\
     }while(0)
 
+#define GET_NEXT_NOT_EOL_TOKEN(token)do{\
+        if((result = get_next_token(&token))){\
+            FREE_RECOURCES(stack);\
+            return result;\
+        }\
+        if(token.type == TOKEN_EOL) was_EOL = true;\
+    }while(token.type == TOKEN_EOL);
+
+
 #define PT_SIZE 9
 
 typedef enum{
@@ -456,14 +465,17 @@ int expression(analyse_data_t* data, bool* is_EOL){
     bool was_EOL = false;
     bool reduce_only = false;
     int parantheses_counter = 0;
+    int result = 0;
     token_t prev_token;
     token_t token = data->token;
+    if(token.type == TOKEN_EOL){
+        GET_NEXT_NOT_EOL_TOKEN(token);
+    }
 
     process_parenthese(token, &parantheses_counter);
 
     do{
         stack_print(stack);
-        int result = 0;
         bool nullable = false;
         data_type input_id_data_type = Undefined;
         eSymbol input_symbol = token_to_esymbol(token, data, &input_id_data_type, &nullable);
@@ -528,13 +540,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
 
                 prev_token = token;
 
-                do{
-                    if((result = get_next_token(&token))){
-                        FREE_RECOURCES(stack);
-                        return result;
-                    }
-                    if(token.type == TOKEN_EOL) was_EOL = true;
-                }while(token.type == TOKEN_EOL);
+                GET_NEXT_NOT_EOL_TOKEN(token);
 
                 process_parenthese(token, &parantheses_counter);
 
@@ -555,13 +561,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
                     FREE_RECOURCES(stack);
                     return INTERNAL_ERROR;
                 } 
-                do{
-                    if((result = get_next_token(&token))){
-                        FREE_RECOURCES(stack);
-                        return result;
-                    }
-                    if(token.type == TOKEN_EOL) was_EOL = true;
-                }while(token.type == TOKEN_EOL);
+                GET_NEXT_NOT_EOL_TOKEN(token);
 
                 process_parenthese(token, &parantheses_counter);
 
@@ -593,13 +593,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
                     return INTERNAL_ERROR;
                 }
 
-                do{
-                    if((result = get_next_token(&token))){
-                        FREE_RECOURCES(stack);
-                        return result;
-                    }
-                    if(token.type == TOKEN_EOL) was_EOL = true;
-                }while(token.type == TOKEN_EOL);
+                GET_NEXT_NOT_EOL_TOKEN(token);
 
                 process_parenthese(token, &parantheses_counter);
 
@@ -642,14 +636,13 @@ int expression(analyse_data_t* data, bool* is_EOL){
         return INTERNAL_ERROR;
     }
 
+
     if(data->var_id){
         var_data_t* var_data = (var_data_t*)data->var_id->data;
         if((final_element->nullable || final_element->is_nil) && !var_data->q_type && var_data->data_type != Undefined){
             FREE_RECOURCES(stack);
             return SEM_ERROR_TYPE_COMPAT;
         }
-
-            printf("%d****\n", var_data->data_type);
 
 
         switch(var_data->data_type){
