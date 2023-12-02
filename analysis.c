@@ -716,8 +716,11 @@ static int def_var(analyse_data_t* data){
 
 static int write(analyse_data_t* data){
     //???. 〈 write 〉 −→ write ( 〈 expression 〉, ...)
-    GET_TOKEN_AND_CHECK_TYPE(TOKEN_LEFT_BRACKET);
+    CHECK_TYPE(TOKEN_LEFT_BRACKET);
     GET_TOKEN_AND_CHECK_RULE(possible_EOL);
+    if(data->token.type == TOKEN_RIGHT_BRACKET){
+        return SYNTAX_OK;
+    }
     data->var_id = symtable_search(&data->global_table, "%%exp_result");
     CHECK_EXPRESSION();
     while(data->token.type == COMMA){
@@ -1017,7 +1020,7 @@ static int p_type(analyse_data_t* data){
 }
 int main()
 {
-    char *input = "let c: Int\nfunc empty(){\n\n}\nfunc concat(b x : String, with y : String) -> String {\n    let x = y + y\n    if (c > 3) {\n        var x : Double\n    }else{\n        var x: String\n    }\n    return x + \" \" + y\n}";
+    char *input = "write(1+2, 3+4)\nwrite()";
 
     FILE *file = fmemopen(input, strlen(input), "r");
     set_source_file(file);
