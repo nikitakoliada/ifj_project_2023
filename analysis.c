@@ -443,6 +443,7 @@ static int statement(analyse_data_t* data)
         }
         if(((function_data_t*)(*data->current_id).data)->return_data_type == Undefined){
             GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
+            return statement(data);
         }
         else{
             data->var_id = symtable_search(&data->global_table, "%%exp_result");

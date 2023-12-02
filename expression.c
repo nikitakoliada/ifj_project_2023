@@ -81,6 +81,7 @@ int get_pt_index(eSymbol symbol){
         case RPS:
             return RPI;
         case EqS:
+        case NEqS:
         case GEqS:
         case LEqs:
         case LessS:
@@ -164,6 +165,7 @@ void stack_print(stack_t* stack){
     for(int i = stack->index; i >= 0; i--){
         printf("%d)%d - %d\n", i, stack->array[i]->symbol, stack->array[i]->type);
     }
+    printf("\n");
 }
 
 void swap(void** a, void** b){
@@ -688,10 +690,14 @@ int expression(analyse_data_t* data, bool* is_EOL){
     }
 
     if(final_element->symbol != NON_TERM){
-
-        // Free recources
-        FREE_RECOURCES(stack);
-        return INTERNAL_ERROR;
+        if(data->in_function && !data->in_var_definition 
+        && ((var_data_t*)data->var_id->data)->data_type == Undefined && !data->in_while_or_if){
+            FREE_RECOURCES(stack);
+            return SEM_ERROR_EXPR;
+        }else{
+            FREE_RECOURCES(stack);
+            return SYNTAX_ERROR;
+        }
     }
 
 
