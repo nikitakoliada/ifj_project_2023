@@ -431,6 +431,68 @@ int reduce(stack_t* stack){
     return SYNTAX_OK;
 }
 
+int compare_output_types(analyse_data_t* data, stack_element* final_element){
+
+    data_type expected_type = 0;
+    bool nullable = false;
+
+    if(data->in_defintion){
+        var_data_t type = ((function_data_t*)data->current_id->data)->params_types[data->args_index];
+        expected_type = type.data_type;
+        nullable = type.q_type;
+    }else if(data->in_while_or_if){
+        return final_element->type == Bool_Type && !final_element->nullable ? SYNTAX_OK : SEM_ERROR_TYPE_COMPAT;
+    }else if(data->in_function && !data->in_var_definition && ((var_data_t*)data->var_id->data)->data_type == Undefined){
+        function_data_t* func_data = (function_data_t*)data->current_id->data;
+        expected_type = func_data->return_data_type;
+        nullable = func_data->return_data_q_type;
+    }else{
+        var_data_t* var_data = (var_data_t*)data->var_id->data;
+        expected_type = var_data->data_type;
+        nullable = var_data->q_type;
+    }
+
+    if((final_element->nullable || final_element->is_nil) && !nullable && expected_type != Undefined){
+        return SEM_ERROR_TYPE_COMPAT;
+    }
+
+    switch(expected_type){
+        case Int_Type:
+            if(final_element->type != Int_Type){
+                return SEM_ERROR_TYPE_COMPAT;
+            }
+            break;
+        case Double_Type:
+            if(final_element->type == Int_Type){
+                if(final_element->is_identifier){
+                    return SEM_ERROR_TYPE_COMPAT;
+                }
+            }
+            else if(final_element->type != Double_Type){
+                return SEM_ERROR_TYPE_COMPAT;
+            }
+            break;
+        case String_Type:
+            if(final_element->type != String_Type){
+                return SEM_ERROR_TYPE_COMPAT;
+            }
+            break;
+        case Undefined:
+            if(data->in_var_definition){
+                printf("got here!!!\n");
+                var_data_t* var_data = (var_data_t*)data->var_id->data;
+                var_data->data_type = final_element->type;
+                var_data->q_type = final_element->nullable;
+            }
+            else{
+                //Should be some error
+            }
+            break;
+    }
+
+    return SYNTAX_OK;
+}
+
 
 void process_parenthese(token_t token, int* count){
     if(token.type == TOKEN_LEFT_BRACKET) (*count)++;
@@ -627,8 +689,6 @@ int expression(analyse_data_t* data, bool* is_EOL){
         return SYNTAX_ERROR;
     }
 
-
-
     if(final_element->symbol != NON_TERM){
 
         // Free recources
@@ -637,56 +697,12 @@ int expression(analyse_data_t* data, bool* is_EOL){
     }
 
 
-    if(data->var_id){
-        var_data_t* var_data = (var_data_t*)data->var_id->data;
-        if((final_element->nullable || final_element->is_nil) && !var_data->q_type && var_data->data_type != Undefined){
-            FREE_RECOURCES(stack);
-            return SEM_ERROR_TYPE_COMPAT;
-        }
-
-
-        switch(var_data->data_type){
-            case Int_Type:
-                if(final_element->type != Int_Type){
-                    // Free recources
-                    FREE_RECOURCES(stack);
-                    return SEM_ERROR_TYPE_COMPAT;
-                }
-                // Generate assignment
-                break;
-            case Double_Type:
-                if(final_element->type == Int_Type){
-                    if(final_element->is_identifier){
-                        FREE_RECOURCES(stack);
-                        return SEM_ERROR_TYPE_COMPAT;
-                    }
-                    // Generate Int2Double
-                }
-                else if(final_element->type != Double_Type){
-                    // Free recources
-                    FREE_RECOURCES(stack);
-                    return SEM_ERROR_TYPE_COMPAT;
-                }
-                // Generate assignment
-                break;
-            case String_Type:
-                if(final_element->type != String_Type){
-                    // Free recources
-                    FREE_RECOURCES(stack);
-                    return SEM_ERROR_TYPE_COMPAT;
-                }
-                // Generate assignment
-                break;
-            case Undefined:
-                if(data->in_var_definition){
-                    var_data->data_type = final_element->type;
-                    var_data->q_type = final_element->nullable;
-                }
-
-                // Generate assigment
-                break;
-        }
+    if((result = compare_output_types(data, final_element))){
+        FREE_RECOURCES(stack);
+        return result;
     }
+
+    // Generate assignment
 
     data->token = token;
     *is_EOL = was_EOL; 
