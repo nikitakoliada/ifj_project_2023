@@ -1024,7 +1024,7 @@ static int p_type(analyse_data_t* data){
     }
     return SYNTAX_ERROR;
 }
-int main()
+/*int main()
 {
     char *input = "func concat(b x : String, with y : String) -> String {\n\n    let x = y + y\n    if (4 > 3) {\n        var x : Double\n    }else{\n        var x: String\n    }\n    return x + \" \" + y\n}";
 
@@ -1055,6 +1055,34 @@ int main()
     }
     free_variables(data);
     //fclose(file);
+
+    return result;
+}*/
+
+int analyse(){
+    set_source_file(stdin);
+    analyse_data_t *data = malloc(sizeof(analyse_data_t));
+    
+    if (!init_variables(data))
+        return INTERNAL_ERROR;
+
+    result = get_next_token(&data->token);
+
+    result = program(data);
+
+    if(result != SYNTAX_OK){
+        printf("ERROR: %d\n", result);
+        for(int i = 0; i <= data->label_deep; i++){
+            printf("LABEL: %d - ", i);
+            print_all_keys(data->local_table[i].root);
+            printf("\n");
+        }
+        // fprintf(stderr, "ERROR: %d\n", result);
+    }else{
+        printf("OK\n");
+    }
+
+    free_variables(data);
 
     return result;
 }
