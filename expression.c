@@ -85,6 +85,7 @@ int get_pt_index(eSymbol symbol){
         case IntS:
         case StringS:
         case IdS:
+        case FunctionS:
         case NilS:
             return IdI;
         case DollarS:
@@ -120,7 +121,7 @@ data_type get_data_type(token_t token, analyse_data_t* data, bool* is_nullable){
     }
 }
 
-eSymbol token_to_esymbol(token_t token, analyse_data_t* data, bool* is_nullable){
+eSymbol token_to_esymbol(token_t token, analyse_data_t* data, data_type* type, bool* is_nullable){
     switch(token.type){
         case PLUS:  return PlusS;
         case MINUS: return MinusS;
@@ -143,21 +144,9 @@ eSymbol token_to_esymbol(token_t token, analyse_data_t* data, bool* is_nullable)
             if(token.data.Keyword == Nil_KW) return NilS; 
             return DollarS;
         case IDENTIFIER:
-            bool a = false;
-            data_type t = get_data_type(token, data, is_nullable);
-            if(t == Int_Type) return IntS;
-            if(t == String_Type) return StringS;
-            if(t == Double_Type) return DoubleS;
+            *type = get_data_type(token, data, is_nullable);
+            return IdS;
         default: return DollarS; // Process
-    }
-}
-
-eSymbol type_to_symbol(data_type type){
-    switch(type){
-        case Int_Type: return IntS;
-        case String_Type: return StringS;
-        case Double_Type: return DoubleS;
-        case Undefined: return DollarS;
     }
 }
 
@@ -475,7 +464,8 @@ int expression(analyse_data_t* data, bool* is_EOL){
         stack_print(stack);
         int result = 0;
         bool nullable = false;
-        eSymbol input_symbol = token_to_esymbol(token, data, &nullable);
+        data_type input_id_data_type = Undefined;
+        eSymbol input_symbol = token_to_esymbol(token, data, &input_id_data_type, &nullable);
         pt_index input_index = get_pt_index(input_symbol);
         stack_element* st_element = stack_top_terminal(stack);
         if(!st_element) return INTERNAL_ERROR;
@@ -539,7 +529,9 @@ int expression(analyse_data_t* data, bool* is_EOL){
                 if(!new_element) return INTERNAL_ERROR;
                 was_EOL = false;
                 new_element->symbol = input_symbol;
-                new_element->type = get_data_type(token, data, &nullable);
+                new_element->type = input_symbol == IdS 
+                    ? input_id_data_type 
+                    : get_data_type(token, data, &nullable);
                 new_element->nullable = nullable;
                 new_element->is_identifier = token.type == IDENTIFIER;
                 if(!stack_push(stack, new_element))
@@ -572,7 +564,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
                 new_element->is_nil = false;
                 new_element->nullable = false; // TODO: Could be true (no support at this moment)
                 new_element->type = type;
-                new_element->symbol = type_to_symbol(type);
+                new_element->symbol = FunctionS;
                 printf("---%d\n", type);
                 if(!stack_pop(stack))
                 {

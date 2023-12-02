@@ -217,6 +217,19 @@ bst_node_ptr bst_delete(bst_node_ptr root, char* key) {
     return root;
 }
 
+int has_undefined_function(bst_node_ptr node) {
+    if (node == NULL) {
+        return 0;
+    }
+
+    // Check if the current node is a function
+    if (node->data_type == node_data_type_function && !((function_data_t*)node->data)->defined) {
+        return 1;
+    }
+
+    // Recursively check the left and right subtrees
+    return has_undefined_function(node->left_ptr) || has_undefined_function(node->right_ptr);
+}
 
 bst_node_ptr symtable_search(symtable_t* table, char* key) {
     return bst_search(table->root, key);
