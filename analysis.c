@@ -492,6 +492,7 @@ static int function_declaration(analyse_data_t* data){
     func_data->defined = true;
     symtable_dispose(&data->local_table[data->label_deep]);
     data->label_deep--;
+    data->in_defintion = false;
     return SYNTAX_OK;
 }
 
@@ -924,7 +925,7 @@ static int def_type(analyse_data_t* data){
     }
    //31. 〈def_type 〉−→ ε
 
-    return SYNTAX_OK;
+    return SYNTAX_ERROR;
 }
 
 // //32. 〈 end 〉 −→ EOF

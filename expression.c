@@ -114,9 +114,9 @@ data_type get_data_type(token_t token, analyse_data_t* data, bool* is_nullable){
             }
             bst_node_ptr node = var_search(data, label_deep, token.data.String);
             if(!node) return Undefined;
-            var_data_t* data = (var_data_t*)node->data;
-            if(is_nullable) *is_nullable = data->q_type;
-            return data->data_type;
+            var_data_t* var_data = (var_data_t*)node->data;
+            if(is_nullable) *is_nullable = var_data->q_type;
+            return var_data->data_type;
         case INT_VALUE:
             return Int_Type;
 
@@ -482,15 +482,6 @@ int compare_output_types(analyse_data_t* data, stack_element* final_element){
             }
             break;
         case Undefined:
-            if(data->in_var_definition){
-                printf("got here!!!\n");
-                var_data_t* var_data = (var_data_t*)data->var_id->data;
-                var_data->data_type = final_element->type;
-                var_data->q_type = final_element->nullable;
-            }
-            else{
-                //Should be some error
-            }
             break;
     }
 
@@ -704,6 +695,12 @@ int expression(analyse_data_t* data, bool* is_EOL){
     if((result = compare_output_types(data, final_element))){
         FREE_RECOURCES(stack);
         return result;
+    }
+
+    else if(data->in_var_definition){
+        var_data_t* var_data = (var_data_t*)data->var_id->data;
+        var_data->data_type = final_element->type;
+        var_data->q_type = final_element->nullable;
     }
 
     // Generate assignment
