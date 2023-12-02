@@ -240,9 +240,6 @@ void print_all_keys(bst_node_ptr node) {
     print_all_keys(node->left_ptr);
 
     // Print the key of the current node
-    if(node->data_type == node_data_type_var)
-        printf("%s, with type %d\n", node->key, ((var_data_t*)node->data)->data_type);
-    else
     printf("%s, ", node->key);
 
     // Recursively visit the right subtree

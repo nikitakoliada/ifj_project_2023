@@ -401,15 +401,16 @@ static int statement(analyse_data_t* data)
     else if(data->token.type == IDENTIFIER){
         //5. 〈 statement 〉 −→ 〈 assignment 〉EOL 〈 statement 〉
         data->var_id = var_search(data, data->label_deep, data->token.data.String);
-        bst_node_ptr tmp_id = data->current_id;
         data->current_id = symtable_search(&data->global_table, data->token.data.String);
         data->tmp_key = data->token.data.String;
         GET_TOKEN();
         if(data->token.type == ASSIGNMENT){
+            printf("%s", data->tmp_key);
             CHECK_RULE(assignment);
 
             CHECK_RULE(possible_EOL);
             data->tmp_key = "";
+            return statement(data);
         }
         //7. 〈 statement 〉 −→ 〈 f_call 〉EOL 〈 statement 〉
         else{
@@ -423,10 +424,8 @@ static int statement(analyse_data_t* data)
             }
             data->tmp_key = "";
 
-        } 
-        data->current_id = tmp_id;
-        return statement(data);
-
+            return statement(data);
+        }
     }
     //6. 〈 statement 〉 −→ 〈def_var 〉 EOL 〈 statement 〉
     else if(data->token.type == KEYWORD && (data->token.data.Keyword == Let_KW || data->token.data.Keyword == Var_KW)){
@@ -438,7 +437,6 @@ static int statement(analyse_data_t* data)
     //???. 〈 statement 〉 −→ <return_kw> <expression> EOL <statement>
     else if(data->token.type == KEYWORD && data->token.data.Keyword == Return_KW){
         if(data->in_function == false || data->current_id == NULL){
-
             return SYNTAX_ERROR;
         }
         if(((function_data_t*)(*data->current_id).data)->return_data_type == Undefined){
@@ -748,6 +746,12 @@ static int def_var(analyse_data_t* data){
         if(data->token.type == COLON){
             no_type = false;
             CHECK_RULE(def_type);
+            var_data->q_type = ((var_data_t*)(*data->var_id).data)->q_type;
+            var_data->data_type = ((var_data_t*)(*data->var_id).data)->data_type;
+        }
+        else{
+            var_data->q_type = Undefined;
+            var_data->data_type = Undefined;
         }
         // = 〈 expression 〉
         if(data->token.type == ASSIGNMENT){
@@ -759,14 +763,6 @@ static int def_var(analyse_data_t* data){
         else{
             CHECK_TYPE(TOKEN_EOL);
             GET_TOKEN();
-        }
-        if(no_type == false){
-            var_data->q_type = ((var_data_t*)(*data->var_id).data)->q_type;
-            var_data->data_type = ((var_data_t*)(*data->var_id).data)->data_type;
-        }
-        else{
-            var_data->q_type = Undefined;
-            var_data->data_type = Undefined;
         }
         if(no_type && no_assignment){
             return SYNTAX_ERROR;
@@ -1070,10 +1066,10 @@ static int p_type(analyse_data_t* data){
     }
     return SYNTAX_ERROR;
 }
-int main()
+/*int main()
 {
-    char *    input = "write(\"Zadejte cislo pro vypocet faktorialu: \")\nlet inp = readInt()\n// pomocna funkce pro dekrementaci celeho cisla o zadane cislo\nfunc decrement(of n: Int, by m: Int) -> Int {\nreturn n - m\n}\n// Definice funkce pro vypocet hodnoty faktorialu\nfunc factorial(_ n : Int) -> Int {\nvar result : Int?\nif (n < 2) {\nresult = 1\n} else {\nlet decremented_n = decrement(of: n, by: 1)\nlet temp_result : Int = factorial(decremented_n)\nresult = n * 12\n}\nreturn result\n}\n// pokracovani hlavniho tela programu\nif let inp {\nif (inp < 0) { // Pokracovani hlavniho tela programu\nwrite(\"Faktorial nelze spocitat!\")\n} else {\nlet vysl = factorial(inp)\n\nwrite(\"Vysledek je: \", vysl)\n}\n} else {\nwrite(\"Chyba pri nacitani celeho cisla!\")\n}";
-    //char *    input = "func main(_ i: Int) -> Int? {\n    return nil\n}\nfunc new() -> Int {\n    while 1 == 1{}\n    var i = 3\n    var k: Double = 5.5\n\n    return main(6 / 5) ?? new() - 8\n}\nlet c: Int \nfunc empty(){\n\n}\nfunc concat(b x : String, with y : String) -> String {\n    let x = y + y\n    if c == 5 - 5 {\n        var x : Double\n    }else{\n    }\n    return x + \"\" + y\n}\nlet a = \"ahoj \"\nvar hohol = concat(b: concat(b: a, with: \"svete\"), with: \"svete\") + \"\"\nempty()";
+    //char *    input = "write(\"Zadejte cislo pro vypocet faktorialu: \")\nlet inp = readInt()\n// pomocna funkce pro dekrementaci celeho cisla o zadane cislo\nfunc decrement(of n: Int, by m: Int) -> Int {\nreturn n - m\n}\n// Definice funkce pro vypocet hodnoty faktorialu\nfunc factorial(_ n : Int) -> Int {\nvar result : Int?\nif (n < 2) {\nresult = 1\n} else {\nlet decremented_n = decrement(of: n, by: 1)\nlet temp_result = factorial(decremented_n)\nresult = n * temp_result\n}\nreturn result!\n}\n// pokracovani hlavniho tela programu\nif let inp {\nif (inp < 0) { // Pokracovani hlavniho tela programu\nwrite(\"Faktorial nelze spocitat!\")\n} else {\nlet vysl = factorial(inp)\n\nwrite(\"Vysledek je: \", vysl)\n}\n} else {\nwrite(\"Chyba pri nacitani celeho cisla!\")\n}";
+    char *    input = "func main(_ i: Int) -> Int? {\n    return nil\n}\nfunc new() -> Int {\n    while 1 == 1{}\n    var i = 3\n    var k: Double = 5.5\n\n    return main(6 / 5) ?? new() - 8\n}\nlet c: Int \nfunc empty(){\n\n}\nfunc concat(b x : String, with y : String) -> String {\n    let x = y + y\n    if c == 5 - 5 {\n        var x : Double\n    }else{\n    }\n    return x + \"\" + y\n}\nlet a = \"ahoj \"\nvar hohol = concat(b: concat(b: a, with: \"svete\"), with: \"svete\") + \"\"\nempty()";
     FILE *file = fmemopen(input, strlen(input), "r");
     set_source_file(file);
     analyse_data_t *data = malloc(sizeof(analyse_data_t));
@@ -1115,32 +1111,39 @@ int main()
     //fclose(file);
 
     return result;
-}
+}*/
 
-// int analyse(){
-//     set_source_file(stdin);
-//     analyse_data_t *data = malloc(sizeof(analyse_data_t));
+int analyse(){
+    set_source_file(stdin);
+    analyse_data_t *data = malloc(sizeof(analyse_data_t));
     
-//     if (!init_variables(data))
-//         return INTERNAL_ERROR;
+    if (!init_variables(data))
+        return INTERNAL_ERROR;
 
-//     result = get_next_token(&data->token);
+    result = get_next_token(&data->token);
 
-//     //result = program(data);
+    //result = program(data);
 
-//     result = program_first(data);
-//     fseek(stdin, 0, SEEK_SET);
-//     //second and main
-//     result = get_next_token(&data->token);
-//     result = program(data);
+    result = program_first(data);
+    printf("\n\nEND OF FIRST GO THROUGH\n\n");
+    fseek(stdin, 0, SEEK_SET);
+    //second and main
+    result = get_next_token(&data->token);
+    result = program(data);
 
-//     if(result != SYNTAX_OK){
-//         fprintf(stderr, "ERROR: %d\n", result);
-//     }else{
-//         printf("OK\n");
-//     }
+    if(result != SYNTAX_OK){
+        printf("ERROR: %d\n", result);
+        for(int i = 0; i <= data->label_deep; i++){
+            printf("LABEL: %d - ", i);
+            print_all_keys(data->local_table[i].root);
+            printf("\n");
+        }
+        // fprintf(stderr, "ERROR: %d\n", result);
+    }else{
+        printf("OK\n");
+    }
 
-//     free_variables(data);
+    free_variables(data);
 
-//     return result;
-// }
+    return result;
+}
