@@ -454,6 +454,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
 
     bool is_success = false;
     bool was_EOL = false;
+    bool reduce_only = false;
     int parantheses_counter = 0;
     token_t prev_token;
     token_t token = data->token;
@@ -481,6 +482,19 @@ int expression(analyse_data_t* data, bool* is_EOL){
 
         printf("-****%d - %d*****\n", stack_symbol_index, input_index);
         stack_element* new_element = NULL;
+        
+        if(input_index == IdI && stack_symbol_index == IdI && was_EOL){
+            reduce_only = true;
+        }   
+
+        if(reduce_only){
+            if(stack_symbol != DollarS){
+                precedence_result = R;
+            }
+            else{
+                precedence_result = P;
+            }
+        }
 
         switch(precedence_result){
             case R:
@@ -501,7 +515,9 @@ int expression(analyse_data_t* data, bool* is_EOL){
                     return INTERNAL_ERROR;
                 }
                 new_element->symbol = input_symbol;
-                new_element->type = get_data_type(token, data, &nullable);
+                new_element->type = input_symbol == IdS 
+                    ? input_id_data_type 
+                    : get_data_type(token, data, &nullable);
                 new_element->nullable = nullable;
                 new_element->is_identifier = token.type == IDENTIFIER;
                 if(!stack_push(stack, new_element))

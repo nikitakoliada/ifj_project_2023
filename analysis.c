@@ -198,9 +198,7 @@ static bool init_variables(analyse_data_t* data)
 {
     data->st_length = 10;
 	symtable_init(&data->global_table);
-    for (int length = 0; length < data->st_length; length++){
-        symtable_init(&data->local_table[length]);
-    }
+    symtable_init(&data->local_table[0]);
 	data->current_id = malloc(sizeof(bst_node_ptr))	;
     data->var_id = malloc(sizeof(bst_node_ptr));
     data->expr_id = malloc(sizeof(bst_node_ptr));
@@ -219,7 +217,7 @@ static bool init_variables(analyse_data_t* data)
     var_data->data_type = Undefined;
     var_data->q_type = false;
 
-    symtable_insert_var(&data->global_table, "%%expr_result", var_data);
+    symtable_insert_var(&data->global_table, "%%exp_result", var_data);
     function_data_t * readString = malloc(sizeof(function_data_t));
     readString->defined = true;
     readString->param_len = -1;
@@ -327,9 +325,7 @@ static bool init_variables(analyse_data_t* data)
 static void free_variables(analyse_data_t* data)
 {
 	symtable_dispose(&data->global_table);
-    for (int length = 0; length < 10; length++){
-        symtable_dispose(&data->local_table[length]);
-    }
+    symtable_dispose(&data->local_table[0]);
 }
 
 // forward declarations(LL table)
@@ -350,10 +346,9 @@ static int modifier(analyse_data_t* data);
 static int def_type(analyse_data_t* data);
 static int end(analyse_data_t* data);
 static int possible_EOL(analyse_data_t* data);
-static int ident(analyse_data_t* data);
 static int type(analyse_data_t* data);
-static int q_value(analyse_data_t* data); // ? before p_type 
 static int p_type(analyse_data_t* data);// ? before p_type 
+static int write(analyse_data_t* data);
 
 static int program(analyse_data_t* data)
 {
@@ -396,7 +391,12 @@ static int statement(analyse_data_t* data)
         }
         //7. 〈 statement 〉 −→ 〈 f_call 〉EOL 〈 statement 〉
         else{
-            CHECK_RULE(f_call);
+            if(strcmp(data->tmp_key, "write") == 0){
+                CHECK_RULE(write);
+            }
+            else{
+                CHECK_RULE(f_call);
+            }
             GET_TOKEN_AND_CHECK_RULE(possible_EOL);
             data->tmp_key = "";
 
@@ -412,6 +412,12 @@ static int statement(analyse_data_t* data)
     }
     //???. 〈 statement 〉 −→ <return_kw> <expression> EOL <statement>
     else if(data->token.type == KEYWORD && data->token.data.Keyword == Return_KW){
+        if(data->in_function == false || data->current_id == NULL){
+            return SYNTAX_ERROR;
+        }
+        if(((function_data_t*)(*data->current_id).data)->return_data_type == Undefined){
+            return SYNTAX_ERROR;
+        }
         data->var_id = symtable_search(&data->global_table, "%%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
         CHECK_RULE(possible_EOL);
@@ -437,6 +443,7 @@ static int function(analyse_data_t* data){
         data->in_defintion = true;
 		data->label_index = 0;
         data->label_deep++;
+        symtable_init(&data->local_table[data->label_deep]);
         GET_TOKEN_AND_CHECK_TYPE(IDENTIFIER);
         // if function wasn't declared add it to the global symbol table
         data->current_id = symtable_search(&data->global_table, data->token.data.String);
@@ -459,15 +466,20 @@ static int function(analyse_data_t* data){
         GET_TOKEN_AND_CHECK_RULE(func_ret);
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
         GET_TOKEN_AND_CHECK_RULE(possible_EOL);
+        data->in_defintion = false;
         // so we can difine the variable with the same name as arguments 
         data->label_deep++;
+        symtable_init(&data->local_table[data->label_deep]);
+        bool was_in_function = data->in_function;
+        data->in_function = true;
         CHECK_RULE(statement);
+        if(was_in_function == false)
+            data->in_function = false;
         symtable_dispose(&data->local_table[data->label_deep]);
         data->label_deep--;
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
         symtable_dispose(&data->local_table[data->label_deep]);
         func_data->defined = true;
-        data->in_defintion = false;
         data->label_deep--;
         return SYNTAX_OK;
     }
@@ -478,6 +490,7 @@ static int func_ret(analyse_data_t* data){
     //12. 〈 func_ret 〉 −→ 〈 FUNCTION_TYPE 〉〈 type 〉
 
     if(data->token.type == TOKEN_FUNCTION_TYPE){
+        data->args_index++;
         GET_TOKEN_AND_CHECK_RULE(type);
 
 		((function_data_t*)(*data->current_id).data)->return_data_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index].data_type;
@@ -519,6 +532,7 @@ static int args(analyse_data_t* data){
         var_data->constant = true;
         CHECK_RULE(args_n);
         ((function_data_t*)(*data->current_id).data)->param_len = data->args_index;
+        data->args_index = 0;
         return SYNTAX_OK;
     }    
     //15. 〈 args 〉 −→ ε
@@ -565,6 +579,7 @@ static int if_else(analyse_data_t* data){
     if(data->token.type == KEYWORD && data->token.data.Keyword == If_KW){
         data->label_deep++;
         data->in_while_or_if = true;
+        symtable_init(&data->local_table[data->label_deep]);
         data->label_index += 2;
         GET_TOKEN();
         if(data->token.type == KEYWORD && data->token.data.Keyword == Let_KW){
@@ -583,12 +598,14 @@ static int if_else(analyse_data_t* data){
         }
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
         GET_TOKEN_AND_CHECK_RULE(statement);
+        symtable_dispose(&data->local_table[data->label_deep]);
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
         GET_TOKEN_AND_CHECK_RULE(possible_EOL);
         if(data->token.data.Keyword != Else_KW){
             return SYNTAX_ERROR;
         }
         GET_TOKEN_AND_CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
+        symtable_init(&data->local_table[data->label_deep]);
         GET_TOKEN_AND_CHECK_RULE(statement);
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
         symtable_dispose(&data->local_table[data->label_deep]);
@@ -605,6 +622,7 @@ static int while_(analyse_data_t* data){
         data->label_deep++;
         data->in_while_or_if = true;
         data->label_index += 2;
+        symtable_init(&data->local_table[data->label_deep]);
         data->var_id = symtable_search(&data->global_table, "%%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
@@ -689,12 +707,31 @@ static int def_var(analyse_data_t* data){
         if(no_type && no_assignment){
             return SYNTAX_ERROR;
         }
-        
         var_data->constant = constanta;
         return SYNTAX_OK;
     }
 
     return SYNTAX_ERROR;
+}
+
+static int write(analyse_data_t* data){
+    //???. 〈 write 〉 −→ write ( 〈 expression 〉, ...)
+    CHECK_TYPE(TOKEN_LEFT_BRACKET);
+    GET_TOKEN_AND_CHECK_RULE(possible_EOL);
+    if(data->token.type == TOKEN_RIGHT_BRACKET){
+        return SYNTAX_OK;
+    }
+    data->var_id = symtable_search(&data->global_table, "%%exp_result");
+    CHECK_EXPRESSION();
+    while(data->token.type == COMMA){
+        CHECK_RULE(possible_EOL);
+        data->var_id = symtable_search(&data->global_table, "%%exp_result");
+        GET_TOKEN_AND_CHECK_EXPRESSION();
+    }
+    CHECK_RULE(possible_EOL);
+    CHECK_TYPE(TOKEN_RIGHT_BRACKET);
+    return SYNTAX_OK;
+
 }
 
 // //23. 〈f_call 〉−→ id ( 〈fc_args 〉)
@@ -709,17 +746,16 @@ static int f_call(analyse_data_t* data){
         ((function_data_t*)data->current_id->data)->param_len = 100; // max of params
     }
     CHECK_TYPE(TOKEN_LEFT_BRACKET);
+    GET_TOKEN_AND_CHECK_RULE(possible_EOL);
     if(((function_data_t*)data->current_id->data)->param_len != -1)
-        GET_TOKEN_AND_CHECK_RULE(fc_args);
-    else{
-        GET_TOKEN();
-    }
+        CHECK_RULE(fc_args);
     if(data->args_index != ((function_data_t*)data->current_id->data)->param_len && ((function_data_t*)data->current_id->data)->defined == true){
         return SEM_ERROR_PARAM;
     }
     if(((function_data_t*)data->current_id->data)->defined == false)
         ((function_data_t*)data->current_id->data)->param_len = data->args_index;
     data->args_index = 0;
+    CHECK_RULE(possible_EOL);
     CHECK_TYPE(TOKEN_RIGHT_BRACKET);
     return SYNTAX_OK;
 }
@@ -743,7 +779,7 @@ static int fc_args(analyse_data_t* data){
     if(!((function_data_t*)(*data->current_id).data)->defined)
     {
         if(data->token.type == IDENTIFIER){
-        data->var_id = symtable_search(&data->global_table, "%exp_result");
+        data->var_id = symtable_search(&data->global_table, "%%exp_result");
         CHECK_EXPRESSION();
         CHECK_RULE(fc_args_n_args);
         }
@@ -751,7 +787,7 @@ static int fc_args(analyse_data_t* data){
     }
     else{
         if (strcmp(((function_data_t*)(*data->current_id).data)->param_names[data->args_index], "_") == 0){
-            data->var_id = symtable_search(&data->local_table[0], "%exp_result");
+            data->var_id = symtable_search(&data->global_table, "%%exp_result");
             CHECK_EXPRESSION();
             CHECK_RULE(fc_args_n_args);
             return SYNTAX_OK;
@@ -764,7 +800,7 @@ static int fc_args(analyse_data_t* data){
                 }
             }
             GET_TOKEN_AND_CHECK_TYPE(COLON);
-            data->var_id = symtable_search(&data->local_table[0], "%exp_result");
+            data->var_id = symtable_search(&data->global_table, "%%exp_result");
             GET_TOKEN_AND_CHECK_EXPRESSION();
             CHECK_RULE(fc_args_n_args);
             return SYNTAX_OK;
@@ -862,15 +898,6 @@ static int possible_EOL(analyse_data_t* data){
     }
 //     //34. 〈 possible_EOL 〉 −→ ε
     return SYNTAX_OK;
-}
-
-// //35. 〈 id 〉 −→ identifier
-static int id(analyse_data_t* data){
-//     if(data->token.type == IDENTIFIER){
-//         GET_TOKEN();
-//         return SYNTAX_OK;
-//     }
-    return SYNTAX_ERROR;
 }
 
 static int type(analyse_data_t* data){
@@ -993,10 +1020,10 @@ static int p_type(analyse_data_t* data){
 }
 int main()
 {
-    /*char *input = "func empty(){\n}\nfunc concat(b x : String, with y : String) -> String {\nlet x = x + y\nreturn x + \" \" + y\n}\nlet a = \"ahoj \"\nvar ct : String\nconcat(b: a, with: \"svete\")\nempty()trachnutebe()\n";
+    char *input = "write(1+2, 3+4)\nwrite()";
 
-    FILE *file = fmemopen(input, strlen(input), "r");*/
-    set_source_file(stdin);
+    FILE *file = fmemopen(input, strlen(input), "r");
+    set_source_file(file);
     analyse_data_t *data = malloc(sizeof(analyse_data_t));
     
     if (!init_variables(data))
@@ -1015,7 +1042,7 @@ int main()
     else{
         printf("OK\n");
     }
-    //free_variables(data);
+    free_variables(data);
     //fclose(file);
 
     return result;
