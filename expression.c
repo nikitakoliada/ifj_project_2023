@@ -302,11 +302,13 @@ int reduce(stack_t* stack){
                     if(elements[0]->type == Int_Type ) {
                         if(elements[0]->is_identifier) return SEM_ERROR_TYPE_COMPAT;
                         // Generate Int2Double for 1 operands
+                        gen_int2double();
                     }
 
                     if(elements[2]->type == Int_Type) {
                         if(elements[2]->is_identifier) return SEM_ERROR_TYPE_COMPAT;
                         // Generate Int2Double for 2 operands
+                        gen_int2double_2op();
                     }
 
                     // Generate float division
@@ -342,11 +344,13 @@ int reduce(stack_t* stack){
                         if(elements[0]->type == Int_Type){
                             if(elements[0]->is_identifier) return SEM_ERROR_TYPE_COMPAT;
                             // Generate Int2Double code
+                            gen_int2double();
                         }
 
                         if(elements[2]->type == Int_Type){
                             if(elements[2]->is_identifier) return SEM_ERROR_TYPE_COMPAT;
                             // Generate Int2Double code
+                            gen_int2double_2op();
                         }
 
                         new_element->type = Double_Type;
@@ -376,14 +380,13 @@ int reduce(stack_t* stack){
                     if(elements[0]->type == Double_Type && elements[2]->type == Int_Type){
                         if(elements[2]->is_identifier) return SEM_ERROR_TYPE_COMPAT;
                         // Generate Int2Double code
-                        // Could be for both of the terms
-                        // No solution at code gen yet
+                        gen_int2double_2op();
                     }
 
                     if(elements[2]->type == Double_Type && elements[0]->type == Int_Type){
                         if(elements[0]->is_identifier) return SEM_ERROR_TYPE_COMPAT;
                         // Generate Int2Double code
-                        //gen_int2double();
+                        gen_int2double();
                     }
                 }
                 else if(elements[0]->type != elements[2]->type 
@@ -500,6 +503,8 @@ int compare_output_types(analyse_data_t* data, stack_element* final_element){
                 if(final_element->is_identifier){
                     return SEM_ERROR_TYPE_COMPAT;
                 }
+
+                gen_int2double();
             }
             else if(final_element->type != Double_Type){
                 return SEM_ERROR_TYPE_COMPAT;
@@ -624,7 +629,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
                 } 
 
                 // Push new term
-                if(input_symbol == IdS || input_symbol == StringS || input_symbol == IntS || input_symbol == DoubleS){
+                if((input_symbol == IdS && input_id_data_type != Undefined) || input_symbol == StringS || input_symbol == IntS || input_symbol == DoubleS){
                     gen_push(&token);
                 }
 
@@ -662,6 +667,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
                 if(!new_element) return INTERNAL_ERROR;
                 data_type type = Int_Type;
                 data->token = token;
+                gen_pop();
                 if((result = f_expression_call(data, prev_token, &type, &nullable))){
                     FREE_RECOURCES(stack);
                     return result;
