@@ -520,6 +520,7 @@ static int function(analyse_data_t* data){
         GET_TOKEN_AND_CHECK_RULE(args);
         CHECK_TYPE(TOKEN_RIGHT_BRACKET);
         GET_TOKEN_AND_CHECK_RULE(func_ret);
+        data->args_index = 0;
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
         GET_TOKEN_AND_CHECK_RULE(possible_EOL);
         data->in_defintion = false;
@@ -587,7 +588,6 @@ static int args(analyse_data_t* data){
         var_data->constant = true;
         CHECK_RULE(args_n);
         ((function_data_t*)(*data->current_id).data)->param_len = data->args_index;
-        data->args_index = 0;
         return SYNTAX_OK;
     }    
     //15. 〈 args 〉 −→ ε
