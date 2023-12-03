@@ -29,7 +29,7 @@ void generate_readString(void)
     GENERATE("POPFRAME");
     GENERATE("RETURN");
     GENERATE("LABEL !_readString");
-    GENERATE("");
+    GENERATE_EMPTY_LINE();
 }
 
 /**
@@ -50,7 +50,7 @@ void generate_readInt(void)
     GENERATE("POPFRAME");
     GENERATE("RETURN");
     GENERATE("LABEL !_readInt");
-    GENERATE("");
+    GENERATE_EMPTY_LINE();
 }
 
 /**
@@ -71,7 +71,7 @@ void generate_readDouble(void)
     GENERATE("POPFRAME");
     GENERATE("RETURN");
     GENERATE("LABEL !_readDouble");
-    GENERATE("");
+    GENERATE_EMPTY_LINE();
 }
 
 /**
@@ -87,12 +87,12 @@ void generate_write(void)
     GENERATE("LABEL !function_write");
     GENERATE("PUSHFRAME");
 
-    GENERATE("WRITE LF@%0");
+    GENERATE("WRITE LF@%%0");
 
     GENERATE("POPFRAME");
     GENERATE("RETURN");
     GENERATE("LABEL !_write");
-    GENERATE("");
+    GENERATE_EMPTY_LINE();
 }
 
 /**
@@ -120,7 +120,7 @@ void generate_Int2Double(void)
     GENERATE("POPFRAME");
     GENERATE("RETURN");
     GENERATE("LABEL !_Int2Double");
-    GENERATE("");
+    GENERATE_EMPTY_LINE();
 }
 
 /**
@@ -147,7 +147,7 @@ void generate_Double2Int(void)
     GENERATE("POPFRAME");
     GENERATE("RETURN");
     GENERATE("LABEL !_Double2Int");
-    GENERATE("");
+    GENERATE_EMPTY_LINE();
 }
 
 /**
@@ -168,7 +168,7 @@ void generate_length(void)
     GENERATE("POPFRAME");
     GENERATE("RETURN");
     GENERATE("LABEL !_length");
-    GENERATE("");
+    GENERATE_EMPTY_LINE();
 }
 
 /**
@@ -192,7 +192,7 @@ void generate_substring(void)
     GENERATE("DEFVAR LF@%%length");
     GENERATE("DEFVAR LF@%%char");
 
-    GENERATE("MOVE LF@%%retval0 string@");
+    GENERATE("MOVE LF@%%retval0 string@%%0");
 
     GENERATE("JUMPIFEQ nil$error_substr nil@nil LF@substr$s");
     GENERATE("JUMPIFEQ nil$error_substr nil@nil LF@substr$i");
@@ -228,13 +228,13 @@ void generate_substring(void)
     GENERATE("JUMP !end_substr");
 
     GENERATE("LABEL nil$return_substr");
-    GENERATE("MOVE LF@%%retval0 string@");
+    GENERATE("MOVE LF@%%retval0 string@%%0");
 
     GENERATE("LABEL !end_substr");
     GENERATE("POPFRAME");
     GENERATE("RETURN");
     GENERATE("LABEL !_substr");
-    GENERATE("");
+    GENERATE_EMPTY_LINE();
 }
 
 /**
@@ -278,7 +278,7 @@ void generate_ord(void)
     GENERATE("POPFRAME");
     GENERATE("RETURN");
     GENERATE("LABEL !_ord");
-    GENERATE("");
+    GENERATE_EMPTY_LINE();
 }
 
 /**
@@ -313,21 +313,21 @@ void generate_chr(void)
     GENERATE("POPFRAME");
     GENERATE("RETURN");
     GENERATE("LABEL !_chr");
-    GENERATE("");
+    GENERATE_EMPTY_LINE();
 }
 
 void define_built_in_functions(void)
 {
     generate_readString();
-//    generate_readInt();
-//    generate_readDouble();
-//    generate_Double2Int();
-//    generate_length();
-//    generate_substring();
-//    generate_ord();
-//    generate_chr();
-//    generate_write();
-//    generate_Int2Double();
+    generate_readInt();
+    generate_readDouble();
+    generate_Double2Int();
+    generate_length();
+    generate_substring();
+    generate_ord();
+    generate_chr();
+    generate_write();
+    generate_Int2Double();
 }
 
 /**
@@ -335,15 +335,54 @@ void define_built_in_functions(void)
  *
  * @return void
  */
-void generate_header(void)
+void generator_start(void)
 {
     GENERATE(".IFJcode23");
+    GENERATE("DEFVAR GF@%%exp_result");
     define_built_in_functions();
+    GENERATE("LABEL $main");
+    GENERATE("CREATEFRAME");
+    GENERATE("PUSHFRAME");
+}
+
+void generator_end(void) {
+    GENERATE("POPFRAME");
+    GENERATE("CLEARS");
+}
+
+void generate_var_declaration(char *id)
+{
+    GENERATE("DEFVAR LF@%s", id);
+}
+
+void generate_var_definition(char *id, data_type type)
+{
+    switch (type)
+    {
+        case Int_Type:
+            GENERATE("MOVE LF@%s int@0", id);
+            break;
+        case String_Type:
+            GENERATE("MOVE LF@%s string@", id);
+            break;
+        case Double_Type:
+            GENERATE("MOVE LF@%s float@0.0", id);
+            break;
+        case Bool_Type:
+            GENERATE("MOVE LF@%s bool@false", id);
+            break;
+    }
+}
+
+void generate_var_assignment(char *id)
+{
+    GENERATE("MOVE LF@%s LF@%%exp_result", id);
 }
 
 int main()
 {
-    generate_header();
+    generator_start();
+    generator_end();
     return 0;
 }
 
