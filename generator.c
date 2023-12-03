@@ -339,6 +339,9 @@ void generator_start()
 {
     GENERATE(".IFJcode23");
     GENERATE("DEFVAR GF@%%exp_result");
+    GENERATE("DEFVAR GF@%%tmp1");
+    GENERATE("DEFVAR GF@%%tmp2");
+    GENERATE("DEFVAR GF@%%tmp3");
     define_built_in_functions();
     GENERATE("LABEL $$main");
     GENERATE("CREATEFRAME");
@@ -371,6 +374,8 @@ void generate_var_definition(char *id, data_type type)
         case Bool_Type:
             GENERATE("MOVE LF@%s bool@false", id);
             break;
+        default:
+            break;
     }
 }
 
@@ -397,6 +402,8 @@ void generate_read(char *id, data_type type)
             GENERATE("CREATEFRAME");
             GENERATE("CALL !function_readDouble");
             GENERATE("MOVE LF@%s TF@%%retval0", id);
+            break;
+        default:
             break;
     }
 }
@@ -434,22 +441,97 @@ void gen_push(token_t *token){
     gen_term(token);
 }
 
-void gen_operation(eSymbol operation){
-    switch (operation){
-        case PLUS:
+void gen_int2double(void){
+    GENERATE("INT2FLOATS");
+}
+
+void gen_double2int(void){
+    GENERATE("FLOAT2INTS");
+}
+
+void gen_operation(rules rule){
+    switch (rule){
+        case PLUS_R:
             GENERATE("ADDS");
             break;
-        case MINUS:
+        case MINUS_R:
             GENERATE("SUBS");
             break;
-        case MUL:
+        case MUL_R:
             GENERATE("MULS");
             break;
-        case DIV:
+        case DIV_R:
             GENERATE("DIVS");
+            break;
+        case IDIV_R:
+            GENERATE("POPS GF@%%tmp1");
+            GENERATE("INT2FLOATS");
+            GENERATE("PUSHS GF@%%tmp1");
+            GENERATE("INT2FLOATS");
+            GENERATE("DIVS");
+            GENERATE("FLOAT2INTS");
+            break;
+        case EQ:
+            GENERATE("EQS");
+            break;
+        case NEQ:
+            GENERATE("EQS");
+            GENERATE("NOTS");
+            break;
+        case L:
+            GENERATE("LTS");
+            break;
+        case LEQ:
+            GENERATE("GTS");
+            GENERATE("NOTS");
+            break;
+        case G:
+            GENERATE("GTS");
+            break;
+        case GEQ:
+            GENERATE("LTS");
+            GENERATE("NOTS");
+            break;
+        case NOT_NIL_R:
+//           E == NIL ? ERROR : E IS NOT NULLABLE
+            GENERATE("POPS GF@%%tmp1");
+            GENERATE("PUSHS GF@%%tmp1");
+            GENERATE("PUSHS nil@nil");
+            GENERATE("EQS");
+            GENERATE("ORS");
+            GENERATE("PUSHS GF@%%tmp1");
+            break;
+        case NOT_NULL_R:
+//          E1 == NULL ? E2 : E1
+            GENERATE("POPS GF@%%tmp1");
+            GENERATE("POPS GF@%%tmp2");
+            GENERATE("POPS GF@%%tmp3");
+            GENERATE("PUSHS GF@%%tmp3");
+            GENERATE("PUSHS GF@%%tmp2");
+            GENERATE("EQS");
+            GENERATE("PUSHS GF@%%tmp1");
+            GENERATE("PUSHS GF@%%tmp3");
+            GENERATE("EQS");
+            GENERATE("ORS");
+            GENERATE("PUSHS GF@%%tmp2");
+            GENERATE("PUSHS GF@%%tmp1");
+            GENERATE("EQS");
+            GENERATE("ORS");
+            break;
+        default:
             break;
     }
 }
+
+void concat(void){
+    GENERATE("POPS GF@%%tmp1");
+    GENERATE("POPS GF@%%tmp2");
+    GENERATE("CONCAT GF@%%tmp3 GF@%%tmp2 GF@%%tmp1");
+    GENERATE("PUSHS GF@%%tmp3");
+}
+
+
+
 
 void generate_call(func_params_t *params)
 {

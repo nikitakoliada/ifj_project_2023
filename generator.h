@@ -75,8 +75,10 @@ void generate_read(char *id, data_type type);
 void generate_write_var(char *id);
 void gen_push(token_t *token);
 void gen_term(token_t *token);
-void gen_operation(eSymbol operation);
-
+void gen_operation(rules rule);
+void gen_int2double(void);
+void gen_double2int(void);
+void gen_concat(void);
 
 void generate_header(void);
 
