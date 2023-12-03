@@ -151,6 +151,7 @@ void print_token(token_t *token)
         print_token(&data->token);                                 \
 
 #define CHECK_TYPE(t_type)											\
+    if(data->token.type == TOKEN_EOF && t_type == TOKEN_EOL) return SYNTAX_OK ;\
 	if (data->token.type != t_type) return SYNTAX_ERROR
 
 #define CHECK_RULE(rule)											\
@@ -404,7 +405,9 @@ static int statement(analyse_data_t* data)
         data->tmp_key = data->token.data.String;
         GET_TOKEN();
         if(data->token.type == ASSIGNMENT){
+            printf("%s", data->tmp_key);
             CHECK_RULE(assignment);
+
             CHECK_RULE(possible_EOL);
             data->tmp_key = "";
             return statement(data);
@@ -413,9 +416,11 @@ static int statement(analyse_data_t* data)
         else{
             if(strcmp(data->tmp_key, "write") == 0){
                 CHECK_RULE(write);
+                GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
             }
             else{
                 CHECK_RULE(f_call);
+                GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
             }
             data->tmp_key = "";
 
@@ -521,11 +526,9 @@ static int function(analyse_data_t* data){
         // so we can difine the variable with the same name as arguments 
         data->label_deep++;
         symtable_init(&data->local_table[data->label_deep]);
-        bool was_in_function = data->in_function;
         data->in_function = true;
         CHECK_RULE(statement);
-        if(was_in_function == false)
-            data->in_function = false;
+        data->in_function = false;
         symtable_dispose(&data->local_table[data->label_deep]);
         data->label_deep--;
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
@@ -699,7 +702,6 @@ static int assignment(analyse_data_t* data){
         else if(((var_data_t*)(*data->var_id).data)->constant){
             return SEM_ERROR_UNDEF_VAR;
         }
-        GET_TOKEN_AND_CHECK_TYPE(ASSIGNMENT);
         GET_TOKEN_AND_CHECK_EXPRESSION();
         return SYNTAX_OK;
     }
@@ -757,7 +759,7 @@ static int def_var(analyse_data_t* data){
         }
         else{
             CHECK_TYPE(TOKEN_EOL);
-	    GET_TOKEN(); // expression gets new token so we need to balance it
+            GET_TOKEN();
         }
         if(no_type && no_assignment){
             return SYNTAX_ERROR;
@@ -786,7 +788,7 @@ static int write(analyse_data_t* data){
     }
     CHECK_RULE(possible_EOL);
     CHECK_TYPE(TOKEN_RIGHT_BRACKET);
-    GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
+    //GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
     return SYNTAX_OK;
 
 }
@@ -816,7 +818,7 @@ static int f_call(analyse_data_t* data){
     data->args_index = 0;
     CHECK_RULE(possible_EOL);
     CHECK_TYPE(TOKEN_RIGHT_BRACKET);
-    GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
+    //GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
     return SYNTAX_OK;
 }
 
@@ -941,7 +943,7 @@ static int possible_EOL(analyse_data_t* data){
 
 static int type(analyse_data_t* data){
     //36. 〈 type 〉 −→ 〈 p_type 〉
-    if(data->token.type == KEYWORD && (data->token.data.Keyword == Int_KW || data->token.data.Keyword == Double_KW || data->token.data.Keyword == String_KW)){
+    if(data->token.type == KEYWORD){
         CHECK_RULE(p_type);
         GET_TOKEN();
         return SYNTAX_OK;
@@ -1059,9 +1061,8 @@ static int p_type(analyse_data_t* data){
 }
 int main()
 {
-    char *    input = "empty()\nlet c: Int\nfunc empty(){\n\n}\nfunc concat(b x : String, with y : String) -> String {\n    let x = y + y\n    if (4 > 3) {\n        var x : Double\n    }else{\n        var x: String\n    }\n    return x + \" \" + y\n}";
-
-
+    //char *    input = "write(\"Zadejte cislo pro vypocet faktorialu: \")\nlet inp = readInt()\n// pomocna funkce pro dekrementaci celeho cisla o zadane cislo\nfunc decrement(of n: Int, by m: Int) -> Int {\nreturn n - m\n}\n// Definice funkce pro vypocet hodnoty faktorialu\nfunc factorial(_ n : Int) -> Int {\nvar result : Int?\nif (n < 2) {\nresult = 1\n} else {\nlet decremented_n = decrement(of: n, by: 1)\nlet temp_result = factorial(decremented_n)\nresult = n * temp_result\n}\nreturn result!\n}\n// pokracovani hlavniho tela programu\nif let inp {\nif (inp < 0) { // Pokracovani hlavniho tela programu\nwrite(\"Faktorial nelze spocitat!\")\n} else {\nlet vysl = factorial(inp)\n\nwrite(\"Vysledek je: \", vysl)\n}\n} else {\nwrite(\"Chyba pri nacitani celeho cisla!\")\n}";
+    char *    input = "func main(_ i: Int) -> Int? {\n    return nil\n}\nfunc new() -> Int {\n    while 1 == 1{}\n    var i = 3\n    var k: Double = 5.5\n\n    return main(6 / 5) ?? new() - 8\n}\nlet c: Int \nfunc empty(){\n\n}\nfunc concat(b x : String, with y : String) -> String {\n    let x = y + y\n    if c == 5 - 5 {\n        var x : Double\n    }else{\n    }\n    return x + \"\" + y\n}\nlet a = \"ahoj \"\nvar hohol = concat(b: concat(b: a, with: \"svete\"), with: \"svete\") + \"\"\nempty()";
     FILE *file = fmemopen(input, strlen(input), "r");
     set_source_file(file);
     analyse_data_t *data = malloc(sizeof(analyse_data_t));
