@@ -81,6 +81,7 @@ int get_pt_index(eSymbol symbol){
         case RPS:
             return RPI;
         case EqS:
+        case NEqS:
         case GEqS:
         case LEqs:
         case LessS:
@@ -164,6 +165,7 @@ void stack_print(stack_t* stack){
     for(int i = stack->index; i >= 0; i--){
         printf("%d)%d - %d\n", i, stack->array[i]->symbol, stack->array[i]->type);
     }
+    printf("\n");
 }
 
 void swap(void** a, void** b){
@@ -436,7 +438,7 @@ int compare_output_types(analyse_data_t* data, stack_element* final_element){
     data_type expected_type = 0;
     bool nullable = false;
 
-    if(data->in_defintion){
+    if(data->in_call_func){
         var_data_t type = ((function_data_t*)data->current_id->data)->params_types[data->args_index];
         expected_type = type.data_type;
         nullable = type.q_type;
@@ -446,6 +448,12 @@ int compare_output_types(analyse_data_t* data, stack_element* final_element){
         function_data_t* func_data = (function_data_t*)data->current_id->data;
         expected_type = func_data->return_data_type;
         nullable = func_data->return_data_q_type;
+    }else if(data->in_var_definition){
+    printf("name: %s; type: %d\n", data->var_id->key, ((var_data_t*)data->var_id->data)->data_type);
+        var_data_t* var_data = (var_data_t*)data->var_id->data;
+        var_data->data_type = final_element->type;
+        var_data->q_type = final_element->nullable;
+        return SYNTAX_OK;
     }else{
         var_data_t* var_data = (var_data_t*)data->var_id->data;
         expected_type = var_data->data_type;
@@ -682,10 +690,14 @@ int expression(analyse_data_t* data, bool* is_EOL){
     }
 
     if(final_element->symbol != NON_TERM){
-
-        // Free recources
-        FREE_RECOURCES(stack);
-        return INTERNAL_ERROR;
+        if(data->in_function && !data->in_var_definition 
+        && ((var_data_t*)data->var_id->data)->data_type == Undefined && !data->in_while_or_if){
+            FREE_RECOURCES(stack);
+            return SEM_ERROR_EXPR;
+        }else{
+            FREE_RECOURCES(stack);
+            return SYNTAX_ERROR;
+        }
     }
 
 
