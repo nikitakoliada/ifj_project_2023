@@ -4,7 +4,6 @@
 
  * @brief Generator definitions and header file for generator.c - generator of code
 
- * @author Juraj Remeň - xremen02
  * @author Maksym Podhornyi - xpodho08
  */
 
@@ -36,23 +35,6 @@
     fprintf(stdout, __VA_ARGS__);      \
   } while (0)
 
-
-typedef struct
-{
-  char *source;
-  char *target;
-} function_param;
-
-typedef struct
-{
-  char *name;
-  size_t params_size;
-  token_t **params;
-  size_t returns_size;
-  char **returns;
-  function_param *pair;
-} func_params_t;
-
 typedef enum{
     EQ,    // ==
     NEQ,    // !=
@@ -83,24 +65,51 @@ void generate_ord(void);
 void generate_chr(void);
 void define_built_in_functions(void);
 
+// All about variables
 void generate_var_declaration(char *id);
 void generate_var_definition(char *id, data_type type);
 void generate_var_assignment(char *id);
+
+// Read and write
 void generate_read(char *id, data_type type);
 void generate_write_var(char *id);
+
+// Stack
 void gen_push(token_t *token);
+void gen_pop(void);
 void gen_term(token_t *token);
 void gen_operation(rules rule);
 void gen_int2double(void);
 void gen_double2int(void);
 void gen_concat(void);
+void gen_int2double_2op(void);
 
-void generate_header(void);
+// Call
+void gen_call_start(void);
+void add_param_to_call(char* param_name);
+void gen_call(char* function_name);
 
-void generate_function_start(func_params_t *params);
-void generate_call(func_params_t *params);
-void generate_function_end(func_params_t *params);
-void generate_return(func_params_t *params);
-void generate_return_params(func_params_t *params);
+// Start and end
+void generator_start(void);
+void generator_end(void);
+
+// Function generation
+void generate_function_start(char* function_name);
+void generate_function_return_param(data_type type);
+void generate_function_end(char* function_name);
+void generate_function_param(char *param_name, data_type type);
+void generate_function_void_return(void);
+void generate_function_return(void);
+
+// If
+void gen_if_start(int if_counter);
+void gen_if_else(int if_counter);
+void gen_if_end(int if_counter);
+
+// While
+void gen_while_start(int while_counter);
+void gen_while(int while_counter);
+void gen_while_end(int while_counter);
+
 
 #endif //GENERATOR_H
