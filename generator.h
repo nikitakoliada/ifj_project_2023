@@ -47,20 +47,23 @@ typedef struct
 
 
 //built-in function definitions
-void generate_readString(func_params_t *params);
-void generate_readInt(func_params_t *params);
-void generate_readDouble(func_params_t *params);
-void generate_Double2Int(func_params_t *params);
-void generate_length(func_params_t *params);
-void generate_substring(func_params_t *params);
+void generate_readString(void);
+void generate_readInt(void);
+void generate_readDouble(void);
+void generate_Double2Int(void);
+void generate_Int2Double(void);
+void generate_length(void);
+void generate_substring(void);
 void generate_write(void);
-void generate_ord(func_params_t *params);
-void generate_chr(func_params_t *params);
-void define_built_in_functions(func_params_t *params);
+void generate_ord(void);
+void generate_chr(void);
+void define_built_in_functions(void);
 
 void generate_var_declaration(char *id);
 void generate_var_definition(char *id, data_type type);
 void generate_var_assignment(char *id);
+void generate_read(char *id, data_type type);
+void generate_write_var(char *id);
 
 void generate_header(void);
 

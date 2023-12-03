@@ -16,9 +16,8 @@
  *
  * @return string without a line break symbol
  */
-void generate_readString(func_params_t *params)
+void generate_readString()
 {
-    (void)params;
     GENERATE("#readString");
     GENERATE("JUMP !_readString");
     GENERATE("LABEL !function_readString");
@@ -38,9 +37,8 @@ void generate_readString(func_params_t *params)
  *
  * @return integer
  */
-void generate_readInt(func_params_t *params)
+void generate_readInt()
 {
-    (void)params;
     GENERATE("#readInt");
     GENERATE("JUMP !_readInt");
     GENERATE("LABEL !function_readInt");
@@ -60,9 +58,8 @@ void generate_readInt(func_params_t *params)
  *
  * @return decimal number
  */
-void generate_readDouble(func_params_t *params)
+void generate_readDouble()
 {
-    (void)params;
     GENERATE("#readDouble");
     GENERATE("JUMP !_readDouble");
     GENERATE("LABEL !function_readDouble");
@@ -83,9 +80,8 @@ void generate_readDouble(func_params_t *params)
  * @return void
  */
 
-void generate_write(func_params_t *params)
+void generate_write()
 {
-    (void)params;
     GENERATE("#write");
     GENERATE("JUMP !_write");
     GENERATE("LABEL !function_write");
@@ -107,9 +103,8 @@ void generate_write(func_params_t *params)
  *
  */
 
-void generate_Int2Double(func_params_t *params)
+void generate_Int2Double()
 {
-    (void)params;
     GENERATE("#Int2Double");
     GENERATE("JUMP !_Int2Double");
     GENERATE("LABEL !function_Int2Double");
@@ -135,9 +130,8 @@ void generate_Int2Double(func_params_t *params)
  * an integer value by trimming the decimal part.
  *
  */
-void generate_Double2Int(func_params_t *params)
+void generate_Double2Int()
 {
-    (void)params;
     GENERATE("#Double2Int");
     GENERATE("JUMP !_Double2Int");
     GENERATE("LABEL !function_Double2Int");
@@ -161,9 +155,8 @@ void generate_Double2Int(func_params_t *params)
  *
  * @return the length of given string
  */
-void generate_length(func_params_t *params)
+void generate_length()
 {
-    (void)params;
     GENERATE("#length");
     GENERATE("JUMP !_length");
     GENERATE("LABEL !function_length");
@@ -188,9 +181,8 @@ void generate_length(func_params_t *params)
  * error 8 occurs.
  */
 
-void generate_substring(func_params_t *params)
+void generate_substring()
 {
-    (void)params;
     GENERATE("#substr");
     GENERATE("JUMP !_substr");
     GENERATE("LABEL !function_substr");
@@ -252,9 +244,8 @@ void generate_substring(func_params_t *params)
  * If one of the parameters is nil, error 8 occurs.
  * If the index i is outside the bounds of the string (1 to #s), the function returns nil.
  */
-void generate_ord(func_params_t *params)
+void generate_ord()
 {
-    (void)params;
     GENERATE("#ord");
     GENERATE("JUMP !_ord");
     GENERATE("LABEL !function_ord");
@@ -298,9 +289,8 @@ void generate_ord(func_params_t *params)
  * The case when i is outside the interval [0; 255], leads
  * to nil. If i nil, error 8 occurs.
  */
-void generate_chr(func_params_t *params)
+void generate_chr()
 {
-    (void)params;
     GENERATE("#chr");
     GENERATE("JUMP !_chr");
     GENERATE("LABEL !function_chr");
@@ -326,18 +316,18 @@ void generate_chr(func_params_t *params)
     GENERATE_EMPTY_LINE();
 }
 
-void define_built_in_functions(func_params_t *params)
+void define_built_in_functions()
 {
-    generate_readString(params);
-    generate_readInt(params);
-    generate_readDouble(params);
-    generate_Double2Int(params);
-    generate_length(params);
-    generate_substring(params);
-    generate_ord(params);
-    generate_chr(params);
-    generate_write(params);
-    generate_Int2Double(params);
+    generate_readString();
+    generate_readInt();
+    generate_readDouble();
+    generate_Double2Int();
+    generate_length();
+    generate_substring();
+    generate_ord();
+    generate_chr();
+    generate_write();
+    generate_Int2Double();
 }
 
 /**
@@ -345,12 +335,12 @@ void define_built_in_functions(func_params_t *params)
  *
  * @return void
  */
-void generator_start(func_params_t *params)
+void generator_start()
 {
     GENERATE(".IFJcode23");
     GENERATE("DEFVAR GF@%%exp_result");
-    define_built_in_functions(params);
-    GENERATE("LABEL $main");
+    define_built_in_functions();
+    GENERATE("LABEL $$main");
     GENERATE("CREATEFRAME");
     GENERATE("PUSHFRAME");
 }
@@ -386,7 +376,38 @@ void generate_var_definition(char *id, data_type type)
 
 void generate_var_assignment(char *id)
 {
-    GENERATE("MOVE LF@%s LF@%%exp_result", id);
+    GENERATE("MOVE LF@%s GF@%%exp_result", id);
+}
+
+void generate_read(char *id, data_type type)
+{
+    switch (type)
+    {
+        case Int_Type:
+            GENERATE("CREATEFRAME");
+            GENERATE("CALL !function_readInt");
+            GENERATE("MOVE LF@%s TF@%%retval0", id);
+            break;
+        case String_Type:
+            GENERATE("CREATEFRAME");
+            GENERATE("CALL !function_readString");
+            GENERATE("MOVE LF@%s TF@%%retval0", id);
+            break;
+        case Double_Type:
+            GENERATE("CREATEFRAME");
+            GENERATE("CALL !function_readDouble");
+            GENERATE("MOVE LF@%s TF@%%retval0", id);
+            break;
+    }
+}
+
+void generate_write_var(char *id)
+{
+    GENERATE("CREATEFRAME");
+    GENERATE("DEFVAR TF@%%0");
+    GENERATE("MOVE TF@%%0 LF@%s", id);
+    GENERATE("CALL !function_write");
+
 }
 
 void generate_call(func_params_t *params)
@@ -441,9 +462,13 @@ void generate_return(func_params_t *params)
   GENERATE("RETURN");
 }
 
-int main(func_params_t *params)
+int main()
 {
-    generator_start(params);
+    generator_start();
+    generate_var_declaration("a");
+    generate_var_definition("a", Int_Type);
+    generate_read("a", Int_Type);
+    generate_write_var("a");
     generator_end();
     return 0;
 }
