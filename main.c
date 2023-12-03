@@ -7,12 +7,7 @@
  * @author Juraj Remeň - xremen02
 */
 
-#include "scanner.h"
 #include "analysis.h"
-#include "symtable.h"
-#include "error.h"
-#include "stack.h"
-#include "stdio.h"
 
 //void print_token(token_t *token)
 //{
@@ -155,16 +150,5 @@
 
 int main(void)
 {
-    int ret_code;
-
-    while (ret_code != -1){
-        ret_code = analyse();
-
-        if(ret_code != SYNTAX_OK){
-            return ret_code;
-        }
-
-    }
-
-    return 0;
+    return analyse();
 }

@@ -49,7 +49,7 @@ typedef struct
 
 //starts the analysis
 int analyse();
-int f_expression_call(analyse_data_t*, token_t, data_type*);
+int f_expression_call(analyse_data_t*, token_t, data_type*, bool*);
 bst_node_ptr var_search(analyse_data_t* data, int deepness, char* key);
 
 

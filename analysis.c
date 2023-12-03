@@ -649,6 +649,7 @@ static int if_else(analyse_data_t* data){
             CHECK_EXPRESSION();
         }
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
+		data->in_while_or_if = false;
         GET_TOKEN_AND_CHECK_RULE(statement);
         symtable_dispose(&data->local_table[data->label_deep]);
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
@@ -662,8 +663,6 @@ static int if_else(analyse_data_t* data){
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
         symtable_dispose(&data->local_table[data->label_deep]);
         data->label_deep--;
-		data->in_while_or_if = false;
-        GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
         return SYNTAX_OK;
     }
     return SYNTAX_ERROR;
@@ -679,12 +678,11 @@ static int while_(analyse_data_t* data){
         data->var_id = symtable_search(&data->global_table, "%%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
+        data->in_while_or_if = false;
         GET_TOKEN_AND_CHECK_RULE(statement);
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
         symtable_dispose(&data->local_table[data->label_deep]);
         data->label_deep--;
-        data->in_while_or_if = false;
-        GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
         return SYNTAX_OK;
     }
     return SYNTAX_ERROR;
@@ -821,11 +819,15 @@ static int f_call(analyse_data_t* data){
 }
 
 // //23.2. 〈f_call 〉−→ id ( 〈fc_args 〉)
-int f_expression_call(analyse_data_t* data, token_t id, data_type* type){
+int f_expression_call(analyse_data_t* data, token_t id, data_type* type, bool* nullable){
+    bst_node_ptr prev_current = data->current_id;
     data->current_id = symtable_search(&data->global_table, id.data.String);
     data->tmp_key = id.data.String;
     *type = ((function_data_t*)data->current_id->data)->return_data_type;
-    return f_call(data);    
+    *nullable = ((function_data_t*)data->current_id->data)->return_data_q_type;
+    CHECK_RULE(f_call);
+    data->current_id = prev_current;
+    return SYNTAX_OK;   
 }
 
 // //24. 〈 fc_args 〉−→ id: expression 〈fc_ n_args 〉
@@ -941,7 +943,8 @@ static int possible_EOL(analyse_data_t* data){
 
 static int type(analyse_data_t* data){
     //36. 〈 type 〉 −→ 〈 p_type 〉
-    if(data->token.type == KEYWORD && (data->token.data.Keyword == Int_KW || data->token.data.Keyword == Double_KW || data->token.data.Keyword == String_KW)){
+    if(data->token.type == KEYWORD && (data->token.data.Keyword == Int_KW || data->token.data.Keyword == Double_KW || data->token.data.Keyword == String_KW 
+    || data->token.data.Keyword == IntNullable_KW || data->token.data.Keyword == DoubleNullable_KW || data->token.data.Keyword == StringNullable_KW )){
         CHECK_RULE(p_type);
         GET_TOKEN();
         return SYNTAX_OK;
@@ -953,6 +956,7 @@ static int type(analyse_data_t* data){
 static int p_type(analyse_data_t* data){
     //36. 〈 p_type 〉 −→ 〈 p_type 〉
     if(data->token.type == KEYWORD){
+        printf("%d|||\n", data->token.data.Keyword);
         switch (data->token.data.Keyword)
 		{
         //39. 〈 p_type 〉 −→ Double
@@ -1057,13 +1061,12 @@ static int p_type(analyse_data_t* data){
     }
     return SYNTAX_ERROR;
 }
-int main()
+/*int main()
 {
-    char *    input = "empty()\nlet c: Int\nfunc empty(){\n\n}\nfunc concat(b x : String, with y : String) -> String {\n    let x = y + y\n    if (4 > 3) {\n        var x : Double\n    }else{\n        var x: String\n    }\n    return x + \" \" + y\n}";
-
+    char *input = "func concat(b x : String, with y : String) -> String {\n\n    let x = y + y\n    if (4 > 3) {\n        var x : Double\n    }else{\n        var x: String\n    }\n    return x + \" \" + y\n}";
 
     FILE *file = fmemopen(input, strlen(input), "r");
-    set_source_file(file);
+    set_source_file(stdin);
     analyse_data_t *data = malloc(sizeof(analyse_data_t));
     
     if (!init_variables(data))
@@ -1101,6 +1104,34 @@ int main()
     }
     free_variables(data);
     //fclose(file);
+
+    return result;
+}*/
+
+int analyse(){
+    set_source_file(stdin);
+    analyse_data_t *data = malloc(sizeof(analyse_data_t));
+    
+    if (!init_variables(data))
+        return INTERNAL_ERROR;
+
+    result = get_next_token(&data->token);
+
+    result = program(data);
+
+    if(result != SYNTAX_OK){
+        printf("ERROR: %d\n", result);
+        for(int i = 0; i <= data->label_deep; i++){
+            printf("LABEL: %d - ", i);
+            print_all_keys(data->local_table[i].root);
+            printf("\n");
+        }
+        // fprintf(stderr, "ERROR: %d\n", result);
+    }else{
+        printf("OK\n");
+    }
+
+    free_variables(data);
 
     return result;
 }
