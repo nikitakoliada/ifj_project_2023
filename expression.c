@@ -111,7 +111,7 @@ data_type get_data_type(token_t token, analyse_data_t* data, bool* is_nullable){
         case IDENTIFIER:
             assert(data->var_id);
             int label_deep = data->label_deep;
-            if(!strcmp(token.data.String, data->var_id->key) && data->in_var_definition){
+            if(data->tmp_key && !strcmp(token.data.String, data->tmp_key) && data->in_var_definition){
                 label_deep = label_deep > 0 ? label_deep - 1 : 0;
             }
             bst_node_ptr node = var_search(data, label_deep, token.data.String);
