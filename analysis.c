@@ -492,6 +492,7 @@ static int function_declaration(analyse_data_t* data){
     func_data->defined = true;
     symtable_dispose(&data->local_table[data->label_deep]);
     data->label_deep--;
+    data->in_defintion = false;
     return SYNTAX_OK;
 }
 
@@ -666,6 +667,7 @@ static int if_else(analyse_data_t* data){
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
         symtable_dispose(&data->local_table[data->label_deep]);
         data->label_deep--;
+        GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
         return SYNTAX_OK;
     }
     return SYNTAX_ERROR;
@@ -686,6 +688,7 @@ static int while_(analyse_data_t* data){
         CHECK_TYPE(TOKEN_RIGHT_CURLY_BRACKET);
         symtable_dispose(&data->local_table[data->label_deep]);
         data->label_deep--;
+        GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
         return SYNTAX_OK;
     }
     return SYNTAX_ERROR;
@@ -922,7 +925,7 @@ static int def_type(analyse_data_t* data){
     }
    //31. 〈def_type 〉−→ ε
 
-    return SYNTAX_OK;
+    return SYNTAX_ERROR;
 }
 
 // //32. 〈 end 〉 −→ EOF
@@ -945,8 +948,7 @@ static int possible_EOL(analyse_data_t* data){
 
 static int type(analyse_data_t* data){
     //36. 〈 type 〉 −→ 〈 p_type 〉
-    if(data->token.type == KEYWORD && (data->token.data.Keyword == Int_KW || data->token.data.Keyword == Double_KW || data->token.data.Keyword == String_KW 
-    || data->token.data.Keyword == IntNullable_KW || data->token.data.Keyword == DoubleNullable_KW || data->token.data.Keyword == StringNullable_KW )){
+    if(data->token.type == KEYWORD){
         CHECK_RULE(p_type);
         GET_TOKEN();
         return SYNTAX_OK;
@@ -958,7 +960,6 @@ static int type(analyse_data_t* data){
 static int p_type(analyse_data_t* data){
     //36. 〈 p_type 〉 −→ 〈 p_type 〉
     if(data->token.type == KEYWORD){
-        printf("%d|||\n", data->token.data.Keyword);
         switch (data->token.data.Keyword)
 		{
         //39. 〈 p_type 〉 −→ Double
@@ -1067,9 +1068,8 @@ static int p_type(analyse_data_t* data){
 {
     //char *    input = "write(\"Zadejte cislo pro vypocet faktorialu: \")\nlet inp = readInt()\n// pomocna funkce pro dekrementaci celeho cisla o zadane cislo\nfunc decrement(of n: Int, by m: Int) -> Int {\nreturn n - m\n}\n// Definice funkce pro vypocet hodnoty faktorialu\nfunc factorial(_ n : Int) -> Int {\nvar result : Int?\nif (n < 2) {\nresult = 1\n} else {\nlet decremented_n = decrement(of: n, by: 1)\nlet temp_result = factorial(decremented_n)\nresult = n * temp_result\n}\nreturn result!\n}\n// pokracovani hlavniho tela programu\nif let inp {\nif (inp < 0) { // Pokracovani hlavniho tela programu\nwrite(\"Faktorial nelze spocitat!\")\n} else {\nlet vysl = factorial(inp)\n\nwrite(\"Vysledek je: \", vysl)\n}\n} else {\nwrite(\"Chyba pri nacitani celeho cisla!\")\n}";
     char *    input = "func main(_ i: Int) -> Int? {\n    return nil\n}\nfunc new() -> Int {\n    while 1 == 1{}\n    var i = 3\n    var k: Double = 5.5\n\n    return main(6 / 5) ?? new() - 8\n}\nlet c: Int \nfunc empty(){\n\n}\nfunc concat(b x : String, with y : String) -> String {\n    let x = y + y\n    if c == 5 - 5 {\n        var x : Double\n    }else{\n    }\n    return x + \"\" + y\n}\nlet a = \"ahoj \"\nvar hohol = concat(b: concat(b: a, with: \"svete\"), with: \"svete\") + \"\"\nempty()";
-
     FILE *file = fmemopen(input, strlen(input), "r");
-    set_source_file(stdin);
+    set_source_file(file);
     analyse_data_t *data = malloc(sizeof(analyse_data_t));
     
     if (!init_variables(data))
@@ -1120,6 +1120,13 @@ int analyse(){
 
     result = get_next_token(&data->token);
 
+    //result = program(data);
+
+    result = program_first(data);
+    printf("\n\nEND OF FIRST GO THROUGH\n\n");
+    fseek(stdin, 0, SEEK_SET);
+    //second and main
+    result = get_next_token(&data->token);
     result = program(data);
 
     if(result != SYNTAX_OK){
@@ -1138,4 +1145,3 @@ int analyse(){
 
     return result;
 }
-

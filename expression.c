@@ -114,9 +114,9 @@ data_type get_data_type(token_t token, analyse_data_t* data, bool* is_nullable){
             }
             bst_node_ptr node = var_search(data, label_deep, token.data.String);
             if(!node) return Undefined;
-            var_data_t* data = (var_data_t*)node->data;
-            if(is_nullable) *is_nullable = data->q_type;
-            return data->data_type;
+            var_data_t* var_data = (var_data_t*)node->data;
+            if(is_nullable) *is_nullable = var_data->q_type;
+            return var_data->data_type;
         case INT_VALUE:
             return Int_Type;
 
@@ -482,15 +482,6 @@ int compare_output_types(analyse_data_t* data, stack_element* final_element){
             }
             break;
         case Undefined:
-            if(data->in_var_definition){
-                printf("got here!!!\n");
-                var_data_t* var_data = (var_data_t*)data->var_id->data;
-                var_data->data_type = final_element->type;
-                var_data->q_type = final_element->nullable;
-            }
-            else{
-                //Should be some error
-            }
             break;
     }
 
@@ -541,7 +532,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
     process_parenthese(token, &parantheses_counter);
 
     do{
-        stack_print(stack);
+        //stack_print(stack);
         bool nullable = false;
         data_type input_id_data_type = Undefined;
         eSymbol input_symbol = token_to_esymbol(token, data, &input_id_data_type, &nullable);
@@ -558,7 +549,6 @@ int expression(analyse_data_t* data, bool* is_EOL){
             else precedence_result = R;
         }
 
-        printf("-****%d - %d*****\n", stack_symbol_index, input_index);
         stack_element* new_element = NULL;
         
         if(input_index == IdI && stack_symbol_index == IdI && was_EOL){
@@ -647,7 +637,6 @@ int expression(analyse_data_t* data, bool* is_EOL){
                 new_element->nullable = nullable;
                 new_element->type = type;
                 new_element->symbol = FunctionS;
-                printf("---%d\n", type);
                 if(!stack_pop(stack))
                 {
                     FREE_RECOURCES(stack);
@@ -668,7 +657,6 @@ int expression(analyse_data_t* data, bool* is_EOL){
             case F:
                 if(input_symbol == DollarS && stack_symbol == DollarS){
                     is_success = true;
-                    printf("lol");
                 }
                 else{
                     // free recources
@@ -706,6 +694,12 @@ int expression(analyse_data_t* data, bool* is_EOL){
         return result;
     }
 
+    else if(data->in_var_definition){
+        var_data_t* var_data = (var_data_t*)data->var_id->data;
+        var_data->data_type = final_element->type;
+        var_data->q_type = final_element->nullable;
+    }
+
     // Generate assignment
 
     data->token = token;
@@ -713,7 +707,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
 
     FREE_RECOURCES(stack);
 
-    printf("End of Expression\n");
+    //printf("End of Expression\n");
 
     return SYNTAX_OK;
 }
