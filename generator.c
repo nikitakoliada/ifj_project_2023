@@ -410,6 +410,47 @@ void generate_write_var(char *id)
 
 }
 
+void gen_term(token_t *token){
+    switch (token->type){
+        case INT_VALUE:
+            GENERATE("int@%lld", token->data.Int);
+            break;
+        case DOUBLE_VALUE:
+            GENERATE("float@%a", token->data.Double);
+            break;
+        case STRING_VALUE:
+            GENERATE("string@%s", token->data.String);
+            break;
+        case IDENTIFIER:
+            GENERATE("LF@%s", token->data.String);
+            break;
+        default:
+            break;
+    }
+}
+
+void gen_push(token_t *token){
+    GENERATE_WITHOUT_NEW_LINE("PUSHS ");
+    gen_term(token);
+}
+
+void gen_operation(eSymbol operation){
+    switch (operation){
+        case PLUS:
+            GENERATE("ADDS");
+            break;
+        case MINUS:
+            GENERATE("SUBS");
+            break;
+        case MUL:
+            GENERATE("MULS");
+            break;
+        case DIV:
+            GENERATE("DIVS");
+            break;
+    }
+}
+
 void generate_call(func_params_t *params)
 {
   GENERATE("CREATEFRAME");

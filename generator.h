@@ -10,8 +10,10 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+
 #include "symtable.h"
 #include "scanner.h"
+#include "expression.h"
 
 #ifndef GENERATOR_H
 #define GENERATOR_H
@@ -28,6 +30,13 @@
   {                           \
     fprintf(stdout, "\n");    \
   } while (0)
+
+#define GENERATE_WITHOUT_NEW_LINE(...) \
+  do                                   \
+  {                                    \
+    fprintf(stdout, __VA_ARGS__);      \
+  } while (0)
+
 
 typedef struct
 {
@@ -64,6 +73,10 @@ void generate_var_definition(char *id, data_type type);
 void generate_var_assignment(char *id);
 void generate_read(char *id, data_type type);
 void generate_write_var(char *id);
+void gen_push(token_t *token);
+void gen_term(token_t *token);
+void gen_operation(eSymbol operation);
+
 
 void generate_header(void);
 
