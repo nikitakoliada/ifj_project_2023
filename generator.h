@@ -38,23 +38,6 @@
   } while (0)
 
 
-typedef struct
-{
-  char *source;
-  char *target;
-} function_param;
-
-typedef struct
-{
-  char *name;
-  size_t params_size;
-  token_t **params;
-  size_t returns_size;
-  char **returns;
-  function_param *pair;
-} func_params_t;
-
-
 //built-in function definitions
 void generate_readString(void);
 void generate_readInt(void);
@@ -79,13 +62,16 @@ void gen_operation(rules rule);
 void gen_int2double(void);
 void gen_double2int(void);
 void gen_concat(void);
+void gen_call_start(void);
+void add_param_to_call(char* param_name);
+void gen_call_end(char* function_name);
 
 void generate_header(void);
 
-void generate_function_start(func_params_t *params);
-void generate_call(func_params_t *params);
-void generate_function_end(func_params_t *params);
-void generate_return(func_params_t *params);
-void generate_return_params(func_params_t *params);
+void generate_function_start(char* function_name);
+void generate_function_return_param(data_type type);
+void generate_function_end(void);
+void generate_return(void);
+
 
 #endif //GENERATOR_H

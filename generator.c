@@ -374,6 +374,8 @@ void generate_var_definition(char *id, data_type type)
         case Bool_Type:
             GENERATE("MOVE LF@%s bool@false", id);
             break;
+        case Undefined:
+            GENERATE("MOVE LF@%s nil@nil", id);
         default:
             break;
     }
@@ -447,6 +449,12 @@ void gen_int2double(void){
 
 void gen_double2int(void){
     GENERATE("FLOAT2INTS");
+}
+
+void gen_int2double_2op(void){
+    GENERATE("POPS GF@%%tmp1");
+    GENERATE("POPS GF@%%tmp2");
+    GENERATE("INT2FLOATS GF@%%tmp1 GF@%%tmp2");
 }
 
 void gen_operation(rules rule){
@@ -530,59 +538,83 @@ void concat(void){
     GENERATE("PUSHS GF@%%tmp3");
 }
 
-
-
-
-void generate_call(func_params_t *params)
-{
-  GENERATE("CREATEFRAME");
-  for (size_t i = 0; i < params->params_size; i++)
-  {
-    GENERATE("DEFVAR TF@%s$%s", params->name, params->pair[i].target);
-    GENERATE("MOVE TF@%s$%s %s", params->name, params->pair[i].target, params->pair[i].source);
-  }
-  GENERATE("CALL !FUNC_%s", params->name);
+void gen_call_start(void){
+    GENERATE("CREATEFRAME");
 }
 
-void generate_function_start(func_params_t *params)
-{
-  GENERATE("JUMP !BYPASS_%s", params->name);
-  GENERATE("LABEL !FUNC_%s", params->name);
-  GENERATE("PUSHFRAME");
-  for (size_t i = 0; i < params->returns_size; i++)
-  {
-    GENERATE("DEFVAR LF@%%retval%zu", i);
-    GENERATE("MOVE LF@%%retval%zu nil@nil", i);
-  }
+void add_param_to_call(char* param_name){
+    GENERATE("DEFVAR TF@%%%s", param_name);
+    GENERATE("MOVE TF@%%%s GF@%%exp_result", param_name);
 }
 
-void generate_return_params(func_params_t *params)
-{
-  for (size_t i = 0; i < params->returns_size; i++)
-  {
-    if (params->returns)
-    {
-        GENERATE("MOVE LF@%%retval%zu %s", i, params->returns[i]);
+void gen_call(char* function_name){
+    if(strcmp(function_name, "readInt") == 0){
+        GENERATE("CALL !function_readInt");
+    }else if(strcmp(function_name, "readDouble") == 0){
+        GENERATE("CALL !function_readDouble");
+    }else if(strcmp(function_name, "readString") == 0){
+        GENERATE("CALL !function_readString");
+    }else if(strcmp(function_name, "Int2Double") == 0){
+        GENERATE("CALL !function_Int2Double");
+    }else if(strcmp(function_name, "Double2Int") == 0){
+        GENERATE("CALL !function_Double2Int");
+    }else if(strcmp(function_name, "length") == 0){
+        GENERATE("CALL !function_length");
+    }else if(strcmp(function_name, "substring") == 0){
+        GENERATE("CALL !function_substr");
+    }else if(strcmp(function_name, "ord") == 0){
+        GENERATE("CALL !function_ord");
+    }else if(strcmp(function_name, "chr") == 0){
+        GENERATE("CALL !function_chr");
     }
-
-    else
-    {
-        GENERATE("MOVE LF@%%retval%zu nil@nil", i);
-    }
-  }
+    GENERATE("CALL !FUNC_%s", function_name);
 }
 
-void generate_function_end(func_params_t *params)
+void generate_function_start(char *name)
 {
-  generate_return(params);
-  GENERATE("LABEL !BYPASS_%s", params->name);
+    GENERATE("JUMP !BYPASS_%s", name);
+    GENERATE("LABEL !FUNC_%s", name);
+    GENERATE("PUSHFRAME");
 }
 
-void generate_return(func_params_t *params)
+void generate_function_return_param(data_type type)
 {
-  generate_return_params(params);
+    GENERATE("DEFVAR LF@%%retval0");
+    generate_var_definition("%%retval0", type);
+}
+
+//void generate_return_params(func_params_t *params)
+//{
+//  for (size_t i = 0; i < params->returns_size; i++)
+//  {
+//    if (params->returns)
+//    {
+//        GENERATE("MOVE LF@%%retval%zu %s", i, params->returns[i]);
+//    }
+//
+//    else
+//    {
+//        GENERATE("MOVE LF@%%retval%zu nil@nil", i);
+//    }
+//  }
+//}
+
+void generate_function_end(void)
+{
+//  generate_return(params);
+//  GENERATE("LABEL !BYPASS_%s", params->name);
+}
+
+void generate_return(void)
+{
+//  generate_return_params(params);
   GENERATE("POPFRAME");
   GENERATE("RETURN");
+}
+
+void gen_while_start(int while_counter)
+{
+    GENERATE("LABEL !while_start_%d", while_counter);
 }
 
 int main()
