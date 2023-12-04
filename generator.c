@@ -4,7 +4,6 @@
 
  * @brief Generator implementation - generator of code
 
- * @author Juraj Remeň - xremen02
  * @author Maksym Podhornyi - xpodho08
  */
 
@@ -16,7 +15,7 @@
  *
  * @return string without a line break symbol
  */
-void generate_readString(void)
+void generate_readString()
 {
     GENERATE("#readString");
     GENERATE("JUMP !_readString");
@@ -37,7 +36,7 @@ void generate_readString(void)
  *
  * @return integer
  */
-void generate_readInt(void)
+void generate_readInt()
 {
     GENERATE("#readInt");
     GENERATE("JUMP !_readInt");
@@ -58,7 +57,7 @@ void generate_readInt(void)
  *
  * @return decimal number
  */
-void generate_readDouble(void)
+void generate_readDouble()
 {
     GENERATE("#readDouble");
     GENERATE("JUMP !_readDouble");
@@ -80,7 +79,7 @@ void generate_readDouble(void)
  * @return void
  */
 
-void generate_write(void)
+void generate_write()
 {
     GENERATE("#write");
     GENERATE("JUMP !_write");
@@ -103,7 +102,7 @@ void generate_write(void)
  *
  */
 
-void generate_Int2Double(void)
+void generate_Int2Double()
 {
     GENERATE("#Int2Double");
     GENERATE("JUMP !_Int2Double");
@@ -130,7 +129,7 @@ void generate_Int2Double(void)
  * an integer value by trimming the decimal part.
  *
  */
-void generate_Double2Int(void)
+void generate_Double2Int()
 {
     GENERATE("#Double2Int");
     GENERATE("JUMP !_Double2Int");
@@ -155,7 +154,7 @@ void generate_Double2Int(void)
  *
  * @return the length of given string
  */
-void generate_length(void)
+void generate_length()
 {
     GENERATE("#length");
     GENERATE("JUMP !_length");
@@ -181,7 +180,7 @@ void generate_length(void)
  * error 8 occurs.
  */
 
-void generate_substring(void)
+void generate_substring()
 {
     GENERATE("#substr");
     GENERATE("JUMP !_substr");
@@ -192,7 +191,7 @@ void generate_substring(void)
     GENERATE("DEFVAR LF@%%length");
     GENERATE("DEFVAR LF@%%char");
 
-    GENERATE("MOVE LF@%%retval0 string@%%0");
+    GENERATE("MOVE LF@%%retval0 string@");
 
     GENERATE("JUMPIFEQ nil$error_substr nil@nil LF@substr$s");
     GENERATE("JUMPIFEQ nil$error_substr nil@nil LF@substr$i");
@@ -228,7 +227,7 @@ void generate_substring(void)
     GENERATE("JUMP !end_substr");
 
     GENERATE("LABEL nil$return_substr");
-    GENERATE("MOVE LF@%%retval0 string@%%0");
+    GENERATE("MOVE LF@%%retval0 string@");
 
     GENERATE("LABEL !end_substr");
     GENERATE("POPFRAME");
@@ -244,7 +243,7 @@ void generate_substring(void)
  * If one of the parameters is nil, error 8 occurs.
  * If the index i is outside the bounds of the string (1 to #s), the function returns nil.
  */
-void generate_ord(void)
+void generate_ord()
 {
     GENERATE("#ord");
     GENERATE("JUMP !_ord");
@@ -289,7 +288,7 @@ void generate_ord(void)
  * The case when i is outside the interval [0; 255], leads
  * to nil. If i nil, error 8 occurs.
  */
-void generate_chr(void)
+void generate_chr()
 {
     GENERATE("#chr");
     GENERATE("JUMP !_chr");
@@ -316,7 +315,7 @@ void generate_chr(void)
     GENERATE_EMPTY_LINE();
 }
 
-void define_built_in_functions(void)
+void define_built_in_functions()
 {
     generate_readString();
     generate_readInt();
@@ -339,8 +338,11 @@ void generator_start(void)
 {
     GENERATE(".IFJcode23");
     GENERATE("DEFVAR GF@%%exp_result");
+    GENERATE("DEFVAR GF@%%tmp1");
+    GENERATE("DEFVAR GF@%%tmp2");
+    GENERATE("DEFVAR GF@%%tmp3");
     define_built_in_functions();
-    GENERATE("LABEL $main");
+    GENERATE("LABEL $$main");
     GENERATE("CREATEFRAME");
     GENERATE("PUSHFRAME");
 }
@@ -360,28 +362,318 @@ void generate_var_definition(char *id, data_type type)
     switch (type)
     {
         case Int_Type:
-            GENERATE("MOVE LF@%s int@0", id);
+            if(strcmp(id, "%%retval0") == 0) {
+                GENERATE("MOVE TF@%%retval0 int@0");
+            } else {
+                GENERATE("MOVE LF@%s int@0", id);
+            }
             break;
         case String_Type:
-            GENERATE("MOVE LF@%s string@", id);
-            break;
+            if(strcmp(id, "%%retval0") == 0) {
+                GENERATE("MOVE TF@%%retval0 string@");
+            } else {
+                GENERATE("MOVE LF@%s string@", id);
+            }
         case Double_Type:
-            GENERATE("MOVE LF@%s float@0.0", id);
+            if(strcmp(id, "%%retval0") == 0) {
+                GENERATE("MOVE TF@%%retval0 float@0.0");
+            } else {
+                GENERATE("MOVE LF@%s float@0.0", id);
+            }
             break;
         case Bool_Type:
-            GENERATE("MOVE LF@%s bool@false", id);
+            if(strcmp(id, "%%retval0") == 0) {
+                GENERATE("MOVE TF@%%retval0 bool@false");
+            } else {
+                GENERATE("MOVE LF@%s bool@false", id);
+            }
+            break;
+        case Undefined:
+            if(strcmp(id, "%%retval0") == 0) {
+                GENERATE("MOVE TF@%%retval0 nil@nil");
+            } else {
+                GENERATE("MOVE LF@%s nil@nil", id);
+            }
+        default:
             break;
     }
 }
 
 void generate_var_assignment(char *id)
 {
-    GENERATE("MOVE LF@%s LF@%%exp_result", id);
+    if(strcmp(id, "%%exp_result") == 0) {
+        GENERATE("POPS GF@%%exp_result");
+    } else {
+        GENERATE("POPS LF@%s", id);
+    }
 }
+
+void generate_read(char *id, data_type type)
+{
+    switch (type)
+    {
+        case Int_Type:
+            GENERATE("CREATEFRAME");
+            GENERATE("CALL !function_readInt");
+            GENERATE("MOVE LF@%s TF@%%retval0", id);
+            break;
+        case String_Type:
+            GENERATE("CREATEFRAME");
+            GENERATE("CALL !function_readString");
+            GENERATE("MOVE LF@%s TF@%%retval0", id);
+            break;
+        case Double_Type:
+            GENERATE("CREATEFRAME");
+            GENERATE("CALL !function_readDouble");
+            GENERATE("MOVE LF@%s TF@%%retval0", id);
+            break;
+        default:
+            break;
+    }
+}
+
+void generate_write_var(char *id)
+{
+    GENERATE("CREATEFRAME");
+    GENERATE("DEFVAR TF@%%0");
+    GENERATE("MOVE TF@%%0 LF@%s", id);
+    GENERATE("CALL !function_write");
+
+}
+
+void gen_term(token_t *token){
+    switch (token->type){
+        case INT_VALUE:
+            GENERATE("int@%lld", token->data.Int);
+            break;
+        case DOUBLE_VALUE:
+            GENERATE("float@%a", token->data.Double);
+            break;
+        case STRING_VALUE:
+            GENERATE("string@%s", token->data.String);
+            break;
+        case IDENTIFIER:
+            GENERATE("LF@%s", token->data.String);
+            break;
+        default:
+            break;
+    }
+}
+
+void gen_push(token_t *token){
+    GENERATE_WITHOUT_NEW_LINE("PUSHS ");
+    gen_term(token);
+}
+
+void gen_pop(void){
+    GENERATE("POPS");
+}
+
+void gen_int2double(void){
+    GENERATE("INT2FLOATS");
+}
+
+void gen_double2int(void){
+    GENERATE("FLOAT2INTS");
+}
+
+void gen_int2double_2op(void){
+    GENERATE("POPS GF@%%tmp1");
+    GENERATE("INT2FLOATS");
+    GENERATE("PUSHS GF@%%tmp1");
+}
+
+void gen_operation(rules rule){
+    switch (rule){
+        case PLUS_R:
+            GENERATE("ADDS");
+            break;
+        case MINUS_R:
+            GENERATE("SUBS");
+            break;
+        case MUL_R:
+            GENERATE("MULS");
+            break;
+        case DIV_R:
+            GENERATE("DIVS");
+            break;
+        case IDIV_R:
+            GENERATE("POPS GF@%%tmp1");
+            GENERATE("INT2FLOATS");
+            GENERATE("PUSHS GF@%%tmp1");
+            GENERATE("INT2FLOATS");
+            GENERATE("DIVS");
+            GENERATE("FLOAT2INTS");
+            break;
+        case EQ:
+            GENERATE("EQS");
+            break;
+        case NEQ:
+            GENERATE("EQS");
+            GENERATE("NOTS");
+            break;
+        case L:
+            GENERATE("LTS");
+            break;
+        case LEQ:
+            GENERATE("GTS");
+            GENERATE("NOTS");
+            break;
+        case G:
+            GENERATE("GTS");
+            break;
+        case GEQ:
+            GENERATE("LTS");
+            GENERATE("NOTS");
+            break;
+        case NOT_NIL_R:
+//           E == NIL ? ERROR : E IS NOT NULLABLE
+            GENERATE("POPS GF@%%tmp1");
+            GENERATE("PUSHS GF@%%tmp1");
+            GENERATE("PUSHS nil@nil");
+            GENERATE("EQS");
+            GENERATE("ORS");
+            GENERATE("PUSHS GF@%%tmp1");
+            break;
+        case NOT_NULL_R:
+//          E1 == NULL ? E2 : E1
+            GENERATE("POPS GF@%%tmp1");
+            GENERATE("POPS GF@%%tmp2");
+            GENERATE("POPS GF@%%tmp3");
+            GENERATE("PUSHS GF@%%tmp3");
+            GENERATE("PUSHS GF@%%tmp2");
+            GENERATE("EQS");
+            GENERATE("PUSHS GF@%%tmp1");
+            GENERATE("PUSHS GF@%%tmp3");
+            GENERATE("EQS");
+            GENERATE("ORS");
+            GENERATE("PUSHS GF@%%tmp2");
+            GENERATE("PUSHS GF@%%tmp1");
+            GENERATE("EQS");
+            GENERATE("ORS");
+            break;
+        default:
+            break;
+    }
+}
+
+void gen_concat(void){
+    GENERATE("POPS GF@%%tmp1");
+    GENERATE("POPS GF@%%tmp2");
+    GENERATE("CONCAT GF@%%tmp3 GF@%%tmp2 GF@%%tmp1");
+    GENERATE("PUSHS GF@%%tmp3");
+}
+
+void gen_call_start(void){
+    GENERATE("CREATEFRAME");
+}
+
+void add_param_to_call(char* param_name){
+    GENERATE("DEFVAR TF@%%%s", param_name);
+    GENERATE("MOVE TF@%%%s GF@%%exp_result", param_name);
+}
+
+void gen_call(char* function_name){
+    if(strcmp(function_name, "readInt") == 0){
+        GENERATE("CALL !function_readInt");
+    }else if(strcmp(function_name, "readDouble") == 0){
+        GENERATE("CALL !function_readDouble");
+    }else if(strcmp(function_name, "readString") == 0){
+        GENERATE("CALL !function_readString");
+    }else if(strcmp(function_name, "Int2Double") == 0){
+        GENERATE("CALL !function_Int2Double");
+    }else if(strcmp(function_name, "Double2Int") == 0){
+        GENERATE("CALL !function_Double2Int");
+    }else if(strcmp(function_name, "length") == 0){
+        GENERATE("CALL !function_length");
+    }else if(strcmp(function_name, "substring") == 0){
+        GENERATE("CALL !function_substr");
+    }else if(strcmp(function_name, "ord") == 0){
+        GENERATE("CALL !function_ord");
+    }else if(strcmp(function_name, "chr") == 0){
+        GENERATE("CALL !function_chr");
+    }
+    GENERATE("CALL !FUNC_%s", function_name);
+}
+
+void generate_function_start(char *name)
+{
+    GENERATE("JUMP !BYPASS_%s", name);
+    GENERATE("LABEL !FUNC_%s", name);
+    GENERATE("PUSHFRAME");
+}
+
+void generate_function_param(char *param_name, data_type type)
+{
+    GENERATE("DEFVAR LF@%s", param_name);
+    generate_var_definition(param_name, type);
+}
+
+void generate_function_return_param(data_type type)
+{
+    GENERATE("DEFVAR TF@%%retval0");
+    generate_var_definition("%%retval0", type);
+}
+
+void generate_function_return(void)
+{
+    GENERATE("MOVE TF@%%retval0 GF@%%exp_result");
+    GENERATE("POPFRAME");
+    GENERATE("RETURN");
+}
+
+void generate_function_void_return(void)
+{
+    GENERATE("POPFRAME");
+    GENERATE("RETURN");
+}
+
+void generate_function_end(char* function_name)
+{
+    GENERATE("LABEL !BYPASS_%s", function_name);
+}
+
+void gen_while_start(int while_counter)
+{
+    GENERATE("LABEL !while_start_%d", while_counter);
+}
+
+void gen_while(int while_counter)
+{
+    GENERATE("JUMPIFEQ !while_start_%d GF@%%exp_result bool@true", while_counter);
+    GENERATE("LABEL !while_end_%d", while_counter);
+}
+
+void gen_while_end(int while_counter)
+{
+    GENERATE("JUMP !while_start_%d", while_counter);
+    GENERATE("LABEL !while_end_%d", while_counter);
+}
+
+void gen_if_start(int if_counter)
+{
+    GENERATE("JUMPIFEQ !if_else_%d GF@%%exp_result bool@false", if_counter);
+}
+
+void gen_if_else(int if_counter)
+{
+    GENERATE("JUMP !if_end_%d", if_counter);
+    GENERATE("LABEL !if_else_%d", if_counter);
+}
+
+void gen_if_end(int if_counter)
+{
+    GENERATE("LABEL !if_end_%d", if_counter);
+}
+
 
 int main()
 {
     generator_start();
+    generate_var_declaration("a");
+    generate_var_definition("a", Int_Type);
+    generate_read("a", Int_Type);
+    generate_write_var("a");
     generator_end();
     return 0;
 }

@@ -11,6 +11,22 @@
 #include <stdbool.h>
 
 typedef enum{
+    EQ,    // ==
+    NEQ,    // !=
+    G,  // >
+    GEQ,    // >=
+    L,  // <
+    LEQ,    // <=
+    PLUS_R,   // +
+    MINUS_R,  // -
+    MUL_R,    // *
+    DIV_R,    // /
+    IDIV_R,   // //
+    NOT_NIL_R,    // !
+    NOT_NULL_R,    // ??
+}rules;
+
+typedef enum{
     IntS,
     DoubleS,
     StringS,
