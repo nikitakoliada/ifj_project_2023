@@ -465,6 +465,10 @@ void gen_push(token_t *token){
     gen_term(token);
 }
 
+void gen_pop(void){
+    GENERATE("POPS");
+}
+
 void gen_int2double(void){
     GENERATE("INT2FLOATS");
 }

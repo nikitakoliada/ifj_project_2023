@@ -61,6 +61,7 @@ void generate_write_var(char *id);
 
 // Stack
 void gen_push(token_t *token);
+void gen_pop(void);
 void gen_term(token_t *token);
 void gen_operation(rules rule);
 void gen_int2double(void);
