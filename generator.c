@@ -599,17 +599,33 @@ void generate_function_start(char *name)
     GENERATE("PUSHFRAME");
 }
 
+void generate_function_param(char *param_name, data_type type)
+{
+    GENERATE("DEFVAR LF@%s", param_name);
+    generate_var_definition(param_name, type);
+}
+
 void generate_function_return_param(data_type type)
 {
     GENERATE("DEFVAR TF@%%retval0");
     generate_var_definition("%%retval0", type);
 }
 
-void generate_function_end(char* function_name)
+void generate_function_return(void)
 {
     GENERATE("MOVE TF@%%retval0 GF@%%exp_result");
     GENERATE("POPFRAME");
     GENERATE("RETURN");
+}
+
+void generate_function_void_return(void)
+{
+    GENERATE("POPFRAME");
+    GENERATE("RETURN");
+}
+
+void generate_function_end(char* function_name)
+{
     GENERATE("LABEL !BYPASS_%s", function_name);
 }
 

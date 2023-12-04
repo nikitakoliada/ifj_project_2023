@@ -81,6 +81,8 @@ void generator_end(void);
 void generate_function_start(char* function_name);
 void generate_function_return_param(data_type type);
 void generate_function_end(char* function_name);
+void generate_function_param(char *param_name, data_type type);
+void generate_function_return(void);
 
 // If
 void gen_if_start(int if_counter);
