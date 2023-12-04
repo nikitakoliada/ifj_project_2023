@@ -4,7 +4,6 @@
 
  * @brief Generator implementation - generator of code
 
- * @author Juraj Remeň - xremen02
  * @author Maksym Podhornyi - xpodho08
  */
 
@@ -192,7 +191,7 @@ void generate_substring()
     GENERATE("DEFVAR LF@%%length");
     GENERATE("DEFVAR LF@%%char");
 
-    GENERATE("MOVE LF@%%retval0 string@%%0");
+    GENERATE("MOVE LF@%%retval0 string@");
 
     GENERATE("JUMPIFEQ nil$error_substr nil@nil LF@substr$s");
     GENERATE("JUMPIFEQ nil$error_substr nil@nil LF@substr$i");
@@ -228,7 +227,7 @@ void generate_substring()
     GENERATE("JUMP !end_substr");
 
     GENERATE("LABEL nil$return_substr");
-    GENERATE("MOVE LF@%%retval0 string@%%0");
+    GENERATE("MOVE LF@%%retval0 string@");
 
     GENERATE("LABEL !end_substr");
     GENERATE("POPFRAME");
@@ -335,7 +334,7 @@ void define_built_in_functions()
  *
  * @return void
  */
-void generator_start()
+void generator_start(void)
 {
     GENERATE(".IFJcode23");
     GENERATE("DEFVAR GF@%%exp_result");
@@ -363,19 +362,38 @@ void generate_var_definition(char *id, data_type type)
     switch (type)
     {
         case Int_Type:
-            GENERATE("MOVE LF@%s int@0", id);
+            if(strcmp(id, "%%retval0") == 0) {
+                GENERATE("MOVE TF@%%retval0 int@0");
+            } else {
+                GENERATE("MOVE LF@%s int@0", id);
+            }
             break;
         case String_Type:
-            GENERATE("MOVE LF@%s string@", id);
-            break;
+            if(strcmp(id, "%%retval0") == 0) {
+                GENERATE("MOVE TF@%%retval0 string@");
+            } else {
+                GENERATE("MOVE LF@%s string@", id);
+            }
         case Double_Type:
-            GENERATE("MOVE LF@%s float@0.0", id);
+            if(strcmp(id, "%%retval0") == 0) {
+                GENERATE("MOVE TF@%%retval0 float@0.0");
+            } else {
+                GENERATE("MOVE LF@%s float@0.0", id);
+            }
             break;
         case Bool_Type:
-            GENERATE("MOVE LF@%s bool@false", id);
+            if(strcmp(id, "%%retval0") == 0) {
+                GENERATE("MOVE TF@%%retval0 bool@false");
+            } else {
+                GENERATE("MOVE LF@%s bool@false", id);
+            }
             break;
         case Undefined:
-            GENERATE("MOVE LF@%s nil@nil", id);
+            if(strcmp(id, "%%retval0") == 0) {
+                GENERATE("MOVE TF@%%retval0 nil@nil");
+            } else {
+                GENERATE("MOVE LF@%s nil@nil", id);
+            }
         default:
             break;
     }
@@ -383,7 +401,11 @@ void generate_var_definition(char *id, data_type type)
 
 void generate_var_assignment(char *id)
 {
-    GENERATE("MOVE LF@%s GF@%%exp_result", id);
+    if(strcmp(id, "%%exp_result") == 0) {
+        GENERATE("POPS GF@%%exp_result");
+    } else {
+        GENERATE("POPS LF@%s", id);
+    }
 }
 
 void generate_read(char *id, data_type type)
@@ -453,8 +475,8 @@ void gen_double2int(void){
 
 void gen_int2double_2op(void){
     GENERATE("POPS GF@%%tmp1");
-    GENERATE("POPS GF@%%tmp2");
-    GENERATE("INT2FLOATS GF@%%tmp1 GF@%%tmp2");
+    GENERATE("INT2FLOATS");
+    GENERATE("PUSHS GF@%%tmp1");
 }
 
 void gen_operation(rules rule){
@@ -531,7 +553,7 @@ void gen_operation(rules rule){
     }
 }
 
-void concat(void){
+void gen_concat(void){
     GENERATE("POPS GF@%%tmp1");
     GENERATE("POPS GF@%%tmp2");
     GENERATE("CONCAT GF@%%tmp3 GF@%%tmp2 GF@%%tmp1");
@@ -579,43 +601,51 @@ void generate_function_start(char *name)
 
 void generate_function_return_param(data_type type)
 {
-    GENERATE("DEFVAR LF@%%retval0");
+    GENERATE("DEFVAR TF@%%retval0");
     generate_var_definition("%%retval0", type);
 }
 
-//void generate_return_params(func_params_t *params)
-//{
-//  for (size_t i = 0; i < params->returns_size; i++)
-//  {
-//    if (params->returns)
-//    {
-//        GENERATE("MOVE LF@%%retval%zu %s", i, params->returns[i]);
-//    }
-//
-//    else
-//    {
-//        GENERATE("MOVE LF@%%retval%zu nil@nil", i);
-//    }
-//  }
-//}
-
-void generate_function_end(void)
+void generate_function_end(char* function_name)
 {
-//  generate_return(params);
-//  GENERATE("LABEL !BYPASS_%s", params->name);
-}
-
-void generate_return(void)
-{
-//  generate_return_params(params);
-  GENERATE("POPFRAME");
-  GENERATE("RETURN");
+    GENERATE("MOVE TF@%%retval0 GF@%%exp_result");
+    GENERATE("POPFRAME");
+    GENERATE("RETURN");
+    GENERATE("LABEL !BYPASS_%s", function_name);
 }
 
 void gen_while_start(int while_counter)
 {
     GENERATE("LABEL !while_start_%d", while_counter);
 }
+
+void gen_while(int while_counter)
+{
+    GENERATE("JUMPIFEQ !while_start_%d GF@%%exp_result bool@true", while_counter);
+    GENERATE("LABEL !while_end_%d", while_counter);
+}
+
+void gen_while_end(int while_counter)
+{
+    GENERATE("JUMP !while_start_%d", while_counter);
+    GENERATE("LABEL !while_end_%d", while_counter);
+}
+
+void gen_if_start(int if_counter)
+{
+    GENERATE("JUMPIFEQ !if_else_%d GF@%%exp_result bool@false", if_counter);
+}
+
+void gen_if_else(int if_counter)
+{
+    GENERATE("JUMP !if_end_%d", if_counter);
+    GENERATE("LABEL !if_else_%d", if_counter);
+}
+
+void gen_if_end(int if_counter)
+{
+    GENERATE("LABEL !if_end_%d", if_counter);
+}
+
 
 int main()
 {
