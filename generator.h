@@ -82,6 +82,7 @@ void generate_function_start(char* function_name);
 void generate_function_return_param(data_type type);
 void generate_function_end(char* function_name);
 void generate_function_param(char *param_name, data_type type);
+void generate_function_void_return(void);
 void generate_function_return(void);
 
 // If
