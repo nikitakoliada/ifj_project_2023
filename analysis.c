@@ -664,14 +664,14 @@ static int if_else(analyse_data_t* data){
             }
             prev_q_type = ((var_data_t*) let_id->data)->q_type; 
             ((var_data_t*) let_id->data)->q_type = false;
-            
+            GENERATE_BLOCK(gen_if_let, let_id->key, data->label_index);
             GET_TOKEN();
         }
         else{
             data->var_id = symtable_search(&data->global_table, "%%exp_result");
             CHECK_EXPRESSION();
+            GENERATE_BLOCK(gen_if_start, data->label_index);
         }
-        GENERATE_BLOCK(gen_if_start, data->label_index);
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
 		data->in_while_or_if = false;
         GET_TOKEN_AND_CHECK_RULE(statement);
@@ -808,7 +808,6 @@ static int def_var(analyse_data_t* data){
 
 static int write(analyse_data_t* data){
     //???. 〈 write 〉 −→ write ( 〈 expression 〉, ...)
-    GENERATE_BLOCK(gen_call_start);
     CHECK_TYPE(TOKEN_LEFT_BRACKET);
     GET_TOKEN_AND_CHECK_RULE(possible_EOL);
     if(data->token.type == TOKEN_RIGHT_BRACKET){
@@ -821,10 +820,10 @@ static int write(analyse_data_t* data){
         CHECK_RULE(possible_EOL);
         data->var_id = symtable_search(&data->global_table, "%%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
+        GENERATE_BLOCK(generate_write_val);
     }
     CHECK_RULE(possible_EOL);
     CHECK_TYPE(TOKEN_RIGHT_BRACKET);
-    GENERATE_BLOCK(gen_call, "write");
     //GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
     return SYNTAX_OK;
 
