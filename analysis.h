@@ -47,6 +47,34 @@ typedef struct
 	bool in_call_func;
 } analyse_data_t;
 
+// variable functions
+static bool init_variables(analyse_data_t*)
+static void free_variables(analyse_data_t*)
+
+// forward declarations(LL table)
+static int program_first(analyse_data_t*)
+static int program(analyse_data_t*);
+static int statement(analyse_data_t*); 
+static int function_declaration(analyse_data_t*);
+static int function(analyse_data_t*);
+static int func_ret(analyse_data_t*);
+static int args(analyse_data_t*);
+static int args_n(analyse_data_t*);
+static int if_else(analyse_data_t*);
+static int while_(analyse_data_t*);
+static int assignment(analyse_data_t*);
+static int def_var(analyse_data_t*);
+static int write(analyse_data_t*);
+static int f_call(analyse_data_t*);
+static int fc_args(analyse_data_t*);
+static int fc_args_n_args(analyse_data_t*);
+static int modifier(analyse_data_t*);
+static int def_type(analyse_data_t*);
+static int end(analyse_data_t*);
+static int possible_EOL(analyse_data_t*);
+static int type(analyse_data_t*);
+static int p_type(analyse_data_t*);// ? before p_type
+
 //starts the analysis
 int analyse();
 int f_expression_call(analyse_data_t*, token_t, data_type*, bool*);

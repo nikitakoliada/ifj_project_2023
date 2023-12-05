@@ -24,13 +24,13 @@ int height(bst_node_ptr N) {
     return N->height;
 }
 
-int getBalance(bst_node_ptr N) {
+int get_balance(bst_node_ptr N) {
     if (N == NULL)
         return 0;
     return height(N->left_ptr) - height(N->right_ptr);
 }
 
-bst_node_ptr rightRotate(bst_node_ptr root_ptr) {
+bst_node_ptr right_rotate(bst_node_ptr root_ptr) {
     bst_node_ptr tmp = root_ptr->left_ptr;
     bst_node_ptr tmp2 = tmp->right_ptr;
 
@@ -46,7 +46,7 @@ bst_node_ptr rightRotate(bst_node_ptr root_ptr) {
     return tmp;
 }
 
-bst_node_ptr leftRotate(bst_node_ptr root_ptr) {
+bst_node_ptr left_rotate(bst_node_ptr root_ptr) {
     bst_node_ptr tmp1 = root_ptr->right_ptr;
     bst_node_ptr tmp2 = tmp1->left_ptr;
 
@@ -92,23 +92,23 @@ bst_node_ptr bst_insert(bst_node_ptr node, char* key, void* data, node_data_type
 
     node->height = 1 + max(height(node->left_ptr), height(node->right_ptr));
 
-    int balance = getBalance(node);
+    int balance = get_balance(node);
 
 
     if (balance > 1 && strcmp(key, node->left_ptr->key) < 0)
-        return rightRotate(node);
+        return right_rotate(node);
 
     if (balance < -1 && strcmp(key, node->right_ptr->key) > 0)
-        return leftRotate(node);
+        return left_rotate(node);
 
     if (balance > 1 && strcmp(key, node->left_ptr->key) > 0) {
-        node->left_ptr = leftRotate(node->left_ptr);
-        return rightRotate(node);
+        node->left_ptr = left_rotate(node->left_ptr);
+        return right_rotate(node);
     }
 
     if (balance < -1 && strcmp(key, node->right_ptr->key) < 0) {
-        node->right_ptr = rightRotate(node->right_ptr);
-        return leftRotate(node);
+        node->right_ptr = right_rotate(node->right_ptr);
+        return left_rotate(node);
     }
 
     return node;
@@ -134,7 +134,7 @@ void bst_dispose(bst_node_ptr root) {
     }
 }
 
-bst_node_ptr minValueNode(bst_node_ptr node) {
+bst_node_ptr min_value_node(bst_node_ptr node) {
     bst_node_ptr current = node;
 
     while (current->left_ptr != NULL)
@@ -190,28 +190,28 @@ bst_node_ptr bst_delete(bst_node_ptr root, char* key) {
     root->height = 1 + max(height(root->left_ptr), height(root->right_ptr));
 
     // STEP 3: GET THE BALANCE FACTOR OF THIS NODE (to check whether this node became unbalanced)
-    int balance = getBalance(root);
+    int balance = get_balance(root);
 
     // If this node becomes unbalanced, then there are 4 cases
 
     // Left Left Case
-    if (balance > 1 && getBalance(root->left_ptr) >= 0)
-        return rightRotate(root);
+    if (balance > 1 && get_balance(root->left_ptr) >= 0)
+        return right_rotate(root);
 
     // Left Right Case
-    if (balance > 1 && getBalance(root->left_ptr) < 0) {
-        root->left_ptr = leftRotate(root->left_ptr);
-        return rightRotate(root);
+    if (balance > 1 && get_balance(root->left_ptr) < 0) {
+        root->left_ptr = left_rotate(root->left_ptr);
+        return right_rotate(root);
     }
 
     // Right Right Case
-    if (balance < -1 && getBalance(root->right_ptr) <= 0)
-        return leftRotate(root);
+    if (balance < -1 && get_balance(root->right_ptr) <= 0)
+        return left_rotate(root);
 
     // Right Left Case
-    if (balance < -1 && getBalance(root->right_ptr) > 0) {
-        root->right_ptr = rightRotate(root->right_ptr);
-        return leftRotate(root);
+    if (balance < -1 && get_balance(root->right_ptr) > 0) {
+        root->right_ptr = right_rotate(root->right_ptr);
+        return left_rotate(root);
     }
 
     return root;

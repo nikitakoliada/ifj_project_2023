@@ -121,7 +121,11 @@ typedef struct token {
     unsigned long long line;
 } token_t;
 
-void set_source_file(FILE *file);
-int get_next_token(token_t *token);
+void set_source_file(FILE *);
+bool is_keyword(char*);
+void add_char_to_string(char *, unsigned*, unsigned*, char);
+void get_keyword_type(char*, keyword_t*);
+bool is_pure_type(char*);
+int get_next_token(token_t*);
 
 #endif // SCANNER_H

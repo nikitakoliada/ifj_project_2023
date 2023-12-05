@@ -24,7 +24,7 @@ typedef enum{
     IDIV_R,   // //
     NOT_NIL_R,    // !
     NOT_NULL_R,    // ??
-}rules;
+} rules;
 
 typedef enum{
     IntS,
@@ -50,6 +50,6 @@ typedef enum{
     NON_TERM,
     NilS,
     Handle
-}eSymbol;
+} eSymbol;
 
 int expression(analyse_data_t*, bool*);

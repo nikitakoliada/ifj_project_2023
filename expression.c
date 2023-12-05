@@ -53,7 +53,7 @@ typedef enum{
     NI,   // !
     IdI,  // id
     DI    // $  
-}pt_index;
+} pt_index;
 
 precedence_value_t predence_table[PT_SIZE][PT_SIZE] = {
     //        +-  */  (     )   r   ??  !  id   $          

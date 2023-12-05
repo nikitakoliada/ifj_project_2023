@@ -25,10 +25,12 @@ typedef struct stack{
 }stack_t;
 
 bool stack_init(stack_t**);
+bool stack_extend(stack_t**);
 bool stack_push(stack_t*, stack_element*);
 stack_element* stack_pop(stack_t*);
 void stack_pop_elements(stack_t*, int);
 stack_element* stack_top(stack_t*);
+int top_terminal_index(stack_t*);
 stack_element* stack_top_terminal(stack_t*);
 bool stack_insert_after_top_terminal(stack_t*, eSymbol, data_type);
 bool is_stack_empty(stack_t*);

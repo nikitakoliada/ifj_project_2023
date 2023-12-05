@@ -44,17 +44,18 @@ typedef struct bst_node {
 // BST functions
 bst_node_ptr new_bst_node(char*, void*, node_data_type_t);
 void bst_init(bst_node_ptr *);
-int bst_height(bst_node_ptr);
-int bst_calculate_balance(bst_node_ptr);
+int height(bst_node_ptr);
+int get_balance(bst_node_ptr);
 int max(int, int);
-bst_node_ptr bst_rotate_right(bst_node_ptr);
-bst_node_ptr bst_rotate_left(bst_node_ptr);
+bst_node_ptr right_rotate(bst_node_ptr);
+bst_node_ptr left_rotate(bst_node_ptr);
 bst_node_ptr bst_insert (bst_node_ptr, char*, void*, node_data_type_t);
 void bst_replace_by_right_most(bst_node_ptr, bst_node_ptr);
 bst_node_ptr bst_delete(bst_node_ptr, char*);
 bst_node_ptr bst_search(bst_node_ptr, char*);
 void bst_dispose(bst_node_ptr);
 int has_undefined_function(bst_node_ptr node);
+bst_node_ptr min_value_node(bst_node_ptr);
 void print_all_keys(bst_node_ptr node);
 
 

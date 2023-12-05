@@ -321,37 +321,14 @@ static bool init_variables(analyse_data_t* data)
 	return true;
 }
 
-
-
-//Frees symbol tables
+// Frees symbol tables
 static void free_variables(analyse_data_t* data)
 {
 	symtable_dispose(&data->global_table);
     symtable_dispose(&data->local_table[0]);
 }
 
-// forward declarations(LL table)
-static int program(analyse_data_t* data);
-static int statement(analyse_data_t* data); 
-static int function(analyse_data_t* data);
-static int function_declaration(analyse_data_t* data);
-static int func_ret(analyse_data_t* data);
-static int args(analyse_data_t* data);
-static int args_n(analyse_data_t* data);
-static int if_else(analyse_data_t* data);
-static int while_(analyse_data_t* data);
-static int assignment(analyse_data_t* data);
-static int def_var(analyse_data_t* data);
-static int f_call(analyse_data_t* data);
-static int fc_args(analyse_data_t* data);
-static int fc_args_n_args(analyse_data_t* data);
-static int modifier(analyse_data_t* data);
-static int def_type(analyse_data_t* data);
-static int end(analyse_data_t* data);
-static int possible_EOL(analyse_data_t* data);
-static int type(analyse_data_t* data);
-static int p_type(analyse_data_t* data);// ? before p_type 
-static int write(analyse_data_t* data);
+
 
 // going thru file for the first time in order to check all definitions
 static int program_first(analyse_data_t* data)
@@ -376,7 +353,6 @@ static int program(analyse_data_t* data)
     // <program> -> <statement>
 	return statement(data);
 }
-
 
 static int statement(analyse_data_t* data)
 {

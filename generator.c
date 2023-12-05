@@ -5,6 +5,7 @@
  * @brief Generator implementation - generator of code
 
  * @author Maksym Podhornyi - xpodho08
+ * @author Juraj Remeň - xremen02
  */
 
 #include "generator.h"
