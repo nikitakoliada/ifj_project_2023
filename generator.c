@@ -17,7 +17,7 @@
  */
 void generate_readString()
 {
-    GENERATE("#readString");
+    GENERATE("\n#readString");
     GENERATE("JUMP !_readString");
     GENERATE("LABEL !function_readString");
     GENERATE("PUSHFRAME");
@@ -227,7 +227,7 @@ void generate_substring()
     GENERATE("JUMP !end_substr");
 
     GENERATE("LABEL nil$return_substr");
-    GENERATE("MOVE LF@%%retval0 string@");
+    GENERATE("MOVE LF@%%retval0 nil@nil");
 
     GENERATE("LABEL !end_substr");
     GENERATE("POPFRAME");
@@ -374,6 +374,7 @@ void generate_var_definition(char *id, data_type type)
             } else {
                 GENERATE("MOVE LF@%s string@", id);
             }
+            break;
         case Double_Type:
             if(strcmp(id, "%%retval0") == 0) {
                 GENERATE("MOVE TF@%%retval0 float@0.0");
@@ -680,8 +681,7 @@ int main()
 {
     generator_start();
     generate_var_declaration("a");
-    generate_var_definition("a", Int_Type);
-    generate_read("a", Int_Type);
+    generate_read("a", String_Type);
     generate_write_var("a");
     generator_end();
     return 0;
