@@ -17,6 +17,7 @@
 #ifndef GENERATOR_H
 #define GENERATOR_H
 
+/** @brief Macro for generating code */
 #define GENERATE(...)             \
   do                              \
   {                               \
@@ -24,12 +25,14 @@
     fprintf(stdout, "\n");        \
   } while (0)
 
+/** @brief Macro for generating empty line */
 #define GENERATE_EMPTY_LINE() \
   do                          \
   {                           \
     fprintf(stdout, "\n");    \
   } while (0)
 
+/** @brief Macro for generating code without new line */
 #define GENERATE_WITHOUT_NEW_LINE(...) \
   do                                   \
   {                                    \
@@ -160,28 +163,146 @@ void gen_concat(void);
  */
 void gen_int2double_2op(void);
 
+/**
+ * @brief Start generating call to function
+ *
+ * @return void
+ */
 void gen_call_start(void);
+
+/**
+ * @brief Add parameter to function call
+ *
+ * @param param_name - id of parameter
+ *
+ * @return void
+ */
 void add_param_to_call(char* param_name);
+
+/**
+ * @brief Generate code for function call
+ *
+ * @param function_name - name of function to call
+ *
+ * @return void
+ */
 void gen_call(char* function_name);
 
-// Function generation
+/**
+ * @brief Start generating user function
+ *
+ * @param function_name - name of function
+ *
+ * @return void
+ */
 void generate_function_start(char* function_name);
+
+/**
+ * @brief Generate code for function return
+ *
+ * @param type - type of return value
+ *
+ * @return void
+ */
 void generate_function_return_param(data_type type);
+
+/**
+ * @brief End generating user function
+ *
+ * @param function_name - name of function
+ *
+ * @return void
+ */
 void generate_function_end(char* function_name);
+
+/**
+ * @brief Generate code for function parameter
+ *
+ * @param param_name - name of parameter
+ * @param type - type of parameter
+ *
+ * @return void
+ */
 void generate_function_param(char *param_name, data_type type);
+
+/**
+ * @brief Generate code for function return if
+ * return type is void
+ *
+ * @return void
+ */
 void generate_function_void_return(void);
+
+/**
+ * @brief Generate code for function return if
+ * return type is not void
+ *
+ * @return void
+ */
 void generate_function_return(void);
 
-// If
+/**
+ * @brief Generate code for check if variable is nil
+ *
+ * @param id - name of variable
+ * @param let_if_counter - unique number of let/if
+ *
+ * @return void
+ */
 void gen_if_let(char *id, int let_if_counter);
+
+/**
+ * @brief Start generating if
+ *
+ * @param if_counter - unique number of if
+ *
+ * @return void
+ */
 void gen_if_start(int if_counter);
+
+/**
+ * @brief Generate code for else part of if
+ *
+ * @param if_counter - unique number of if
+ *
+ * @return void
+ */
 void gen_if_else(int if_counter);
+
+/**
+ * @brief Generate code for end of if
+ *
+ * @param if_counter - unique number of if
+ *
+ * @return void
+ */
 void gen_if_end(int if_counter);
 
-// While
+/**
+ * @brief Start generating while
+ *
+ * @param while_counter - unique number of while
+ *
+ * @return void
+ */
 void gen_while_start(int while_counter);
-void gen_while(int while_counter);
-void gen_while_end(int while_counter);
 
+/**
+ * @brief Generate code for while body
+ *
+ * @param while_counter - unique number of while
+ *
+ * @return void
+ */
+void gen_while(int while_counter);
+
+/**
+ * @brief Generate code for end of while
+ *
+ * @param while_counter - unique number of while
+ *
+ * @return void
+ */
+void gen_while_end(int while_counter);
 
 #endif //GENERATOR_H

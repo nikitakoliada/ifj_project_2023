@@ -186,6 +186,8 @@ void generate_substring()
     GENERATE("PUSHFRAME");
 
     GENERATE("DEFVAR LF@%%retval0");
+    GENERATE("MOVE LF@%%retval0 string@");
+
     GENERATE("DEFVAR LF@%%cond_range");
     GENERATE("DEFVAR LF@%%length");
     GENERATE("DEFVAR LF@%%char");
@@ -208,8 +210,8 @@ void generate_substring()
     GENERATE("JUMPIFEQ nil$return_substr LF@%%cond_range bool@true");
 
     GENERATE("LABEL loop");
-    GENERATE("GT LF@%%cond_range LF@substr$i LF@substr$j");
-    GENERATE("JUMPIFEQ !end_substr LF@%%cond_range bool@true");
+    GENERATE("LT LF@%%cond_range LF@substr$i LF@substr$j");
+    GENERATE("JUMPIFEQ !end_substr LF@%%cond_range bool@false");
     GENERATE("GETCHAR LF@%%char LF@substr$s LF@substr$i");
     GENERATE("CONCAT LF@%%retval0 LF@%%retval0 LF@%%char");
     GENERATE("ADD LF@substr$i LF@substr$i int@1");
@@ -402,7 +404,7 @@ void generate_write_val(void)
 {
     GENERATE("CREATEFRAME");
     GENERATE("DEFVAR TF@%%0");
-    GENERATE("MOVE TF@%%0 LF@%%exp_result");
+    GENERATE("MOVE TF@%%0 GF@%%exp_result");
     GENERATE("CALL !function_write");
 
 }
@@ -643,9 +645,6 @@ void gen_if_end(int if_counter)
 int main()
 {
     generator_start();
-    generate_var_declaration("a");
-    generate_read("a", String_Type);
-    generate_write_var("a");
     generator_end();
     return 0;
 }
