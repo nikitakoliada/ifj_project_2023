@@ -667,7 +667,6 @@ int expression(analyse_data_t* data, bool* is_EOL){
                 if(!new_element) return INTERNAL_ERROR;
                 data_type type = Int_Type;
                 data->token = token;
-                gen_pop();
                 if((result = f_expression_call(data, prev_token, &type, &nullable))){
                     FREE_RECOURCES(stack);
                     return result;

@@ -192,7 +192,7 @@ bst_node_ptr var_search(analyse_data_t* data, int deepness, char* key){
             return ptr;
         }
     }
-    return symtable_search(&data->global_table, key);
+    return NULL;
 }
 
 static bool init_variables(analyse_data_t* data)
@@ -207,6 +207,8 @@ static bool init_variables(analyse_data_t* data)
 	data->args_index = 0;
 	data->label_index = 0;
 	data->label_deep = 0;
+
+    data->tmp_func = NULL;
 
 
 	data->in_defintion = false;
@@ -404,7 +406,7 @@ static int statement(analyse_data_t* data)
         data->var_id = var_search(data, data->label_deep, data->token.data.String);
         bst_node_ptr tmp_id = data->current_id;
         data->current_id = symtable_search(&data->global_table, data->token.data.String);
-        data->tmp_key = data->token.data.String;
+        data->tmp_func = data->token.data.String;
         GET_TOKEN();
         if(data->token.type == ASSIGNMENT){
             //printf("%s", data->tmp_key);
@@ -415,7 +417,7 @@ static int statement(analyse_data_t* data)
         }
         //7. 〈 statement 〉 −→ 〈 f_call 〉EOL 〈 statement 〉
         else{
-            if(strcmp(data->tmp_key, "write") == 0){
+            if(strcmp(data->tmp_func, "write") == 0){
                 CHECK_RULE(write);
                 GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
             }
@@ -857,7 +859,7 @@ static int f_call(analyse_data_t* data){
     data->args_index = 0;
     CHECK_RULE(possible_EOL);
     CHECK_TYPE(TOKEN_RIGHT_BRACKET);
-    GENERATE_BLOCK(gen_call, data->tmp_key);
+    GENERATE_BLOCK(gen_call, data->tmp_func);
     data->in_call_func = false;
     //GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
     return SYNTAX_OK;
@@ -868,6 +870,7 @@ int f_expression_call(analyse_data_t* data, token_t id, data_type* type, bool* n
     bst_node_ptr prev_current = data->current_id;
     bst_node_ptr prev_var = data->var_id;
     data->current_id = symtable_search(&data->global_table, id.data.String);
+    data->tmp_func = id.data.String;
     *type = ((function_data_t*)data->current_id->data)->return_data_type;
     *nullable = ((function_data_t*)data->current_id->data)->return_data_q_type;
     CHECK_RULE(f_call);

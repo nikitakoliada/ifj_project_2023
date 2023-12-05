@@ -332,35 +332,35 @@ void generate_var_definition(char *id, data_type type)
     {
         case Int_Type:
             if(strcmp(id, "%%retval0") == 0) {
-                GENERATE("MOVE TF@%%retval0 int@0");
+                GENERATE("MOVE LF@%%retval0 int@0");
             } else {
                 GENERATE("MOVE LF@%s int@0", id);
             }
             break;
         case String_Type:
             if(strcmp(id, "%%retval0") == 0) {
-                GENERATE("MOVE TF@%%retval0 string@");
+                GENERATE("MOVE LF@%%retval0 string@");
             } else {
                 GENERATE("MOVE LF@%s string@", id);
             }
             break;
         case Double_Type:
             if(strcmp(id, "%%retval0") == 0) {
-                GENERATE("MOVE TF@%%retval0 float@0.0");
+                GENERATE("MOVE LF@%%retval0 float@0.0");
             } else {
                 GENERATE("MOVE LF@%s float@0.0", id);
             }
             break;
         case Bool_Type:
             if(strcmp(id, "%%retval0") == 0) {
-                GENERATE("MOVE TF@%%retval0 bool@false");
+                GENERATE("MOVE LF@%%retval0 bool@false");
             } else {
                 GENERATE("MOVE LF@%s bool@false", id);
             }
             break;
         case Undefined:
             if(strcmp(id, "%%retval0") == 0) {
-                GENERATE("MOVE TF@%%retval0 nil@nil");
+                GENERATE("MOVE LF@%%retval0 nil@nil");
             } else {
                 GENERATE("MOVE LF@%s nil@nil", id);
             }
@@ -441,7 +441,7 @@ void gen_push_return(void)
 }
 
 void gen_pop(void){
-    GENERATE("POPS");
+    GENERATE("POPS GF@%%tmp1");
 }
 
 void gen_int2double(void){
@@ -584,13 +584,13 @@ void generate_function_param(char *param_name, data_type type)
 
 void generate_function_return_param(data_type type)
 {
-    GENERATE("DEFVAR TF@%%retval0");
+    GENERATE("DEFVAR LF@%%retval0");
     generate_var_definition("%%retval0", type);
 }
 
 void generate_function_return(void)
 {
-    GENERATE("MOVE TF@%%retval0 GF@%%exp_result");
+    GENERATE("MOVE LF@%%retval0 GF@%%exp_result");
     GENERATE("POPFRAME");
     GENERATE("RETURN");
 }
