@@ -689,6 +689,8 @@ int expression(analyse_data_t* data, bool* is_EOL){
                     return INTERNAL_ERROR;
                 }
 
+                gen_push_return();
+
 
                 GET_NEXT_NOT_EOL_TOKEN(token);
 

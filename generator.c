@@ -408,7 +408,7 @@ void generate_write_val(void)
     GENERATE("DEFVAR TF@%%0");
     GENERATE("MOVE TF@%%0 GF@%%exp_result");
     GENERATE("CALL !FUNC_write");
-    
+
 }
 
 void gen_term(token_t *token){
@@ -433,6 +433,11 @@ void gen_term(token_t *token){
 void gen_push(token_t *token){
     GENERATE_WITHOUT_NEW_LINE("PUSHS ");
     gen_term(token);
+}
+
+void gen_push_return(void)
+{
+    GENERATE("PUSHS TF@%%retval0");
 }
 
 void gen_pop(void){
@@ -608,8 +613,7 @@ void gen_while_start(int while_counter)
 
 void gen_while(int while_counter)
 {
-    GENERATE("JUMPIFEQ !while_start_%d GF@%%exp_result bool@true", while_counter);
-    GENERATE("LABEL !while_end_%d", while_counter);
+    GENERATE("JUMPIFEQ !while_end_%d GF@%%exp_result bool@false", while_counter);
 }
 
 void gen_while_end(int while_counter)

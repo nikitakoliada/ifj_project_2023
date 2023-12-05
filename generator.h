@@ -123,6 +123,8 @@ void generate_write_val(void);
  */
 void gen_push(token_t *token);
 
+void gen_push_return(void);
+
 /**
  * @brief Remove value from stack
  *
