@@ -148,11 +148,11 @@ void print_token(token_t *token)
 	if ((result = get_next_token(&data->token)) != 0) {        \
             return result;                                         \
         }                                                          \
-        print_token(&data->token);                                 \
+        //print_token(&data->token);                                 \
 
 #define CHECK_TYPE(t_type)											\
-    if(data->token.type == TOKEN_EOF && t_type == TOKEN_EOL) return SYNTAX_OK ;\
-	if (data->token.type != t_type) return SYNTAX_ERROR
+    if(data->token.type == TOKEN_EOF && t_type == TOKEN_EOL){}\
+	else if (data->token.type != t_type) return SYNTAX_ERROR
 
 #define CHECK_RULE(rule)											\
 	if ((result = rule(data)) != 0) return result
@@ -407,7 +407,7 @@ static int statement(analyse_data_t* data)
         data->tmp_key = data->token.data.String;
         GET_TOKEN();
         if(data->token.type == ASSIGNMENT){
-            printf("%s", data->tmp_key);
+            //printf("%s", data->tmp_key);
             CHECK_RULE(assignment);
 
             CHECK_RULE(possible_EOL);
@@ -733,7 +733,7 @@ static int assignment(analyse_data_t* data){
             return SEM_ERROR_UNDEF_VAR;
         }
         GET_TOKEN_AND_CHECK_EXPRESSION();
-        GENERATE_BLOCK(generate_var_assignment, data->tmp_key);
+        //GENERATE_BLOCK(generate_var_assignment, data->tmp_key);
         return SYNTAX_OK;
     }
     return SYNTAX_ERROR;
@@ -789,7 +789,7 @@ static int def_var(analyse_data_t* data){
         if(data->token.type == ASSIGNMENT){
             no_assignment = false;
             GET_TOKEN_AND_CHECK_EXPRESSION();
-            GENERATE_BLOCK(generate_var_assignment, data->tmp_key);
+            //GENERATE_BLOCK(generate_var_assignment, data->tmp_key); // EOF in the end of the line -> Error
             data->in_var_definition = false;
         }
         else{
@@ -816,6 +816,7 @@ static int write(analyse_data_t* data){
     }
     data->var_id = symtable_search(&data->global_table, "%%exp_result");
     CHECK_EXPRESSION();
+    GENERATE_BLOCK(generate_write_val);
     while(data->token.type == COMMA){
         CHECK_RULE(possible_EOL);
         data->var_id = symtable_search(&data->global_table, "%%exp_result");
@@ -1167,7 +1168,7 @@ int analyse(){
     //result = program(data);
 
     result = program_first(data);
-    printf("\n\nEND OF FIRST GO THROUGH\n\n");
+    //printf("\n\nEND OF FIRST GO THROUGH\n\n");
     fseek(stdin, 0, SEEK_SET);
     //second and main
     GENERATE_BLOCK(generator_start);
@@ -1183,7 +1184,7 @@ int analyse(){
         }
         // fprintf(stderr, "ERROR: %d\n", result);
     }else{
-        printf("OK\n");
+        //printf("OK\n");
     }
 
     free_variables(data);

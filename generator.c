@@ -19,7 +19,7 @@ void generate_readString()
 {
     GENERATE("\n#readString");
     GENERATE("JUMP !_readString");
-    GENERATE("LABEL !function_readString");
+    GENERATE("LABEL !FUNC_readString");
     GENERATE("PUSHFRAME");
     GENERATE("DEFVAR LF@%%retval0");
 
@@ -40,7 +40,7 @@ void generate_readInt()
 {
     GENERATE("#readInt");
     GENERATE("JUMP !_readInt");
-    GENERATE("LABEL !function_readInt");
+    GENERATE("LABEL !FUNC_readInt");
     GENERATE("PUSHFRAME");
     GENERATE("DEFVAR LF@%%retval0");
 
@@ -61,7 +61,7 @@ void generate_readDouble()
 {
     GENERATE("#readDouble");
     GENERATE("JUMP !_readDouble");
-    GENERATE("LABEL !function_readDouble");
+    GENERATE("LABEL !FUNC_readDouble");
     GENERATE("PUSHFRAME");
     GENERATE("DEFVAR LF@%%retval0");
 
@@ -83,7 +83,7 @@ void generate_write()
 {
     GENERATE("#write");
     GENERATE("JUMP !_write");
-    GENERATE("LABEL !function_write");
+    GENERATE("LABEL !FUNC_write");
     GENERATE("PUSHFRAME");
 
     GENERATE("WRITE LF@%%0");
@@ -106,7 +106,7 @@ void generate_Int2Double()
 {
     GENERATE("#Int2Double");
     GENERATE("JUMP !_Int2Double");
-    GENERATE("LABEL !function_Int2Double");
+    GENERATE("LABEL !FUNC_Int2Double");
     GENERATE("PUSHFRAME");
     GENERATE("DEFVAR LF@%%retval0");
 
@@ -133,7 +133,7 @@ void generate_Double2Int()
 {
     GENERATE("#Double2Int");
     GENERATE("JUMP !_Double2Int");
-    GENERATE("LABEL !function_Double2Int");
+    GENERATE("LABEL !FUNC_Double2Int");
     GENERATE("PUSHFRAME");
     GENERATE("DEFVAR LF@%%retval0");
 
@@ -158,7 +158,7 @@ void generate_length()
 {
     GENERATE("#length");
     GENERATE("JUMP !_length");
-    GENERATE("LABEL !function_length");
+    GENERATE("LABEL !FUNC_length");
     GENERATE("PUSHFRAME");
     GENERATE("DEFVAR LF@%%retval0");
 
@@ -182,7 +182,7 @@ void generate_substring()
 {
     GENERATE("#substr");
     GENERATE("JUMP !_substr");
-    GENERATE("LABEL !function_substr");
+    GENERATE("LABEL !FUNC_substr");
     GENERATE("PUSHFRAME");
 
     GENERATE("DEFVAR LF@%%retval0");
@@ -239,7 +239,7 @@ void generate_ord()
 {
     GENERATE("#ord");
     GENERATE("JUMP !_ord");
-    GENERATE("LABEL !function_ord");
+    GENERATE("LABEL !FUNC_ord");
     GENERATE("PUSHFRAME");
 
     GENERATE("DEFVAR LF@%%retval0");
@@ -271,7 +271,7 @@ void generate_chr()
 {
     GENERATE("#chr");
     GENERATE("JUMP !_chr");
-    GENERATE("LABEL !function_chr");
+    GENERATE("LABEL !FUNC_chr");
     GENERATE("PUSHFRAME");
     GENERATE("DEFVAR LF@%%retval0");
 
@@ -407,8 +407,8 @@ void generate_write_val(void)
     GENERATE("CREATEFRAME");
     GENERATE("DEFVAR TF@%%0");
     GENERATE("MOVE TF@%%0 GF@%%exp_result");
-    GENERATE("CALL !function_write");
-
+    GENERATE("CALL !FUNC_write");
+    
 }
 
 void gen_term(token_t *token){

@@ -473,7 +473,7 @@ int compare_output_types(analyse_data_t* data, stack_element* final_element){
         expected_type = func_data->return_data_type;
         nullable = func_data->return_data_q_type;
     }else if(data->in_var_definition && strcmp("%%exp_result", data->var_id->key)){
-    printf("name: %s; type: %d; token_name: %s\n", data->var_id->key, ((var_data_t*)data->var_id->data)->data_type, data->tmp_key);
+        //printf("name: %s; type: %d; token_name: %s\n", data->var_id->key, ((var_data_t*)data->var_id->data)->data_type, data->tmp_key);
         var_data_t* var_data = (var_data_t*)data->var_id->data;
         var_data->data_type = final_element->type;
         var_data->q_type = final_element->nullable;
@@ -566,7 +566,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
     process_parenthese(token, &parantheses_counter);
 
     do{
-        stack_print(stack);
+        //stack_print(stack);
         bool nullable = false;
         data_type input_id_data_type = Undefined;
         eSymbol input_symbol = token_to_esymbol(token, data, &input_id_data_type, &nullable);
@@ -748,7 +748,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
 
     FREE_RECOURCES(stack);
 
-    printf("End of Expression\n");
+    //printf("End of Expression\n");
 
     return SYNTAX_OK;
 }
