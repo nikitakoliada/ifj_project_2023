@@ -10,6 +10,7 @@
 
 //#include "expression.h"
 #include "analysis.h"
+#include "generator.h"
 #include "stack.h"
 #include "error.h"
 #include "scanner.h"
@@ -110,7 +111,7 @@ data_type get_data_type(token_t token, analyse_data_t* data, bool* is_nullable){
         case IDENTIFIER:
             assert(data->var_id);
             int label_deep = data->label_deep;
-            if(!strcmp(token.data.String, data->var_id->key) && data->in_var_definition){
+            if(data->tmp_key && !strcmp(token.data.String, data->tmp_key) && data->in_var_definition){
                 label_deep = label_deep > 0 ? label_deep - 1 : 0;
             }
             bst_node_ptr node = var_search(data, label_deep, token.data.String);
@@ -175,6 +176,7 @@ void swap(void** a, void** b){
 }
 
 int reduce(stack_t* stack){
+    int gen_rule = -1;
     stack_element* elements[3];
     int elements_count = 0;
 
@@ -241,6 +243,7 @@ int reduce(stack_t* stack){
         new_element->nullable = false;
         new_element->type = elements[0]->type;
         new_element->is_identifier = elements[0]->is_identifier;
+        gen_rule = NOT_NULL_R;
 
         // Generate ! code
     }
@@ -280,7 +283,7 @@ int reduce(stack_t* stack){
                 }
 
                 new_element->type = elements[2]->type;
-
+                gen_rule = NOT_NULL_R;
                 // Generate ?? code
             }
             else if(elements[1]->symbol == DivS){
@@ -293,20 +296,23 @@ int reduce(stack_t* stack){
                 if(elements[0]->type == Int_Type && elements[2]->type == Int_Type){
                     new_element->type = Int_Type;
                     // Generate decimal division
+                    gen_rule = IDIV_R;
                 }
                 else{
                     if(elements[0]->type == Int_Type ) {
                         if(elements[0]->is_identifier) return SEM_ERROR_TYPE_COMPAT;
                         // Generate Int2Double for 1 operands
+                        gen_int2double();
                     }
 
                     if(elements[2]->type == Int_Type) {
                         if(elements[2]->is_identifier) return SEM_ERROR_TYPE_COMPAT;
                         // Generate Int2Double for 2 operands
+                        gen_int2double_2op();
                     }
 
                     // Generate float division
-
+                    gen_rule = DIV_R;
                     new_element->type = Double_Type;
                 }
             }
@@ -324,6 +330,7 @@ int reduce(stack_t* stack){
                     new_element->type = String_Type;
 
                     // Generate concatenation
+                    gen_concat();
                 }
                 else{
                     if((elements[0]->type != Int_Type && elements[0]->type != Double_Type) 
@@ -337,11 +344,13 @@ int reduce(stack_t* stack){
                         if(elements[0]->type == Int_Type){
                             if(elements[0]->is_identifier) return SEM_ERROR_TYPE_COMPAT;
                             // Generate Int2Double code
+                            gen_int2double();
                         }
 
                         if(elements[2]->type == Int_Type){
                             if(elements[2]->is_identifier) return SEM_ERROR_TYPE_COMPAT;
                             // Generate Int2Double code
+                            gen_int2double_2op();
                         }
 
                         new_element->type = Double_Type;
@@ -350,12 +359,15 @@ int reduce(stack_t* stack){
                     switch(elements[1]->symbol){
                         case PlusS:
                             // Generate sum
+                            gen_rule = PLUS_R;
                             break;
                         case MinusS:
                             // Generate difference
+                            gen_rule = MINUS_R;
                             break;
                         case MultS:
                             // Generate multiplication
+                            gen_rule = MUL_R;
                             break;
                     }
                 }
@@ -368,11 +380,13 @@ int reduce(stack_t* stack){
                     if(elements[0]->type == Double_Type && elements[2]->type == Int_Type){
                         if(elements[2]->is_identifier) return SEM_ERROR_TYPE_COMPAT;
                         // Generate Int2Double code
+                        gen_int2double_2op();
                     }
 
                     if(elements[2]->type == Double_Type && elements[0]->type == Int_Type){
                         if(elements[0]->is_identifier) return SEM_ERROR_TYPE_COMPAT;
                         // Generate Int2Double code
+                        gen_int2double();
                     }
                 }
                 else if(elements[0]->type != elements[2]->type 
@@ -383,9 +397,11 @@ int reduce(stack_t* stack){
                 switch(elements[1]->symbol){
                     case EqS:
                         // Generate ==
+                        gen_rule = EQ;
                         break;
                     case NEqS:
                         // Generate !=
+                        gen_rule = EQ;
                         break;
                 }
 
@@ -403,15 +419,19 @@ int reduce(stack_t* stack){
                 switch(elements[1]->symbol){
                     case LessS:
                         // Generate <
+                        gen_rule = L;
                         break;
                     case GreaterS:
                         // Generate >
+                        gen_rule = G;
                         break;
                     case GEqS:
-                        // Geenrate >= 
+                        // Geenrate >=
+                        gen_rule = GEQ;
                         break;
                     case LEqs:
                         // Generate <=
+                        gen_rule = LEQ;
                         break;
                 }   
 
@@ -426,6 +446,10 @@ int reduce(stack_t* stack){
     }
     else{
         return SYNTAX_ERROR;
+    }
+
+    if(gen_rule != -1){
+        gen_operation(gen_rule); // Needs to be checked for an error
     }
 
     if(!stack_push(stack, new_element)) return INTERNAL_ERROR;
@@ -479,6 +503,8 @@ int compare_output_types(analyse_data_t* data, stack_element* final_element){
                 if(final_element->is_identifier){
                     return SEM_ERROR_TYPE_COMPAT;
                 }
+
+                gen_int2double();
             }
             else if(final_element->type != Double_Type){
                 return SEM_ERROR_TYPE_COMPAT;
@@ -602,6 +628,11 @@ int expression(analyse_data_t* data, bool* is_EOL){
                     return INTERNAL_ERROR;
                 } 
 
+                // Push new term
+                if((input_symbol == IdS && input_id_data_type != Undefined) || input_symbol == StringS || input_symbol == IntS || input_symbol == DoubleS){
+                    gen_push(&token);
+                }
+
                 prev_token = token;
 
                 GET_NEXT_NOT_EOL_TOKEN(token);
@@ -636,6 +667,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
                 if(!new_element) return INTERNAL_ERROR;
                 data_type type = Int_Type;
                 data->token = token;
+                gen_pop();
                 if((result = f_expression_call(data, prev_token, &type, &nullable))){
                     FREE_RECOURCES(stack);
                     return result;
@@ -655,6 +687,10 @@ int expression(analyse_data_t* data, bool* is_EOL){
                     FREE_RECOURCES(stack);
                     return INTERNAL_ERROR;
                 }
+
+                // Pop identifier from the stack
+                // Push function value
+                // No solution yet
 
                 GET_NEXT_NOT_EOL_TOKEN(token);
 
@@ -707,6 +743,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
     }
 
     // Generate assignment
+    generate_var_assignment(data->var_id->key);
 
     data->token = token;
     *is_EOL = was_EOL; 
