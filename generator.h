@@ -87,6 +87,7 @@ void generate_function_void_return(void);
 void generate_function_return(void);
 
 // If
+void gen_if_let(char *id, int let_if_counter);
 void gen_if_start(int if_counter);
 void gen_if_else(int if_counter);
 void gen_if_end(int if_counter);

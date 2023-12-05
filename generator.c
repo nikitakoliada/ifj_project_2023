@@ -650,6 +650,15 @@ void gen_while_end(int while_counter)
     GENERATE("LABEL !while_end_%d", while_counter);
 }
 
+void gen_if_let(char *id, int let_if_counter)
+{
+    GENERATE("JUMPIFEQ !if_let_%d LF@%s nil@nil", let_if_counter, id);
+    GENERATE("MOVE GF@%%exp_result bool@true");
+    GENERATE("LABEL !if_let_%d", let_if_counter);
+    GENERATE("MOVE GF@%%exp_result bool@false");
+    gen_if_start(let_if_counter);
+}
+
 void gen_if_start(int if_counter)
 {
     GENERATE("JUMPIFEQ !if_else_%d GF@%%exp_result bool@false", if_counter);
