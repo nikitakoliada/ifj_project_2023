@@ -175,9 +175,7 @@ void generate_length()
  *
  * @return the substring of the specified string s.
  * If the index i or j is out of bounds or if j < i,
- * the function returns an empty string.
- * If any parameter is nil,
- * error 8 occurs.
+ * the function returns a nil value.
  */
 
 void generate_substring()
@@ -186,33 +184,28 @@ void generate_substring()
     GENERATE("JUMP !_substr");
     GENERATE("LABEL !function_substr");
     GENERATE("PUSHFRAME");
+
     GENERATE("DEFVAR LF@%%retval0");
     GENERATE("DEFVAR LF@%%cond_range");
     GENERATE("DEFVAR LF@%%length");
     GENERATE("DEFVAR LF@%%char");
 
-    GENERATE("MOVE LF@%%retval0 string@");
-
-    GENERATE("JUMPIFEQ nil$error_substr nil@nil LF@substr$s");
-    GENERATE("JUMPIFEQ nil$error_substr nil@nil LF@substr$i");
-    GENERATE("JUMPIFEQ nil$error_substr nil@nil LF@substr$j");
-
-    GENERATE("LT LF@%%cond_range LF@substr$i int@1");
+    GENERATE("LT LF@%%cond_range LF@substr$i int@0");
     GENERATE("JUMPIFEQ nil$return_substr LF@%%cond_range bool@true");
+
     GENERATE("STRLEN LF@%%length LF@substr$s");
-    GENERATE("GT LF@%%cond_range LF@substr$i LF@%%length");
+
+    GENERATE("LT LF@%%cond_range LF@substr$i LF@%%length");
+    GENERATE("JUMPIFEQ nil$return_substr LF@%%cond_range bool@false");
+
+    GENERATE("LT LF@%%cond_range LF@substr$j int@0");
     GENERATE("JUMPIFEQ nil$return_substr LF@%%cond_range bool@true");
 
-    GENERATE("LT LF@%%cond_range LF@substr$j int@1");
-    GENERATE("JUMPIFEQ nil$return_substr LF@%%cond_range bool@true");
     GENERATE("GT LF@%%cond_range LF@substr$j LF@%%length");
     GENERATE("JUMPIFEQ nil$return_substr LF@%%cond_range bool@true");
 
-    GENERATE("LT LF@%%cond_range LF@substr$j LF@substr$i");
+    GENERATE("GT LF@%%cond_range LF@substr$i LF@substr$j");
     GENERATE("JUMPIFEQ nil$return_substr LF@%%cond_range bool@true");
-
-    GENERATE("SUB LF@substr$i LF@substr$i int@1");
-    GENERATE("SUB LF@substr$j LF@substr$j int@1");
 
     GENERATE("LABEL loop");
     GENERATE("GT LF@%%cond_range LF@substr$i LF@substr$j");
@@ -221,10 +214,6 @@ void generate_substring()
     GENERATE("CONCAT LF@%%retval0 LF@%%retval0 LF@%%char");
     GENERATE("ADD LF@substr$i LF@substr$i int@1");
     GENERATE("JUMP loop");
-
-    GENERATE("LABEL nil$error_substr");
-    GENERATE("EXIT int@8");
-    GENERATE("JUMP !end_substr");
 
     GENERATE("LABEL nil$return_substr");
     GENERATE("MOVE LF@%%retval0 nil@nil");
@@ -239,9 +228,8 @@ void generate_substring()
 /**
  * @brief BuiltIn function ord
  *
- * @return the ordinal value of character at position i in the string s.
- * If one of the parameters is nil, error 8 occurs.
- * If the index i is outside the bounds of the string (1 to #s), the function returns nil.
+ * @return the ordinal value of first character of the string s.
+ * If the string is empty, the function returns 0.
  */
 void generate_ord()
 {
@@ -251,27 +239,16 @@ void generate_ord()
     GENERATE("PUSHFRAME");
 
     GENERATE("DEFVAR LF@%%retval0");
-    GENERATE("DEFVAR LF@%%length");
     GENERATE("DEFVAR LF@%%cond_range");
 
-    GENERATE("JUMPIFEQ nil$error_ord nil@nil LF@ord$s");
-    GENERATE("JUMPIFEQ nil$error_ord nil@nil LF@ord$i");
+    GENERATE("JUMPIFEQ empty$error_ord string@ LF@ord$s");
 
-    GENERATE("STRLEN LF@%%length LF@ord$s");
-    GENERATE("GT LF@%%cond_range LF@ord$i LF@%%length");
-    GENERATE("JUMPIFEQ nil$return_ord LF@%%cond_range bool@true");
-    GENERATE("LT LF@%%cond_range LF@ord$i int@1");
-    GENERATE("JUMPIFEQ nil$return_ord LF@%%cond_range bool@true");
-
-    GENERATE("STRI2INT LF@%%retval0 LF@ord$s LF@ord$i");
+    GENERATE("STRI2INT LF@%%retval0 LF@ord$s int@0");
     GENERATE("JUMP !end_ord");
 
-    GENERATE("LABEL nil$error_ord");
-    GENERATE("EXIT int@8");
+    GENERATE("LABEL empty$error_ord");
+    GENERATE("MOVE LF@%%retval0 int@0");
     GENERATE("JUMP !end_ord");
-
-    GENERATE("LABEL nil$return_ord");
-    GENERATE("MOVE LF@%%retval0 nil@nil");
 
     GENERATE("LABEL !end_ord");
     GENERATE("POPFRAME");
@@ -285,8 +262,6 @@ void generate_ord()
  *
  * @return a one-character string with a character
  * whose ASCII code is specified by the i parameter.
- * The case when i is outside the interval [0; 255], leads
- * to nil. If i nil, error 8 occurs.
  */
 void generate_chr()
 {
@@ -296,18 +271,7 @@ void generate_chr()
     GENERATE("PUSHFRAME");
     GENERATE("DEFVAR LF@%%retval0");
 
-    GENERATE("GT LF@%%cond_range LF@chr$i int@255");
-    GENERATE("JUMPIFEQ $chr$error LF@%%cond_range bool@true");
-    GENERATE("LT LF@%%cond_range LF@chr$i int@0");
-    GENERATE("JUMPIFEQ $chr$error LF@%%cond_range bool@true");
-
     GENERATE("INT2CHAR LF@%%retval0 LF@chr$i");
-    GENERATE("JUMP !end_chr");
-
-    GENERATE("LABEL $chr$error");
-    GENERATE("EXIT int@8");
-
-    GENERATE("LABEL !end_chr");
 
     GENERATE("POPFRAME");
     GENERATE("RETURN");
@@ -315,6 +279,12 @@ void generate_chr()
     GENERATE_EMPTY_LINE();
 }
 
+/**
+ * @brief Define all built in functions
+ *
+ * @param void
+ * @return void
+ */
 void define_built_in_functions()
 {
     generate_readString();
@@ -329,11 +299,6 @@ void define_built_in_functions()
     generate_Int2Double();
 }
 
-/**
- * @brief Generate header of the code
- *
- * @return void
- */
 void generator_start(void)
 {
     GENERATE(".IFJcode23");
@@ -433,11 +398,11 @@ void generate_read(char *id, data_type type)
     }
 }
 
-void generate_write_var(char *id)
+void generate_write_val(void)
 {
     GENERATE("CREATEFRAME");
     GENERATE("DEFVAR TF@%%0");
-    GENERATE("MOVE TF@%%0 LF@%s", id);
+    GENERATE("MOVE TF@%%0 LF@%%exp_result");
     GENERATE("CALL !function_write");
 
 }
@@ -528,7 +493,6 @@ void gen_operation(rules rule){
             GENERATE("NOTS");
             break;
         case NOT_NIL_R:
-//           E == NIL ? ERROR : E IS NOT NULLABLE
             GENERATE("POPS GF@%%tmp1");
             GENERATE("PUSHS GF@%%tmp1");
             GENERATE("PUSHS nil@nil");
@@ -537,7 +501,6 @@ void gen_operation(rules rule){
             GENERATE("PUSHS GF@%%tmp1");
             break;
         case NOT_NULL_R:
-//          E1 == NULL ? E2 : E1
             GENERATE("POPS GF@%%tmp1");
             GENERATE("POPS GF@%%tmp2");
             GENERATE("POPS GF@%%tmp3");
