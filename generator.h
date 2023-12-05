@@ -52,46 +52,133 @@ typedef enum{
 }rules;
 
 
-//built-in function definitions
-void generate_readString(void);
-void generate_readInt(void);
-void generate_readDouble(void);
-void generate_Double2Int(void);
-void generate_Int2Double(void);
-void generate_length(void);
-void generate_substring(void);
-void generate_write(void);
-void generate_ord(void);
-void generate_chr(void);
-void define_built_in_functions(void);
+/**
+ * @brief Generate header of the code,
+ * define all built in functions and global variables
+ * and jump to main function.
+ *
+ * @return void
+ */
+void generator_start(void);
 
-// All about variables
+/**
+ * @brief Generate end of the code
+ *
+ * @return void
+ */
+void generator_end(void);
+
+/**
+ * @brief Generate code for variable declaration
+ *
+ * @param id - name of variable
+ * @return void
+ */
 void generate_var_declaration(char *id);
+
+/**
+ * @brief Generate code for variable definition
+ *
+ * @param id - name of variable
+ * @param type - type of variable
+ * @return void
+ */
 void generate_var_definition(char *id, data_type type);
+
+/**
+ * @brief Generate code for variable assignment
+ * from stack to variable
+ *
+ * @param id - name of variable
+ * @return void
+ */
 void generate_var_assignment(char *id);
 
-// Read and write
-void generate_read(char *id, data_type type);
-void generate_write_var(char *id);
 
-// Stack
+/**
+ * @brief Generate code to read variable from stdin
+ *
+ * @param id - name of variable
+ * @param type - type of variable to read
+ *
+ * @return void
+ */
+void generate_read(char *id, data_type type);
+
+/**
+ * @brief Generate code to write value of variable
+ * exp_result to stdout
+ *
+ * @return void
+ */
+void generate_write_val(void);
+
+/**
+ * @brief Push value of variable to stack
+ *
+ * @param token - token with value of variable
+ */
 void gen_push(token_t *token);
+
+/**
+ * @brief Remove value from stack
+ *
+ * @return void
+ */
 void gen_pop(void);
+
+/**
+ * @brief Generate code to assign value of variable
+ *
+ * @param token - token with value of variable
+ * @return void
+ */
 void gen_term(token_t *token);
+
+/**
+ * @brief Generate code with operation for stack
+ *
+ * @param rule - rule of operation
+ * @return void
+ */
 void gen_operation(rules rule);
+
+/**
+ * @brief Generate code for int to double conversion
+ * from stack
+ *
+ * @return void
+ */
 void gen_int2double(void);
+
+/**
+ * @brief Generate code for double to int conversion
+ * from stack
+ *
+ * @return void
+ */
 void gen_double2int(void);
+
+/**
+ * @brief Generate code for concatenation of two strings
+ * from stack
+ *
+ * @return void
+ */
 void gen_concat(void);
+
+/**
+ * @brief Generate code for int to double conversion
+ * with two operands
+ *
+ *
+ * @return void
+ */
 void gen_int2double_2op(void);
 
-// Call
 void gen_call_start(void);
 void add_param_to_call(char* param_name);
 void gen_call(char* function_name);
-
-// Start and end
-void generator_start(void);
-void generator_end(void);
 
 // Function generation
 void generate_function_start(char* function_name);
@@ -102,6 +189,7 @@ void generate_function_void_return(void);
 void generate_function_return(void);
 
 // If
+void gen_if_let(char *id, int let_if_counter);
 void gen_if_start(int if_counter);
 void gen_if_else(int if_counter);
 void gen_if_end(int if_counter);

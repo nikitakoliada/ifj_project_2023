@@ -16,11 +16,10 @@
 #include "scanner.h"  
 
 
-
 //used to create a reusable code block 
 //that can be inserted wherever needed in the program
-#define GENERATE_CODE(_callback, ...)								\
-	if (!_callback(__VA_ARGS__)) return ERROR_INTERNAL
+#define GENERATE_BLOCK(_call_gen_func, ...)								\
+	_call_gen_func(__VA_ARGS__);
 
 typedef struct
 {
