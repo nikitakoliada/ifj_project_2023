@@ -193,6 +193,7 @@ void generate_substring()
     GENERATE("DEFVAR LF@%%char");
 
     GENERATE("LT LF@%%cond_range LF@substr$i int@0");
+
     GENERATE("JUMPIFEQ nil$return_substr LF@%%cond_range bool@true");
 
     GENERATE("STRLEN LF@%%length LF@substr$s");
@@ -218,6 +219,7 @@ void generate_substring()
     GENERATE("JUMP loop");
 
     GENERATE("LABEL nil$return_substr");
+  
     GENERATE("MOVE LF@%%retval0 nil@nil");
 
     GENERATE("LABEL !end_substr");
@@ -642,11 +644,11 @@ void gen_if_end(int if_counter)
 }
 
 
-int main()
+/*int main()
 {
     generator_start();
     generator_end();
     return 0;
-}
+}*/
 
 

@@ -224,19 +224,19 @@ static bool init_variables(analyse_data_t* data)
     readString->defined = true;
     readString->param_len = -1;
     readString->return_data_type = String_Type;
-    readString->return_data_q_type = false;
+    readString->return_data_q_type = true;
     symtable_insert_function(&data->global_table, "readString", readString);
     function_data_t * readInt = malloc(sizeof(function_data_t));
     readInt->defined = true;
     readInt->param_len = -1;
     readInt->return_data_type = Int_Type;
-    readInt->return_data_q_type = false;
+    readInt->return_data_q_type = true;
     symtable_insert_function(&data->global_table, "readInt", readInt);
     function_data_t * readDouble = malloc(sizeof(function_data_t));
     readDouble->defined = true;
     readDouble->param_len = -1; // -1 == 0 in our compiler
     readDouble->return_data_type = Double_Type;
-    readDouble->return_data_q_type = false;
+    readDouble->return_data_q_type = true;
     symtable_insert_function(&data->global_table, "readDouble", readDouble);
 
     function_data_t * Int2Double = malloc(sizeof(function_data_t));
@@ -649,26 +649,29 @@ static int if_else(analyse_data_t* data){
         data->in_while_or_if = true;
         symtable_init(&data->local_table[data->label_deep]);
         data->label_index += 2;
+        bst_node_ptr let_id = NULL;
+        bool prev_q_type = false;
         GET_TOKEN();
         if(data->token.type == KEYWORD && data->token.data.Keyword == Let_KW){
             GET_TOKEN_AND_CHECK_TYPE(IDENTIFIER);
-            bst_node_ptr let_id = var_search(data, data->label_deep, data->token.data.String);
-            bool prev_q_type = ((var_data_t*)(*let_id).data).q_type;
-            ((var_data_t*)(*let_id).data).q_type = true;
+
+            let_id = var_search(data, data->label_deep, data->token.data.String);
             if(let_id == NULL){
                 return SEM_ERROR_UNDEF_VAR;
             }
-            /*else if(((var_data_t*)(*let_id).data)->constant == false){
-                return SEM_ERROR_UNDEF_VAR;
-            }*/
-            ((var_data_t*)(*let_id).data).q_type = prev_q_type;
+            if(((var_data_t*)(*let_id).data)->q_type == false){
+                return SEM_ERROR_TYPE_COMPAT;
+            }
+            prev_q_type = ((var_data_t*) let_id->data)->q_type; 
+            ((var_data_t*) let_id->data)->q_type = false;
+            GENERATE_BLOCK(gen_if_let, let_id->key, data->label_index);
             GET_TOKEN();
         }
         else{
             data->var_id = symtable_search(&data->global_table, "%%exp_result");
             CHECK_EXPRESSION();
+            GENERATE_BLOCK(gen_if_start, data->label_index);
         }
-        GENERATE_BLOCK(gen_if_start, data->label_index);
         CHECK_TYPE(TOKEN_LEFT_CURLY_BRACKET);
 		data->in_while_or_if = false;
         GET_TOKEN_AND_CHECK_RULE(statement);
@@ -686,6 +689,9 @@ static int if_else(analyse_data_t* data){
         symtable_dispose(&data->local_table[data->label_deep]);
         data->label_deep--;
         GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
+        if(let_id){
+            ((var_data_t*) let_id->data)->q_type = prev_q_type;
+        }
         GENERATE_BLOCK(gen_if_end, data->label_index);
         
         return SYNTAX_OK;
@@ -771,16 +777,17 @@ static int def_var(analyse_data_t* data){
             CHECK_RULE(def_type);
             var_data->q_type = ((var_data_t*)(*data->var_id).data)->q_type;
             var_data->data_type = ((var_data_t*)(*data->var_id).data)->data_type;
+            data->in_var_definition = false;
         }
         else{
             var_data->q_type = Undefined;
             var_data->data_type = Undefined;
+            data->in_var_definition = true;
         }
         GENERATE_BLOCK(generate_var_definition, data->tmp_key, var_data->data_type);
         // = 〈 expression 〉
         if(data->token.type == ASSIGNMENT){
             no_assignment = false;
-            data->in_var_definition = true;
             GET_TOKEN_AND_CHECK_EXPRESSION();
             GENERATE_BLOCK(generate_var_assignment, data->tmp_key);
             data->in_var_definition = false;
@@ -801,7 +808,6 @@ static int def_var(analyse_data_t* data){
 
 static int write(analyse_data_t* data){
     //???. 〈 write 〉 −→ write ( 〈 expression 〉, ...)
-    GENERATE_BLOCK(gen_call_start);
     CHECK_TYPE(TOKEN_LEFT_BRACKET);
     GET_TOKEN_AND_CHECK_RULE(possible_EOL);
     if(data->token.type == TOKEN_RIGHT_BRACKET){
@@ -814,10 +820,10 @@ static int write(analyse_data_t* data){
         CHECK_RULE(possible_EOL);
         data->var_id = symtable_search(&data->global_table, "%%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
+        GENERATE_BLOCK(generate_write_val);
     }
     CHECK_RULE(possible_EOL);
     CHECK_TYPE(TOKEN_RIGHT_BRACKET);
-    GENERATE_BLOCK(gen_call, "write");
     //GET_TOKEN_AND_CHECK_TYPE(TOKEN_EOL);
     return SYNTAX_OK;
 
@@ -861,7 +867,6 @@ int f_expression_call(analyse_data_t* data, token_t id, data_type* type, bool* n
     bst_node_ptr prev_current = data->current_id;
     bst_node_ptr prev_var = data->var_id;
     data->current_id = symtable_search(&data->global_table, id.data.String);
-    data->tmp_key = id.data.String;
     *type = ((function_data_t*)data->current_id->data)->return_data_type;
     *nullable = ((function_data_t*)data->current_id->data)->return_data_q_type;
     CHECK_RULE(f_call);

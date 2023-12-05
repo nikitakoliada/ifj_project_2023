@@ -12,7 +12,6 @@
 
 #include "symtable.h"
 #include "scanner.h"
-#include "expression.h"
 
 #ifndef GENERATOR_H
 #define GENERATOR_H
@@ -38,6 +37,22 @@
   {                                    \
     fprintf(stdout, __VA_ARGS__);      \
   } while (0)
+
+typedef enum{
+    EQ,    // ==
+    NEQ,    // !=
+    G,  // >
+    GEQ,    // >=
+    L,  // <
+    LEQ,    // <=
+    PLUS_R,   // +
+    MINUS_R,  // -
+    MUL_R,    // *
+    DIV_R,    // /
+    IDIV_R,   // //
+    NOT_NIL_R,    // !
+    NOT_NULL_R,    // ??
+}rules;
 
 
 /**
@@ -81,6 +96,7 @@ void generate_var_definition(char *id, data_type type);
  * @return void
  */
 void generate_var_assignment(char *id);
+
 
 /**
  * @brief Generate code to read variable from stdin

@@ -5,6 +5,7 @@
  # @brief Makefile implementation
  #
  # @author Juraj Remeň - xremen02
+ # @author Pavlo Butenko - xbuten00
 ##
 
 CC = gcc
@@ -14,7 +15,7 @@ GENERATOR := generator.c generator.h
 
 all: ifj
 
-ifj: scanner.o symtable.o stack.o analysis.o expression.o main.c
+ifj: scanner.o symtable.o stack.o analysis.o expression.o generator.o main.c
 	${CC} ${FLAGS} -o $@ $^
 
 .PHONY: generator_test ifj
