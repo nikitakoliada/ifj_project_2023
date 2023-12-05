@@ -472,8 +472,8 @@ int compare_output_types(analyse_data_t* data, stack_element* final_element){
         function_data_t* func_data = (function_data_t*)data->current_id->data;
         expected_type = func_data->return_data_type;
         nullable = func_data->return_data_q_type;
-    }else if(data->in_var_definition){
-    printf("name: %s; type: %d\n", data->var_id->key, ((var_data_t*)data->var_id->data)->data_type);
+    }else if(data->in_var_definition && strcmp("%%exp_result", data->var_id->key)){
+    printf("name: %s; type: %d; token_name: %s\n", data->var_id->key, ((var_data_t*)data->var_id->data)->data_type, data->tmp_key);
         var_data_t* var_data = (var_data_t*)data->var_id->data;
         var_data->data_type = final_element->type;
         var_data->q_type = final_element->nullable;
@@ -677,6 +677,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
                 new_element->nullable = nullable;
                 new_element->type = type;
                 new_element->symbol = FunctionS;
+                parantheses_counter--;
                 if(!stack_pop(stack))
                 {
                     FREE_RECOURCES(stack);
@@ -688,9 +689,6 @@ int expression(analyse_data_t* data, bool* is_EOL){
                     return INTERNAL_ERROR;
                 }
 
-                // Pop identifier from the stack
-                // Push function value
-                // No solution yet
 
                 GET_NEXT_NOT_EOL_TOKEN(token);
 
