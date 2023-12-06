@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <ctype.h>
 
 #include "symtable.h"
 #include "scanner.h"
@@ -38,6 +39,7 @@
     fprintf(stdout, __VA_ARGS__);      \
   } while (0)
 
+/** @brief enum for rules of operations */
 typedef enum{
     EQ,    // ==
     NEQ,    // !=

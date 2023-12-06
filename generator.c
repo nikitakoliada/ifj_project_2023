@@ -412,6 +412,8 @@ void generate_write_val(void)
 }
 
 void gen_term(token_t *token){
+    char* tmp;
+    char* tmp2;
     switch (token->type){
         case INT_VALUE:
             GENERATE("int@%lld", token->data.Int);
@@ -420,7 +422,32 @@ void gen_term(token_t *token){
             GENERATE("float@%a", token->data.Double);
             break;
         case STRING_VALUE:
-            GENERATE("string@%s", token->data.String);
+            tmp = malloc(strlen(token->data.String) + 1);
+            tmp2 = malloc(4 * sizeof(char));
+            for (int i = 0; i < strlen(token->data.String); i++){
+                if (token->data.String[i] == '\\'
+                    || token->data.String[i] == '#'
+                    || token->data.String[i] <= 32
+                    || !isprint(token->data.String[i])){
+                    if(realloc(tmp, strlen(tmp) + 4) == NULL){
+                        fprintf(stderr, "Error while reallocating memory\n");
+                        exit(INTERNAL_ERROR);
+                    }
+                    tmp[i] = '\\';
+                    sprintf(tmp2, "%03d", token->data.String[i]);
+                    tmp = strcat(tmp, tmp2);
+                }else{
+                    tmp[strlen(tmp)] = token->data.String[i];
+                    if(realloc(tmp, strlen(tmp) + 1) == NULL){
+                        fprintf(stderr, "Error while reallocating memory\n");
+                        exit(INTERNAL_ERROR);
+                    }
+                }
+            }
+            tmp[strlen(tmp)] = '\0';
+            GENERATE("string@%s", tmp);
+            free(tmp);
+            free(tmp2);
             break;
         case IDENTIFIER:
             GENERATE("LF@%s", token->data.String);
@@ -503,21 +530,18 @@ void gen_operation(rules rule){
             break;
         case NOT_NIL_R:
             GENERATE("POPS GF@%%tmp1");
-            GENERATE("PUSHS GF@%%tmp1");
-            GENERATE("PUSHS nil@nil");
-            GENERATE("EQS");
-            GENERATE("ORS");
-            GENERATE("PUSHS GF@%%tmp1");
+            GENERATE("JUMPIFEQ !nil_error_exit GF@%%tmp1 nil@nil");
+            GENERATE("LABEL !nil_error_exit");
+            GENERATE("EXIT int@4");
             break;
         case NOT_NULL_R:
             GENERATE("POPS GF@%%tmp1");
             GENERATE("POPS GF@%%tmp2");
-            GENERATE("POPS GF@%%tmp3");
-            GENERATE("PUSHS GF@%%tmp3");
-            GENERATE("PUSHS GF@%%tmp2");
-            GENERATE("EQS");
+            GENERATE("PUSHS nil@nil");
             GENERATE("PUSHS GF@%%tmp1");
-            GENERATE("PUSHS GF@%%tmp3");
+            GENERATE("EQS");
+            GENERATE("POPS GF@%%tmp1");
+
             GENERATE("EQS");
             GENERATE("ORS");
             GENERATE("PUSHS GF@%%tmp2");

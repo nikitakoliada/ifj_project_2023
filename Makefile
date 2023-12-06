@@ -4,8 +4,7 @@
  #
  # @brief Makefile implementation
  #
- # @author Maksym Podhornyi - xpodho08
- # @author Pavlo Butenko - xbuten00
+ # @author Nikita Koliada - xkolia00
 ##
 
 CC = gcc
