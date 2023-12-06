@@ -284,6 +284,44 @@ void generate_chr()
 }
 
 /**
+ * @brief Generate error function
+ *
+ * @return void
+ */
+void generate_error_function(void){
+    GENERATE("#error");
+    GENERATE("JUMP !_error");
+    GENERATE("LABEL !error");
+    GENERATE("PUSHFRAME");
+
+    GENERATE("EXIT int@4");
+
+    GENERATE("POPFRAME");
+    GENERATE("RETURN");
+    GENERATE("LABEL !_error");
+    GENERATE_EMPTY_LINE();
+}
+
+/**
+ * @brief Generate function push not nil
+ *
+ * @return void
+ */
+void generate_function_push_not_nil(void){
+    GENERATE("#push_not_nil");
+    GENERATE("JUMP !_push_not_nil");
+    GENERATE("LABEL !push_not_nil");
+    GENERATE("PUSHFRAME");
+
+    GENERATE("PUSHS GF@%%tmp1");
+
+    GENERATE("POPFRAME");
+    GENERATE("RETURN");
+    GENERATE("LABEL !_push_not_nil");
+    GENERATE_EMPTY_LINE();
+}
+
+/**
  * @brief Define all built in functions
  *
  * @param void
@@ -311,6 +349,7 @@ void generator_start(void)
     GENERATE("DEFVAR GF@%%tmp2");
     GENERATE("DEFVAR GF@%%tmp3");
     define_built_in_functions();
+    generate_error_function();
     GENERATE("LABEL $$main");
     GENERATE("CREATEFRAME");
     GENERATE("PUSHFRAME");
@@ -530,24 +569,13 @@ void gen_operation(rules rule){
             break;
         case NOT_NIL_R:
             GENERATE("POPS GF@%%tmp1");
-            GENERATE("JUMPIFEQ !nil_error_exit GF@%%tmp1 nil@nil");
-            GENERATE("LABEL !nil_error_exit");
-            GENERATE("EXIT int@4");
+            GENERATE("JUMPIFEQ !error GF@%%tmp1 nil@nil");
             break;
         case NOT_NULL_R:
             GENERATE("POPS GF@%%tmp1");
-            GENERATE("POPS GF@%%tmp2");
-            GENERATE("PUSHS nil@nil");
-            GENERATE("PUSHS GF@%%tmp1");
-            GENERATE("EQS");
+            GENERATE("JUMPIFEQ !push_not_nil GF@%%tmp1 nil@nil");
             GENERATE("POPS GF@%%tmp1");
-
-            GENERATE("EQS");
-            GENERATE("ORS");
-            GENERATE("PUSHS GF@%%tmp2");
-            GENERATE("PUSHS GF@%%tmp1");
-            GENERATE("EQS");
-            GENERATE("ORS");
+            GENERATE("JUMPIFEQ !push_not_nil GF@%%tmp1 nil@nil");
             break;
         default:
             break;
@@ -571,25 +599,6 @@ void add_param_to_call(char* param_name){
 }
 
 void gen_call(char* function_name){
-    if(strcmp(function_name, "readInt") == 0){
-        GENERATE("CALL !function_readInt");
-    }else if(strcmp(function_name, "readDouble") == 0){
-        GENERATE("CALL !function_readDouble");
-    }else if(strcmp(function_name, "readString") == 0){
-        GENERATE("CALL !function_readString");
-    }else if(strcmp(function_name, "Int2Double") == 0){
-        GENERATE("CALL !function_Int2Double");
-    }else if(strcmp(function_name, "Double2Int") == 0){
-        GENERATE("CALL !function_Double2Int");
-    }else if(strcmp(function_name, "length") == 0){
-        GENERATE("CALL !function_length");
-    }else if(strcmp(function_name, "substring") == 0){
-        GENERATE("CALL !function_substr");
-    }else if(strcmp(function_name, "ord") == 0){
-        GENERATE("CALL !function_ord");
-    }else if(strcmp(function_name, "chr") == 0){
-        GENERATE("CALL !function_chr");
-    }
     GENERATE("CALL !FUNC_%s", function_name);
 }
 
