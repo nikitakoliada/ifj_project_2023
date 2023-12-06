@@ -269,6 +269,23 @@ void test_factorial_code() {
     printf("Factorial Code Test: Passed\n");
 }
 
+// TODO max should fix it 
+void test_nullable() {
+    char *input = "Int???";
+    FILE *file = fmemopen(input, strlen(input), "r");
+    set_source_file(file);
+
+    token_t token;
+    get_next_token(&token);
+
+    assert(token.type == KEYWORD);
+    assert(token.data.Keyword == IntNullable_KW);
+    get_next_token(&token);
+    assert(token.type == NIL_COLL);
+    fclose(file);
+    printf("Nullable type Test: Passed\n");
+}
+
 int main() {
     test_keyword_token();
     test_builtin_function_token();
@@ -284,6 +301,7 @@ int main() {
     test_state_transition();
     test_string_value_token();
     test_factorial_code();
+    test_nullable();
     
     return 0;
 }
