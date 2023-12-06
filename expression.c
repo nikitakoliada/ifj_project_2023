@@ -468,7 +468,7 @@ int compare_output_types(analyse_data_t* data, stack_element* final_element){
         nullable = type.q_type;
     }else if(data->in_while_or_if){
         return final_element->type == Bool_Type && !final_element->nullable ? SYNTAX_OK : SEM_ERROR_TYPE_COMPAT;
-    }else if(data->in_function && !data->in_var_definition && ((var_data_t*)data->var_id->data)->data_type == Undefined){
+    }else if(data->in_function && strcmp(data->tmp_func, "write") && !data->in_var_definition && ((var_data_t*)data->var_id->data)->data_type == Undefined){
         function_data_t* func_data = (function_data_t*)data->current_id->data;
         expected_type = func_data->return_data_type;
         nullable = func_data->return_data_q_type;
