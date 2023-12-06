@@ -18,131 +18,6 @@
 //Defining macros for easier work with the parser 
 //and for better readability of the code
 int result = SYNTAX_ERROR;
-void print_token(token_t *token)
-{
-   switch (token->type) {
-       case KEYWORD:
-           printf("KEYWORD\n");
-           switch (token->data.Keyword) {
-               case Double_KW:
-                   printf("Double_KW\n");
-                   break;
-               case Else_KW:
-                   printf("Else_KW\n");
-                   break;
-               case If_KW:
-                   printf("If_KW\n");
-                   break;
-               case Int_KW:
-                   printf("Int_KW\n");
-                   break;
-               case Return_KW:
-                   printf("Return_KW\n");
-                   break;
-               case String_KW:
-                   printf("String_KW\n");
-                   break;
-               case Var_KW:
-                   printf("Var_KW\n");
-                   break;
-               case While_KW:
-                   printf("While_KW\n");
-                   break;
-               case Nil_KW:
-                   printf("Nil_KW\n");
-                   break;
-               case Function_KW:
-                   printf("Function_KW\n");
-                   break;
-               case Let_KW:
-                   printf("Let_KW\n");
-                   break;
-           }
-           break;
-       case IDENTIFIER:
-           printf("IDENTIFIER\n");
-           printf("%s\n", token->data.String);
-           break;
-       case TOKEN_EOF:
-           printf("TOKEN_EOF\n");
-           break;
-       case TOKEN_EOL:
-           printf("TOKEN_EOL\n");
-           break;
-       case TOKEN_FUNCTION_TYPE:
-           printf("TOKEN_FUNCTION_TYPE\n");
-           break;
-       case STRING_VALUE:
-           printf("STRING_VALUE\n");
-           printf("%s\n", token->data.String);
-           break;
-       case INT_VALUE:
-           printf("INT_VALUE\n");
-           printf("%lld\n", token->data.Int);
-           break;
-       case (PLUS):
-           printf("PLUS\n");
-           break;
-       case (MINUS):
-           printf("MINUS\n");
-           break;
-       case (MUL):
-           printf("MULTIPLY\n");
-           break;
-       case (DIV):
-           printf("DIVIDE\n");
-           break;
-       case (EQUAL):
-           printf("EQUAL\n");
-           break;
-       case (NOT_EQUAL):
-           printf("NOT_EQUAL\n");
-           break;
-       case (LESS_THAN):
-           printf("LESS_THAN\n");
-           break;
-       case (LESS_THAN_OR_EQUAL):
-           printf("LESS_THAN_OR_EQUAL\n");
-           break;
-       case (MORE_THAN):
-           printf("MORE_THAN\n");
-           break;
-       case (MORE_THAN_OR_EQUAL):
-           printf("MORE_THAN_OR_EQUAL\n");
-           break;
-       case (TOKEN_LEFT_BRACKET):
-           printf("TOKEN_LEFT_BRACKET\n");
-           break;
-       case (TOKEN_RIGHT_BRACKET):
-           printf("TOKEN_RIGHT_BRACKET\n");
-           break;
-       case (TOKEN_LEFT_CURLY_BRACKET):
-           printf("TOKEN_LEFT_CURLY_BRACKET\n");
-           break;
-       case (TOKEN_RIGHT_CURLY_BRACKET):
-           printf("TOKEN_RIGHT_CURLY_BRACKET\n");
-           break;
-       case (COMMA):
-           printf("COMMA\n");
-           break;
-       case (COLON):
-           printf("COLON\n");
-           break;
-       case (NOT):
-           printf("NOT\n");
-           break;
-       case (DOUBLE_VALUE):
-           printf("DOUBLE_VALUE\n");
-           printf("%f\n", token->data.Double);
-           break;
-       case ASSIGNMENT:
-           printf("ASSIGNMENT\n");
-           break;
-       default:
-           printf("%d\n", token->type);
-           break;
-   }
-}
 
 #define GET_TOKEN()													\
 	if ((result = get_next_token(&data->token)) != 0) {        \
@@ -408,7 +283,6 @@ static int statement(analyse_data_t* data)
         data->tmp_func = data->token.data.String;
         GET_TOKEN();
         if(data->token.type == ASSIGNMENT){
-            //printf("%s", data->tmp_key);
             CHECK_RULE(assignment);
 
             CHECK_RULE(possible_EOL);
@@ -433,7 +307,6 @@ static int statement(analyse_data_t* data)
     //6. 〈 statement 〉 −→ 〈def_var 〉 EOL 〈 statement 〉
     else if(data->token.type == KEYWORD && (data->token.data.Keyword == Let_KW || data->token.data.Keyword == Var_KW)){
         CHECK_RULE(def_var);
-        //printf("%s", data->var_id->key);
         CHECK_RULE(possible_EOL);
         return statement(data);
     }
@@ -464,7 +337,7 @@ static int statement(analyse_data_t* data)
     }
     //9. 〈 statement 〉 −→ 〈 end 〉
     else if(data->token.type == TOKEN_EOF){
-        return end(data); // TODO ig idk maybe inside end
+        return end(data);
     }
     //10. 〈 statement 〉 −→ ε
     return SYNTAX_OK;
@@ -645,7 +518,6 @@ static int args_n(analyse_data_t* data){
     return SYNTAX_OK;
 }
 
-// //TODO no rule for expression
 static int if_else(analyse_data_t* data){
 //     //18. 〈 if_else 〉 −→ if 〈 expression 〉{ 〈 statement 〉} 〈 possible_EOL 〉else { 〈 statement 〉}
     if(data->token.type == KEYWORD && data->token.data.Keyword == If_KW){
@@ -1114,52 +986,6 @@ static int p_type(analyse_data_t* data){
     }
     return SYNTAX_ERROR;
 }
-/*int main()
-{
-    //char *    input = "write(\"Zadejte cislo pro vypocet faktorialu: \")\nlet inp = readInt()\n// pomocna funkce pro dekrementaci celeho cisla o zadane cislo\nfunc decrement(of n: Int, by m: Int) -> Int {\nreturn n - m\n}\n// Definice funkce pro vypocet hodnoty faktorialu\nfunc factorial(_ n : Int) -> Int {\nvar result : Int?\nif (n < 2) {\nresult = 1\n} else {\nlet decremented_n = decrement(of: n, by: 1)\nlet temp_result = factorial(decremented_n)\nresult = n * temp_result\n}\nreturn result!\n}\n// pokracovani hlavniho tela programu\nif let inp {\nif (inp < 0) { // Pokracovani hlavniho tela programu\nwrite(\"Faktorial nelze spocitat!\")\n} else {\nlet vysl = factorial(inp)\n\nwrite(\"Vysledek je: \", vysl)\n}\n} else {\nwrite(\"Chyba pri nacitani celeho cisla!\")\n}";
-    char *    input = "func main(_ i: Int) -> Int? {\n    return nil\n}\nfunc new() -> Int {\n    while 1 == 1{}\n    var i = 3\n    var k: Double = 5.5\n\n    return main(6 / 5) ?? new() - 8\n}\nlet c: Int \nfunc empty(){\n\n}\nfunc concat(b x : String, with y : String) -> String {\n    let x = y + y\n    if c == 5 - 5 {\n        var x : Double\n    }else{\n    }\n    return x + \"\" + y\n}\nlet a = \"ahoj \"\nvar hohol = concat(b: concat(b: a, with: \"svete\"), with: \"svete\") + \"\"\nempty()";
-    FILE *file = fmemopen(input, strlen(input), "r");
-    set_source_file(file);
-    analyse_data_t *data = malloc(sizeof(analyse_data_t));
-    
-    if (!init_variables(data))
-        return INTERNAL_ERROR;
-
-    result = get_next_token(&data->token);
-
-    if (data->token.type == TOKEN_EOF)
-        return -1;
-
-    //first go through
-    result = program_first(data);
-    printf("\n\nEND OF FIRST GO THROUGH\n\n");
-    bst_node_ptr node = symtable_search(&data->global_table, "add");
-    fclose(file);
-    FILE *file2 = fmemopen(input, strlen(input), "r");
-    set_source_file(file2);
-    //second and main
-    result = get_next_token(&data->token);
-    result = program(data);
-
-    if(result != SYNTAX_OK){
-        printf("ERROR: %d\n", result);
-        printf("GLOBAL LABEL - ");
-        print_all_keys(data->global_table.root);
-        printf("\n");
-        for(int i = 0; i <= data->label_deep; i++){
-            printf("LABEL: %d - ", i);
-            print_all_keys(data->local_table[i].root);
-            printf("\n");
-        }
-        // fprintf(stderr, "ERROR: %d\n", result);
-    }else{
-        printf("OK\n");
-    }
-    free_variables(data);
-    //fclose(file);
-
-    return result;
-}*/
 
 int analyse(){
     set_source_file(stdin);
@@ -1170,28 +996,14 @@ int analyse(){
 
     result = get_next_token(&data->token);
 
-    //result = program(data);
     data->in_declaration = true;
     result = program_first(data);
-    //printf("\n\nEND OF FIRST GO THROUGH\n\n");
     fseek(stdin, 0, SEEK_SET);
-    //second and main
     GENERATE_BLOCK(generator_start);
     result = get_next_token(&data->token);
     data->in_declaration = false;
     result = program(data);
     GENERATE_BLOCK(generator_end);
-    if(result != SYNTAX_OK){
-        printf("ERROR: %d\n", result);
-        for(int i = 0; i <= data->label_deep; i++){
-            printf("LABEL: %d - ", i);
-            print_all_keys(data->local_table[i].root);
-            printf("\n");
-        }
-        // fprintf(stderr, "ERROR: %d\n", result);
-    }else{
-        //printf("OK\n");
-    }
 
     free_variables(data);
 

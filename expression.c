@@ -161,14 +161,6 @@ eSymbol token_to_esymbol(token_t token, analyse_data_t* data, data_type* type, b
     }
 }
 
-
-void stack_print(stack_t* stack){
-    for(int i = stack->index; i >= 0; i--){
-        printf("%d)%d - %d\n", i, stack->array[i]->symbol, stack->array[i]->type);
-    }
-    printf("\n");
-}
-
 void swap(void** a, void** b){
     void* temp = *a;
     *a  = *b;
@@ -248,9 +240,6 @@ int reduce(stack_t* stack){
         // Generate ! code
     }
     else if(elements_count == 3){
-        //printf("[1] = %d\n", elements[0]->symbol);
-        //printf("[2] = %d\n", elements[1]->symbol);
-        //printf("[3] = %d\n", elements[2]->symbol);
         // E -> (E)
         if(elements[0]->symbol == LPS && elements[1]->symbol == NON_TERM && elements[2]->symbol == RPS){
             new_element->nullable = elements[1]->nullable;
@@ -473,7 +462,6 @@ int compare_output_types(analyse_data_t* data, stack_element* final_element){
         expected_type = func_data->return_data_type;
         nullable = func_data->return_data_q_type;
     }else if(data->in_var_definition && data->var_id && strcmp("%%exp_result", data->var_id->key)){
-        //printf("name: %s; type: %d; token_name: %s\n", data->var_id->key, ((var_data_t*)data->var_id->data)->data_type, data->tmp_key);
         var_data_t* var_data = (var_data_t*)data->var_id->data;
         var_data->data_type = final_element->type;
         var_data->q_type = final_element->nullable;
@@ -566,7 +554,6 @@ int expression(analyse_data_t* data, bool* is_EOL){
     process_parenthese(token, &parantheses_counter);
 
     do{
-        //stack_print(stack);
         bool nullable = false;
         data_type input_id_data_type = Undefined;
         eSymbol input_symbol = token_to_esymbol(token, data, &input_id_data_type, &nullable);
@@ -749,7 +736,6 @@ int expression(analyse_data_t* data, bool* is_EOL){
 
     FREE_RECOURCES(stack);
 
-    //printf("End of Expression\n");
 
     return SYNTAX_OK;
 }
