@@ -148,7 +148,7 @@ void print_token(token_t *token)
 	if ((result = get_next_token(&data->token)) != 0) {        \
             return result;                                         \
         }                                                          \
-        //print_token(&data->token);                                 \
+        print_token(&data->token);                                 \
 
 #define CHECK_TYPE(t_type)											\
     if(data->token.type == TOKEN_EOF && t_type == TOKEN_EOL){}\
@@ -569,7 +569,8 @@ static int func_ret(analyse_data_t* data){
         ((function_data_t*)(*data->current_id).data)->return_data_type = Undefined;
         ((function_data_t*)(*data->current_id).data)->return_data_q_type = false;
     }
-    GENERATE_BLOCK(generate_function_return_param, ((function_data_t*)(*data->current_id).data)->return_data_type);
+    if(data->in_declaration == false)
+        GENERATE_BLOCK(generate_function_return_param, ((function_data_t*)(*data->current_id).data)->return_data_type);
     return SYNTAX_OK;
 
 }
@@ -599,7 +600,8 @@ static int args(analyse_data_t* data){
         var_data->q_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index].q_type;
         var_data->data_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index].data_type;
         var_data->constant = true;
-        GENERATE_BLOCK(generate_function_param, ((function_data_t*)(*data->current_id).data)->params_identifiers[data->args_index], var_data->data_type)
+        if(data->in_declaration == false)
+            GENERATE_BLOCK(generate_function_param, ((function_data_t*)(*data->current_id).data)->params_identifiers[data->args_index], var_data->data_type)
         CHECK_RULE(args_n);
         ((function_data_t*)(*data->current_id).data)->param_len = data->args_index;
         return SYNTAX_OK;
@@ -636,7 +638,8 @@ static int args_n(analyse_data_t* data){
         var_data->q_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index].q_type;
         var_data->data_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index].data_type;
         var_data->constant = true;
-        GENERATE_BLOCK(generate_function_param, ((function_data_t*)(*data->current_id).data)->params_identifiers[data->args_index], var_data->data_type)
+        if(data->in_declaration == false)
+            GENERATE_BLOCK(generate_function_param, ((function_data_t*)(*data->current_id).data)->params_identifiers[data->args_index], var_data->data_type)
         CHECK_RULE(args_n);	
     }    
 //16. 〈 args_n 〉 −→ ε
@@ -1169,13 +1172,14 @@ int analyse(){
     result = get_next_token(&data->token);
 
     //result = program(data);
-
+    data->in_declaration = true;
     result = program_first(data);
     //printf("\n\nEND OF FIRST GO THROUGH\n\n");
     fseek(stdin, 0, SEEK_SET);
     //second and main
     GENERATE_BLOCK(generator_start);
     result = get_next_token(&data->token);
+    data->in_declaration = false;
     result = program(data);
     GENERATE_BLOCK(generator_end);
     if(result != SYNTAX_OK){

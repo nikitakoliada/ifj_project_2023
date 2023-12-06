@@ -123,6 +123,11 @@ void generate_write_val(void);
  */
 void gen_push(token_t *token);
 
+/**
+ * @brief Push value of return variable to stack
+ *
+ * @return void
+ */
 void gen_push_return(void);
 
 /**
