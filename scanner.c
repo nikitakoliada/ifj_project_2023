@@ -196,7 +196,7 @@ int get_next_token(token_t* token){
                 }
                 break;
             case KEYWORD_OR_IDENTIFIER_S:
-                if(isalnum(symbol) || symbol == '_' || symbol == '?'){
+                if(isalnum(symbol) || symbol == '_'){
                     add_char = true;
                 }else if(symbol == '?' && is_pure_type(raw_token)){
                     add_char = true;
