@@ -34,6 +34,9 @@ typedef enum{
     NON_TERM,
     NilS,
     Handle
-}eSymbol;
+}eSymbol; // Symbol type
 
+// Main expression function
+// First argument accepts LL parser data
+// Second argument sets if there was a new line after expression
 int expression(analyse_data_t*, bool*);
