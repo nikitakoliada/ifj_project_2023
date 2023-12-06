@@ -543,13 +543,20 @@ void gen_operation(rules rule){
             break;
         case NOT_NIL_R:
             GENERATE("POPS GF@%%tmp1");
-            GENERATE("JUMPIFEQ !error GF@%%tmp1 nil@nil");
+            GENERATE("JUMPIFEQ !nil_error_exit_%d GF@%%tmp1 nil@nil", nil_check_counter);
+            GENERATE("JUMP !nil_check_ok_%d", nil_check_counter);
+            GENERATE("LABEL !nil_error_exit_%d", nil_check_counter);
+            GENERATE("EXIT int@4");
+            GENERATE("LABEL !nil_check_ok_%d", nil_check_counter);
+            nil_check_counter++;
             break;
         case NOT_NULL_R:
             GENERATE("POPS GF@%%tmp1");
-            GENERATE("JUMPIFEQ !push_not_nil GF@%%tmp1 nil@nil");
+            GENERATE("JUMPIFEQ !push_not_nil_%d GF@%%tmp1 nil@nil", nil_check_counter);
             GENERATE("POPS GF@%%tmp1");
-            GENERATE("JUMPIFEQ !push_not_nil GF@%%tmp1 nil@nil");
+            GENERATE("JUMPIFEQ !push_not_nil_%d GF@%%tmp1 nil@nil", nil_check_counter);
+            GENERATE("LABEL !push_not_nil_%d", nil_check_counter);
+            GENERATE("PUSHS GF@%%tmp1");
             nil_check_counter++;
             break;
         default:
