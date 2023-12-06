@@ -3,8 +3,9 @@
  * @file scanner.h
 
  * @brief Scanner definitions
- 
- * @author Juraj Remeň - xremen02
+
+ * @author Pavlo Butenko - xbuten00
+ * @author Maksym Podhornyi - xpodho08
 */
 
 #include "error.h"
@@ -17,8 +18,14 @@
 #ifndef SCANNER_H
 #define SCANNER_H
 
+/**
+ * @brief Default length of token
+ */
 #define DEFAULT_TOKEN_LENGTH 256
 
+/**
+ * @brief Enum for scanner states
+ */
 typedef enum scanner_states {
     NEW_TOKEN_S,
     STRING_S,
@@ -53,6 +60,9 @@ typedef enum scanner_states {
     NOT_S,
 } scanner_states_t;
 
+/**
+ * @brief Enum for token types
+ */
 typedef enum token_type {
     KEYWORD,
     IDENTIFIER,
@@ -66,31 +76,34 @@ typedef enum token_type {
     DOUBLE_VALUE,
 
     // relation operators
-    NOT_EQUAL, // !=
-    EQUAL, // ==
-    LESS_THAN, // <
-    LESS_THAN_OR_EQUAL, // <=
-    MORE_THAN, // >
-    MORE_THAN_OR_EQUAL, // >=
+    NOT_EQUAL,
+    EQUAL,
+    LESS_THAN,
+    LESS_THAN_OR_EQUAL,
+    MORE_THAN,
+    MORE_THAN_OR_EQUAL,
 
     // operators
-    PLUS, // +
-    MINUS, // -
-    MUL, // *
-    DIV, // /
-    NIL_COLL, // ??
+    PLUS,
+    MINUS,
+    MUL,
+    DIV,
+    NIL_COLL,
 
     // others
-    TOKEN_LEFT_BRACKET, // (
-    TOKEN_RIGHT_BRACKET, // )
-    TOKEN_LEFT_CURLY_BRACKET, // {
-    TOKEN_RIGHT_CURLY_BRACKET, // }
-    COMMA, // ,
-    COLON, // :
-    NOT, // !
-    ASSIGNMENT // =
+    TOKEN_LEFT_BRACKET,
+    TOKEN_RIGHT_BRACKET,
+    TOKEN_LEFT_CURLY_BRACKET,
+    TOKEN_RIGHT_CURLY_BRACKET,
+    COMMA,
+    COLON,
+    NOT,
+    ASSIGNMENT
 } token_type_t;
 
+/**
+ * @brief Enum for keywords
+ */
 typedef enum keyword{
     Double_KW,
     Else_KW,
@@ -108,6 +121,9 @@ typedef enum keyword{
     DoubleNullable_KW,
 } keyword_t;
 
+/**
+ * @brief Union for token data
+ */
 typedef union token_data {
     long long int Int;
     double Double;
@@ -115,13 +131,29 @@ typedef union token_data {
     keyword_t Keyword;
 } token_data_t;
 
+/**
+ * @brief Struct for token
+ */
 typedef struct token {
     enum token_type type;
     token_data_t data;
     unsigned long long line;
 } token_t;
 
+/**
+ * @brief Set source file for scanner
+ *
+ * @param file - source file
+ * @return void
+ */
 void set_source_file(FILE *file);
+
+/**
+ * @brief Get next token from source file
+ *
+ * @param token - pointer to token
+ * @return 0 on success
+ */
 int get_next_token(token_t *token);
 
 #endif // SCANNER_H

@@ -4,10 +4,8 @@
 
  * @brief Scanner implementation
 
- * @author Juraj Remeň - xremen02
  * @author Pavlo Butenko - xbuten00
  * @author Maksym Podhornyi - xpodho08
-
 */
 
 #include "scanner.h"
@@ -24,6 +22,12 @@ void set_source_file(FILE *file_arg){
     file = file_arg;
 }
 
+/**
+ * @brief Checks if token is a keyword
+ *
+ * @param token - token to check
+ * @return true if token is a keyword, false otherwise
+ */
 bool is_keyword(char *token)
 {
     for (int i = 0; i < 14; i++)
@@ -37,6 +41,16 @@ bool is_keyword(char *token)
         return false;
 }
 
+/**
+ * @brief Adds char to string
+ *
+ * @param string - string to add char to
+ * @param index - last index of string
+ * @param size - size of string
+ * @param c - char to add
+ *
+ * @return void
+ */
 void add_char_to_string(char *string, unsigned* index, unsigned* size, char c)
 {
     unsigned len = strlen(string);
@@ -51,6 +65,14 @@ void add_char_to_string(char *string, unsigned* index, unsigned* size, char c)
     string[*index] = '\0';
 }
 
+/**
+ * @brief Gets keyword type
+ *
+ * @param token_raw - token to check
+ * @param keyword - keyword type
+ *
+ * @return void
+ */
 void get_keyword_type(char* token_raw, keyword_t* keyword){
     for(int i = 0; i < 14; i++){
         if(!strcmp(token_raw, keywords[i])){
@@ -59,6 +81,12 @@ void get_keyword_type(char* token_raw, keyword_t* keyword){
     }
 }
 
+/**
+ * @brief Checks if token is a pure type
+ *
+ * @param token - token to check
+ * @return true if token is a pure type, false otherwise
+ */
 bool is_pure_type(char* token){
     for(int i = 0; i < 3; i++){
         if(!strcmp(token, types[i])) return true;
@@ -67,14 +95,9 @@ bool is_pure_type(char* token){
 }
 
 int get_next_token(token_t* token){
-    // current state of the scanner
     scanner_states_t state = NEW_TOKEN_S;
-
-    // string representation of unicode code
     char* unicode_code = calloc(sizeof(char), 3);
     int unicode_index = 0;
-
-    // creation token and its type
     int token_type = -1;
     char* raw_token = calloc(sizeof(char), DEFAULT_TOKEN_LENGTH);
     if(raw_token == NULL){
@@ -151,7 +174,7 @@ int get_next_token(token_t* token){
                 break;
             case NIL_S:
                 if(symbol == '?'){
-                    token_type = NIL_COLL; // Nullish coalescing operator
+                    token_type = NIL_COLL;
                 }else{
                     ERROR_EXIT("Unexpected symbol", LEX_ERROR);
                 }
@@ -162,37 +185,30 @@ int get_next_token(token_t* token){
                 }else {
                     ungetc(symbol, file);
                     token_type = NOT;
-                    //TODO
                 }
                 break;
             case ASSIGNMENT_S:
                 if(symbol == '='){
-                    // state = EQUAL;
                     token_type = EQUAL;
                 }else {
                     ungetc(symbol, file);
                     token_type = ASSIGNMENT;
-                    //TODO
                 }
                 break;
             case MAYBE_MORE_THAN_S:
                 if(symbol == '='){
-                    // state = MORE_THAN_OR_EQUAL;
                     token_type = MORE_THAN_OR_EQUAL;
                 }else{
                     ungetc(symbol, file);
                     token_type = MORE_THAN;
-                    // TODO
                 }
                 break;
             case MAYBE_LESS_THAN_S:
                 if(symbol == '='){
-                    // state = LESS_THAN_OR_EQUAL;
                     token_type = LESS_THAN_OR_EQUAL;
                 }else{
                     ungetc(symbol, file);
                     token_type = LESS_THAN;
-                    // TODO
                 }
                 break;
             case KEYWORD_OR_IDENTIFIER_S:
@@ -536,7 +552,6 @@ int get_next_token(token_t* token){
                 strcpy(token->data.String, raw_token);
             }
     }
-//    printf("%s\n", raw_token);
     free(raw_token);
 
     return 0;

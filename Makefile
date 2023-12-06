@@ -4,7 +4,7 @@
  #
  # @brief Makefile implementation
  #
- # @author Juraj Remeň - xremen02
+ # @author Maksym Podhornyi - xpodho08
  # @author Pavlo Butenko - xbuten00
 ##
 
