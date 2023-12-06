@@ -136,11 +136,7 @@ void generate_Double2Int()
     GENERATE("PUSHFRAME");
     GENERATE("DEFVAR LF@%%retval0");
 
-    GENERATE("MOVE LF@%%retval0 nil@nil");
-    GENERATE("JUMPIFEQ nil$error_Double2Int nil@nil LF@_Double2Int$f");
-    GENERATE("FLOAT2INT LF@%%retval0 LF@_Double2Int$f");
-
-    GENERATE("LABEL nil$error_Double2Int");
+    GENERATE("FLOAT2INT LF@%%retval0 LF@%%0");
 
     GENERATE("POPFRAME");
     GENERATE("RETURN");
