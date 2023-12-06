@@ -41,6 +41,7 @@ typedef struct
 	int label_index;			// Index for generating unique labels.
 	int label_deep;				// Deep of labes.
 
+	bool in_declaration;	// Defines if the parser is in declaration of functions (first gothru)
 	bool in_function;			// Defines if the parser is in function
 	bool in_defintion;		// Defines if фкпі rule should add or check it's фкпі
 	bool in_while_or_if;		// Defines if the parser is in construction while, if or then
