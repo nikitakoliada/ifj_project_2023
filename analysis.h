@@ -43,7 +43,7 @@ typedef struct
 
 	bool in_declaration;	// Defines if the parser is in declaration of functions (first gothru)
 	bool in_function;			// Defines if the parser is in function
-	bool in_defintion;		// Defines if фкпі rule should add or check it's фкпі
+	bool in_defintion;		// Defines if function is in defintion 
 	bool in_while_or_if;		// Defines if the parser is in construction while, if or then
 	bool in_var_definition;
 	bool in_call_func;
