@@ -64,7 +64,7 @@ precedence_value_t predence_table[PT_SIZE][PT_SIZE] = {
     /* )  */{ R,  R,  F,    R,  R,  R,  S,  R,  R},
     /* r  */{ S,  S,  S,    R,  F,  R,  S,  S,  R},
     /* ?? */{ S,  S,  S,    R,  S,  S,  S,  S,  R},
-    /* !  */{ R,  R,  S,    R,  R,  R,  F,  S,  R},
+    /* !  */{ R,  R,  S,    R,  R,  R,  F,  F,  R},
     /* id */{ R,  R, FUNC,  R,  R,  R,  R,  F,  R},
     /* $  */{ S,  S,  S,    F,  S,  S,  S,  S,  F}
 };
@@ -243,7 +243,7 @@ int reduce(stack_t* stack){
         new_element->nullable = false;
         new_element->type = elements[0]->type;
         new_element->is_identifier = elements[0]->is_identifier;
-        gen_rule = NOT_NULL_R;
+        gen_rule = NOT_NIL_R;
 
         // Generate ! code
     }
@@ -585,7 +585,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
 
         stack_element* new_element = NULL;
         
-        if(input_index == IdI && stack_symbol_index == IdI && was_EOL){
+        if(input_index == IdI && (stack_symbol_index == IdI || stack_symbol_index == NI) && was_EOL){
             reduce_only = true;
         }   
 
@@ -629,7 +629,7 @@ int expression(analyse_data_t* data, bool* is_EOL){
                 } 
 
                 // Push new term
-                if((input_symbol == IdS && input_id_data_type != Undefined) || input_symbol == StringS || input_symbol == IntS || input_symbol == DoubleS){
+                if((input_symbol == IdS && input_id_data_type != Undefined) || input_symbol == StringS || input_symbol == IntS || input_symbol == DoubleS || input_symbol == NilS){
                     gen_push(&token);
                 }
 

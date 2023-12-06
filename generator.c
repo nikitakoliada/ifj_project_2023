@@ -10,6 +10,8 @@
 #include "generator.h"
 #include "ctype.h"
 
+int nil_check_counter = 0;
+
 /* ----- BUILT IN FUNCTIONS ----- */
 /**
  * @brief BuiltIn function readString
@@ -158,7 +160,6 @@ void generate_length()
     GENERATE("LABEL !FUNC_length");
     GENERATE("PUSHFRAME");
     GENERATE("DEFVAR LF@%%retval0");
-    GENERATE("WRITE LF@%%0");
 
     GENERATE("STRLEN LF@%%retval0 LF@%%0");
 
@@ -282,44 +283,6 @@ void generate_chr()
 }
 
 /**
- * @brief Generate error function
- *
- * @return void
- */
-void generate_error_function(void){
-    GENERATE("#error");
-    GENERATE("JUMP !_error");
-    GENERATE("LABEL !error");
-    GENERATE("PUSHFRAME");
-
-    GENERATE("EXIT int@4");
-
-    GENERATE("POPFRAME");
-    GENERATE("RETURN");
-    GENERATE("LABEL !_error");
-    GENERATE_EMPTY_LINE();
-}
-
-/**
- * @brief Generate function push not nil
- *
- * @return void
- */
-void generate_function_push_not_nil(void){
-    GENERATE("#push_not_nil");
-    GENERATE("JUMP !_push_not_nil");
-    GENERATE("LABEL !push_not_nil");
-    GENERATE("PUSHFRAME");
-
-    GENERATE("PUSHS GF@%%tmp1");
-
-    GENERATE("POPFRAME");
-    GENERATE("RETURN");
-    GENERATE("LABEL !_push_not_nil");
-    GENERATE_EMPTY_LINE();
-}
-
-/**
  * @brief Define all built in functions
  *
  * @param void
@@ -347,7 +310,6 @@ void generator_start(void)
     GENERATE("DEFVAR GF@%%tmp2");
     GENERATE("DEFVAR GF@%%tmp3");
     define_built_in_functions();
-    generate_error_function();
     GENERATE("LABEL $$main");
     GENERATE("CREATEFRAME");
     GENERATE("PUSHFRAME");
@@ -502,6 +464,11 @@ void gen_term(token_t *token){
         case IDENTIFIER:
             GENERATE("LF@%s", token->data.String);
             break;
+        case KEYWORD:
+            if(token->data.Keyword == Nil_KW){
+                GENERATE("nil@nil");
+                break;
+            }
         default:
             break;
     }
@@ -587,6 +554,7 @@ void gen_operation(rules rule){
             GENERATE("JUMPIFEQ !push_not_nil GF@%%tmp1 nil@nil");
             GENERATE("POPS GF@%%tmp1");
             GENERATE("JUMPIFEQ !push_not_nil GF@%%tmp1 nil@nil");
+            nil_check_counter++;
             break;
         default:
             break;
