@@ -427,7 +427,7 @@ void gen_term(token_t *token){
                     || token->data.String[i] <= 32
                     || !isprint(token->data.String[i])){
                     if(strlen(tmp) + 4 >= length){
-                        if((tmp = realloc(tmp, length * 2)) == NULL){
+                        if((tmp = realloc(tmp, length * 2 * sizeof(char))) == NULL){
                             fprintf(stderr, "Error while reallocating memory\n");
                             exit(INTERNAL_ERROR);
                         }
@@ -436,14 +436,15 @@ void gen_term(token_t *token){
                     
                     int index = strlen(tmp);
                     tmp[index] = '\\';
-                    tmp[index + 1] = '\0';
+                    tmp[++index] = '\0';
                     sprintf(tmp2, "%03d", token->data.String[i]);
                     tmp = strcat(tmp, tmp2);
+                    tmp[index + 4] = '\0';
                 }else{
                     int index = strlen(tmp);
                     tmp[index] = token->data.String[i];
                     tmp[index + 1] = '\0';
-                    if(strlen(tmp) + 1 == length){
+                    if(strlen(tmp) + 1 > length){
                         if((tmp = realloc(tmp, length * 2)) == NULL){
                             fprintf(stderr, "Error while reallocating memory\n");
                             exit(INTERNAL_ERROR);
@@ -546,8 +547,9 @@ void gen_operation(rules rule){
             GENERATE("JUMPIFEQ !nil_error_exit_%d GF@%%tmp1 nil@nil", nil_check_counter);
             GENERATE("JUMP !nil_check_ok_%d", nil_check_counter);
             GENERATE("LABEL !nil_error_exit_%d", nil_check_counter);
-            GENERATE("EXIT int@4");
+            GENERATE("EXIT int@7");
             GENERATE("LABEL !nil_check_ok_%d", nil_check_counter);
+            GENERATE("PUSHS GF@%%tmp1");
             nil_check_counter++;
             break;
         case NOT_NULL_R:

@@ -327,7 +327,7 @@ int get_next_token(token_t* token){
                     state = NEW_TOKEN_S;
                     break;
                 }else if(symbol == EOF){
-                    token_type = EOF;
+                    token_type = TOKEN_EOF;
                 }
                 break;
 
