@@ -14,7 +14,7 @@ all: ifj
 
 ifj: scanner.o symtable.o stack.o analysis.o expression.o generator.o main.c
 	${CC} ${FLAGS} -o $@ $^
-	rm -rf *.o
+	rm -rf *.o *h.gch
 
 .PHONY: ifj
 
