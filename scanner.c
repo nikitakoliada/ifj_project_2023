@@ -51,18 +51,18 @@ bool is_keyword(char *token)
  *
  * @return void
  */
-void add_char_to_string(char *string, unsigned* index, unsigned* size, char c)
+void add_char_to_string(char **string, unsigned* index, unsigned* size, char c)
 {
-    unsigned len = strlen(string);
+    unsigned len = strlen(*string);
 
     if(len + 2 >= *size){
-        if(realloc(string, *size * 2 * sizeof(char)) == NULL) {
+        if((*string = realloc(*string, *size * 2 * sizeof(char))) == NULL) {
             ERROR_EXIT("Could not reallocate memory for string!", INTERNAL_ERROR)
         }
         *size *= 2;
     }
-    string[(*index)++] = c;
-    string[*index] = '\0';
+    (*string)[(*index)++] = c;
+    (*string)[*index] = '\0';
 }
 
 /**
@@ -397,23 +397,23 @@ int get_next_token(token_t* token){
             case ESCAPE_S:
                 switch (symbol) {
                     case 'n':
-                        add_char_to_string(raw_token, &index, &str_size, '\n');
+                        add_char_to_string(&raw_token, &index, &str_size, '\n');
                         state = STRING_S;
                         break;
                     case 't':
-                        add_char_to_string(raw_token, &index, &str_size, '\t');
+                        add_char_to_string(&raw_token, &index, &str_size, '\t');
                         state = STRING_S;
                         break;
                     case 'r':
-                        add_char_to_string(raw_token, &index, &str_size, '\r');
+                        add_char_to_string(&raw_token, &index, &str_size, '\r');
                         state = STRING_S;
                         break;
                     case '"':
-                        add_char_to_string(raw_token, &index, &str_size, '"');
+                        add_char_to_string(&raw_token, &index, &str_size, '"');
                         state = STRING_S;
                         break;
                     case '\\':
-                        add_char_to_string(raw_token, &index, &str_size, '\\');
+                        add_char_to_string(&raw_token, &index, &str_size, '\\');
                         state = STRING_S;
                         break;
                     case 'u':
@@ -442,7 +442,7 @@ int get_next_token(token_t* token){
                     state = UNICODE_S;
                 }else if(symbol == '}'){
                     int unicode_int = (int) strtol(unicode_code, NULL, 16);
-                    add_char_to_string(raw_token, &index, &str_size, (char)unicode_int);
+                    add_char_to_string(&raw_token, &index, &str_size, (char)unicode_int);
                     state = STRING_S;
                 }else{
                     ERROR_EXIT("Unexpected symbol", LEX_ERROR)
@@ -527,7 +527,7 @@ int get_next_token(token_t* token){
        }
 
        if(add_char){
-           add_char_to_string(raw_token, &index, &str_size, (char)symbol);
+           add_char_to_string(&raw_token, &index, &str_size, (char)symbol);
        }
 
    }while(token_type == -1);

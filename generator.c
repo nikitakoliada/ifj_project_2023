@@ -8,6 +8,7 @@
  */
 
 #include "generator.h"
+#include "ctype.h"
 
 /* ----- BUILT IN FUNCTIONS ----- */
 /**
@@ -110,11 +111,7 @@ void generate_Int2Double()
     GENERATE("PUSHFRAME");
     GENERATE("DEFVAR LF@%%retval0");
 
-    GENERATE("MOVE LF@%%retval0 nil@nil");
-    GENERATE("JUMPIFEQ nil$error_Int2Double nil@nil LF@_Int2Double$i");
-    GENERATE("INT2FLOAT LF@%%retval0 LF@_Int2Double$i");
-
-    GENERATE("LABEL nil$error_Int2Double");
+    GENERATE("INT2FLOAT LF@%%retval0 LF@%%0");
 
     GENERATE("POPFRAME");
     GENERATE("RETURN");
@@ -161,6 +158,7 @@ void generate_length()
     GENERATE("LABEL !FUNC_length");
     GENERATE("PUSHFRAME");
     GENERATE("DEFVAR LF@%%retval0");
+    GENERATE("WRITE LF@%%0");
 
     GENERATE("STRLEN LF@%%retval0 LF@%%0");
 
@@ -346,9 +344,9 @@ void generate_var_definition(char *id, data_type type)
             break;
         case Double_Type:
             if(strcmp(id, "%%retval0") == 0) {
-                GENERATE("MOVE LF@%%retval0 float@0.0");
+                GENERATE("MOVE LF@%%retval0 float@%a", 0.0);
             } else {
-                GENERATE("MOVE LF@%s float@0.0", id);
+                GENERATE("MOVE LF@%s float@%a", id, 0.0);
             }
             break;
         case Bool_Type:
@@ -422,25 +420,38 @@ void gen_term(token_t *token){
             GENERATE("float@%a", token->data.Double);
             break;
         case STRING_VALUE:
-            tmp = malloc(strlen(token->data.String) + 1);
+            int length = strlen(token->data.String) + 1;
+            tmp = malloc(length * sizeof(char));
+            tmp[0] = '\0';
             tmp2 = malloc(4 * sizeof(char));
             for (int i = 0; i < strlen(token->data.String); i++){
                 if (token->data.String[i] == '\\'
                     || token->data.String[i] == '#'
                     || token->data.String[i] <= 32
                     || !isprint(token->data.String[i])){
-                    if(realloc(tmp, strlen(tmp) + 4) == NULL){
-                        fprintf(stderr, "Error while reallocating memory\n");
-                        exit(INTERNAL_ERROR);
+                    if(strlen(tmp) + 4 >= length){
+                        if((tmp = realloc(tmp, length * 2)) == NULL){
+                            fprintf(stderr, "Error while reallocating memory\n");
+                            exit(INTERNAL_ERROR);
+                        }
+                        length *= 2;
                     }
-                    tmp[i] = '\\';
+                    
+                    int index = strlen(tmp);
+                    tmp[index] = '\\';
+                    tmp[index + 1] = '\0';
                     sprintf(tmp2, "%03d", token->data.String[i]);
                     tmp = strcat(tmp, tmp2);
                 }else{
-                    tmp[strlen(tmp)] = token->data.String[i];
-                    if(realloc(tmp, strlen(tmp) + 1) == NULL){
-                        fprintf(stderr, "Error while reallocating memory\n");
-                        exit(INTERNAL_ERROR);
+                    int index = strlen(tmp);
+                    tmp[index] = token->data.String[i];
+                    tmp[index + 1] = '\0';
+                    if(strlen(tmp) + 1 == length){
+                        if((tmp = realloc(tmp, length * 2)) == NULL){
+                            fprintf(stderr, "Error while reallocating memory\n");
+                            exit(INTERNAL_ERROR);
+                        }
+                        length *= 2;
                     }
                 }
             }
@@ -565,31 +576,12 @@ void gen_call_start(void){
     GENERATE("CREATEFRAME");
 }
 
-void add_param_to_call(char* param_name){
-    GENERATE("DEFVAR TF@%%%s", param_name);
-    GENERATE("MOVE TF@%%%s GF@%%exp_result", param_name);
+void add_param_to_call(int arg_index){
+    GENERATE("DEFVAR TF@%%%d", arg_index);
+    GENERATE("MOVE TF@%%%d GF@%%exp_result", arg_index);
 }
 
 void gen_call(char* function_name){
-    if(strcmp(function_name, "readInt") == 0){
-        GENERATE("CALL !function_readInt");
-    }else if(strcmp(function_name, "readDouble") == 0){
-        GENERATE("CALL !function_readDouble");
-    }else if(strcmp(function_name, "readString") == 0){
-        GENERATE("CALL !function_readString");
-    }else if(strcmp(function_name, "Int2Double") == 0){
-        GENERATE("CALL !function_Int2Double");
-    }else if(strcmp(function_name, "Double2Int") == 0){
-        GENERATE("CALL !function_Double2Int");
-    }else if(strcmp(function_name, "length") == 0){
-        GENERATE("CALL !function_length");
-    }else if(strcmp(function_name, "substring") == 0){
-        GENERATE("CALL !function_substr");
-    }else if(strcmp(function_name, "ord") == 0){
-        GENERATE("CALL !function_ord");
-    }else if(strcmp(function_name, "chr") == 0){
-        GENERATE("CALL !function_chr");
-    }
     GENERATE("CALL !FUNC_%s", function_name);
 }
 
@@ -600,10 +592,10 @@ void generate_function_start(char *name)
     GENERATE("PUSHFRAME");
 }
 
-void generate_function_param(char *param_name, data_type type)
+void generate_function_param(char *param_name, int arg_index, data_type type)
 {
     GENERATE("DEFVAR LF@%s", param_name);
-    generate_var_definition(param_name, type);
+    GENERATE("MOVE LF@%s LF@%%%d", param_name, arg_index);
 }
 
 void generate_function_return_param(data_type type)

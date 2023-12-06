@@ -198,11 +198,11 @@ void gen_call_start(void);
 /**
  * @brief Add parameter to function call
  *
- * @param param_name - id of parameter
+ * @param arg_index - index of parameter
  *
  * @return void
  */
-void add_param_to_call(char* param_name);
+void add_param_to_call(int arg_index);
 
 /**
  * @brief Generate code for function call
@@ -244,11 +244,12 @@ void generate_function_end(char* function_name);
  * @brief Generate code for function parameter
  *
  * @param param_name - name of parameter
+ * @param param_name - index of parameter
  * @param type - type of parameter
  *
  * @return void
  */
-void generate_function_param(char *param_name, data_type type);
+void generate_function_param(char *param_name, int arg_index, data_type type);
 
 /**
  * @brief Generate code for function return if

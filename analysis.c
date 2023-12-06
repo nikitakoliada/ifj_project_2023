@@ -148,7 +148,6 @@ void print_token(token_t *token)
 	if ((result = get_next_token(&data->token)) != 0) {        \
             return result;                                         \
         }                                                          \
-        print_token(&data->token);                                 \
 
 #define CHECK_TYPE(t_type)											\
     if(data->token.type == TOKEN_EOF && t_type == TOKEN_EOL){}\
@@ -601,7 +600,7 @@ static int args(analyse_data_t* data){
         var_data->data_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index].data_type;
         var_data->constant = true;
         if(data->in_declaration == false)
-            GENERATE_BLOCK(generate_function_param, ((function_data_t*)(*data->current_id).data)->params_identifiers[data->args_index], var_data->data_type)
+            GENERATE_BLOCK(generate_function_param, ((function_data_t*)(*data->current_id).data)->params_identifiers[data->args_index], data->args_index, var_data->data_type)
         CHECK_RULE(args_n);
         ((function_data_t*)(*data->current_id).data)->param_len = data->args_index;
         return SYNTAX_OK;
@@ -639,7 +638,7 @@ static int args_n(analyse_data_t* data){
         var_data->data_type = ((function_data_t*)(*data->current_id).data)->params_types[data->args_index].data_type;
         var_data->constant = true;
         if(data->in_declaration == false)
-            GENERATE_BLOCK(generate_function_param, ((function_data_t*)(*data->current_id).data)->params_identifiers[data->args_index], var_data->data_type)
+            GENERATE_BLOCK(generate_function_param, ((function_data_t*)(*data->current_id).data)->params_identifiers[data->args_index], data->args_index, var_data->data_type)
         CHECK_RULE(args_n);	
     }    
 //16. 〈 args_n 〉 −→ ε
@@ -894,7 +893,7 @@ static int fc_args(analyse_data_t* data){
     if (strcmp(((function_data_t*)(*data->current_id).data)->param_names[data->args_index], "_") == 0){
         data->var_id = symtable_search(&data->global_table, "%%exp_result");
         CHECK_EXPRESSION();
-        GENERATE_BLOCK(add_param_to_call, ((function_data_t*)(*data->current_id).data)->params_identifiers[data->args_index]);
+        GENERATE_BLOCK(add_param_to_call, data->args_index);
         CHECK_RULE(fc_args_n_args);
         return SYNTAX_OK;
     }
@@ -908,7 +907,7 @@ static int fc_args(analyse_data_t* data){
         GET_TOKEN_AND_CHECK_TYPE(COLON);
         data->var_id = symtable_search(&data->global_table, "%%exp_result");
         GET_TOKEN_AND_CHECK_EXPRESSION();
-        GENERATE_BLOCK(add_param_to_call, ((function_data_t*)(*data->current_id).data)->params_identifiers[data->args_index]);
+        GENERATE_BLOCK(add_param_to_call, data->args_index);
         CHECK_RULE(fc_args_n_args);
         return SYNTAX_OK;
     }
@@ -928,7 +927,7 @@ static int fc_args_n_args(analyse_data_t* data){
         if (strcmp(((function_data_t*)(*data->current_id).data)->param_names[data->args_index], "_") == 0){
             data->var_id = symtable_search(&data->global_table, "%%exp_result");
             GET_TOKEN_AND_CHECK_EXPRESSION();
-            GENERATE_BLOCK(add_param_to_call, ((function_data_t*)(*data->current_id).data)->params_identifiers[data->args_index]);
+            GENERATE_BLOCK(add_param_to_call, data->args_index);
             CHECK_RULE(fc_args_n_args);
             return SYNTAX_OK;
         }
@@ -942,7 +941,7 @@ static int fc_args_n_args(analyse_data_t* data){
             GET_TOKEN_AND_CHECK_TYPE(COLON);
             data->var_id = symtable_search(&data->global_table, "%%exp_result");
             GET_TOKEN_AND_CHECK_EXPRESSION();
-            GENERATE_BLOCK(add_param_to_call, ((function_data_t*)(*data->current_id).data)->params_identifiers[data->args_index]);
+            GENERATE_BLOCK(add_param_to_call, data->args_index);
             CHECK_RULE(fc_args_n_args);
             return SYNTAX_OK;
         }
